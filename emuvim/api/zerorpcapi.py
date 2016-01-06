@@ -44,10 +44,14 @@ class MultiDatacenterApi(object):
 
     def compute_action_start(self, dc_name, compute_name):
         # TODO return UUID / IP ?
-        logging.info("compute start")
+        logging.debug("RPC CALL: compute start")
+        if dc_name in self.dcs:
+            self.dcs[dc_name].addCompute(compute_name)
 
     def compute_action_stop(self, dc_name, compute_name):
         logging.info("compute stop")
+        if dc_name in self.dcs:
+            self.dcs[dc_name].removeCompute(compute_name)
 
     def compute_list(self):
         pass

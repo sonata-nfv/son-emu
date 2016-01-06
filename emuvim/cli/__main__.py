@@ -15,7 +15,7 @@ def main():
     # do some API tests
     print c.compute_action_start("dc2", "my_new_container1")
 
-    time.sleep(5)
+    time.sleep(10)
 
     print c.compute_action_stop("dc2", "my_new_container1")
 
