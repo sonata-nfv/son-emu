@@ -29,7 +29,7 @@ class Datacenter(object):
         Each data center is represented by a single switch to which
         compute resources can be connected at run time.
 
-        TODO: This will be changes in the future to support multiple networks
+        TODO: This will be changed in the future to support multiple networks
         per data center
         """
         self.switch = self.net.mnet.addSwitch(

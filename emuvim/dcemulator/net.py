@@ -69,7 +69,7 @@ class DCNetwork(object):
         # create link if everything is correct
         if (node1 is not None and isinstance(node1, OVSKernelSwitch)
                 and node2 is not None and isinstance(node2, OVSKernelSwitch)):
-            self.mnet.addLink(node1, node2)  # TODO we need TCLinks with user defined performance her
+            self.mnet.addLink(node1, node2)  # TODO we need TCLinks with user defined performance here
         else:
             raise Exception(
                 "one of the given nodes is not a Mininet switch or None")

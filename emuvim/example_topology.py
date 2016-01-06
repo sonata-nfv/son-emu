@@ -7,11 +7,13 @@ script.
 """
 import logging
 from dcemulator.net import DCNetwork
+from api.zerorpcapi import ZeroRpcApiEndpoint
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 def create_topology1():
+    # TODO add long comments to this example to show people how to use this
     # initialize network
     net = DCNetwork()
 
@@ -27,12 +29,24 @@ def create_topology1():
     net.addLink("dc1", s1)
     net.addLink(s1, "dc3")
     net.addLink(s1, dc4)
+
+    # create and start APIs (to access emulated cloud data centers)
+    zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
+    zapi1.connectDatacenter(dc1)
+    zapi1.connectDatacenter(dc2)
+    zapi1.start()
+    # lets also create a second API endpoint on another port to
+    # demonstrate hat you can have one endpoint for each of
+    # your data centers
+    zapi2 = ZeroRpcApiEndpoint("0.0.0.0", 4343)
+    zapi2.connectDatacenter(dc3)
+    zapi2.connectDatacenter(dc4)
+    zapi2.start()
+
     # start network
     net.start()
     net.CLI()  # TODO remove this when we integrate APIs?
     net.stop()  # TODO remove this when we integrate APIs?
-    # start APIs (to access emulated cloud data centers)
-    pass  # TODO: how to reflect one API endpoint per DC?
 
 
 def main():
