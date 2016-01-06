@@ -39,8 +39,12 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def addCompute(self):
-        pass
+    def addCompute(self, name):
+        #TODO remove mnet shortcut to have a clean API
+        #TODO connect container to DC's swtich
+        self.net.mnet.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
 
-    def removeCompute(self):
-        pass
+    def removeCompute(self, name):
+        #TODO remove mnet shortcut to have a clean API
+        #TODO disconnect container to DC's swtich
+        self.net.mnet.removeDocker("%s.%s" % (self.name, name))
