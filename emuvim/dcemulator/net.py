@@ -14,6 +14,12 @@ from node import Datacenter
 
 
 class DCNetwork(object):
+    """
+    Wraps the original Mininet class and provides
+    methods to add data centers, switches, etc.
+
+    This class is used by topology definition scripts.
+    """
 
     def __init__(self):
         self.dcs = {}
@@ -85,4 +91,3 @@ class DCNetwork(object):
 
     def CLI(self):
         CLI(self.mnet)
-

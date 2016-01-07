@@ -1,6 +1,11 @@
 """
  For now only a dummy client. Connects to the zerorpc interface of the
  emulator and performs some actions (start/stop/list).
+
+ We will provide a full CLI here later on which looks like:
+
+ cli compute start dc1 my_name flavor_a
+ cli network create dc1 11.0.0.0/24
 """
 import time
 import zerorpc
