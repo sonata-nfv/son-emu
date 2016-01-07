@@ -12,6 +12,21 @@
  * pip install import zerorpc
  * This will be replaced / extended by a REST API later
 
+### Project structure
+* **emuvim/** all emulator code 
+ * **api/** Data center API endpoint implementations (zerorpc, OpenStack REST, ...)
+ * **cli/** CLI client to interact with a running emulator
+ * **dcemulator/** Dockernet wrapper that introduces the notion of data centers and API endpoints
+ * **test/** Unit tests
+ * **example_topology.py** An example topology script to show how topologies can be specified
+
+### Run
+* First terminal:
+ * `sudo python example_topology.py`
+* Second terminal:
+ * TODO add CLI commands here (e.g. request the start of a new compute resource)
+
+
 ### TODO
 * DCemulator
  * correctly start and connect new compute resources at runtime
