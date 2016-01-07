@@ -12,6 +12,8 @@ class Datacenter(object):
     """
     Represents a logical data center to which compute resources
     (Docker containers) can be added at runtime.
+
+    Will also implement resource bookkeeping in later versions.
     """
 
     def __init__(self, name):
@@ -40,6 +42,10 @@ class Datacenter(object):
         pass
 
     def addCompute(self, name):
+        """
+        Create a new container as compute resource and connect it to this
+        data center.
+        """
         #TODO remove mnet shortcut to have a clean API
         #TODO connect container to DC's swtich
         self.net.mnet.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")

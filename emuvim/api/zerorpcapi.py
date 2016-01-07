@@ -11,6 +11,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class ZeroRpcApiEndpoint(object):
+    """
+    Simple API endpoint that offers a zerorpc-based
+    interface. This interface will be used by the
+    default command line client.
+    It can be used as a reference to implement
+    REST interfaces providing the same semantics,
+    like e.g. OpenStack compute API.
+    """
 
     def __init__(self, listenip, port):
         self.dcs = {}
@@ -38,12 +46,18 @@ class ZeroRpcApiEndpoint(object):
 
 
 class MultiDatacenterApi(object):
+    """
+        Just pass through the corresponding request to the
+        selected data center. Do not implement provisioning
+        logic here because will will have multiple API
+        endpoint implementations at the end.
+    """
 
     def __init__(self, dcs):
         self.dcs = dcs
 
     def compute_action_start(self, dc_name, compute_name):
-        # TODO return UUID / IP ?
+        # TODO what to return UUID / IP ?
         logging.debug("RPC CALL: compute start")
         if dc_name in self.dcs:
             self.dcs[dc_name].addCompute(compute_name)
