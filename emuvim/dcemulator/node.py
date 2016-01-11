@@ -46,11 +46,9 @@ class Datacenter(object):
         Create a new container as compute resource and connect it to this
         data center.
         """
-        #TODO remove mnet shortcut to have a clean API
         #TODO connect container to DC's swtich
-        self.net.mnet.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
+        self.net.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
 
     def removeCompute(self, name):
-        #TODO remove mnet shortcut to have a clean API
         #TODO disconnect container to DC's swtich
-        self.net.mnet.removeDocker("%s.%s" % (self.name, name))
+        self.net.removeDocker("%s.%s" % (self.name, name))

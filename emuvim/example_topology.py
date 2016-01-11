@@ -57,7 +57,7 @@ def create_topology1():
 
     """
     5. We want to access and control our data centers from the outside,
-       e.g., we want to connect an orchestrate to start/stop compute
+       e.g., we want to connect an orchestrator to start/stop compute
        resources aka. VNFs (represented by Docker containers in the emulated)
 
        So we need to instantiate API endpoints (e.g. a zerorpc or REST
