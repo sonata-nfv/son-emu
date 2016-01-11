@@ -54,6 +54,10 @@ class DCNetwork(object):
         return s
 
     def addLink(self, node1, node2):
+        """
+        Able to handle Datacenter objects as link
+        end points.
+        """
         assert node1 is not None
         assert node2 is not None
         # ensure type of node1
@@ -79,6 +83,18 @@ class DCNetwork(object):
         else:
             raise Exception(
                 "one of the given nodes is not a Mininet switch or None")
+
+    def addDocker( self, name, **params ):
+        """
+        Wrapper for addDocker method provided by Dockernet.
+        """
+        return self.mnet.addDocker( name, **params)
+
+    def removeDocker( self, name, **params):
+        """
+        Wrapper for removeHost. Just to be complete.
+        """
+        return self.mnet.removeDocker(name, **params)
 
     def start(self):
         # start
