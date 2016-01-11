@@ -31,6 +31,7 @@
 * DCemulator
  * correctly start and connect new compute resources at runtime
  * remove and disconnect compute resources at runtime
+ * do IP management for new containers
  * list active compute resources
 * Cloud-like reference API with CLI for demonstrations
  * Write CLI client

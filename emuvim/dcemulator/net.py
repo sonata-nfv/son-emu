@@ -77,7 +77,15 @@ class DCNetwork(object):
                 node2 = self.switches[node2]
         if isinstance( node2, Datacenter ):
             node2 = node2.switch
-        self.mnet.addLink(node1, node2, **params)  # TODO we need TCLinks with user defined performance here
+        return self.mnet.addLink(node1, node2, **params)  # TODO we need TCLinks with user defined performance here
+
+    def removeLink(self, link=None, node1=None, node2=None):
+        """
+        Removes a link. Can either be specified by link object,
+        or the nodes the link connects. Wraps Dockernet method.
+        """
+        logging.debug("removeLink: n1=%s n2=%s" % (str(node1), str(node2)))
+        return self.mnet.removeLink(link=link, node1=node1, node2=node2)
 
     def addDocker( self, name, **params ):
         """
