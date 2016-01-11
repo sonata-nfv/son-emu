@@ -20,6 +20,7 @@ class Datacenter(object):
         self.net = None  # DCNetwork to which we belong
         self.name = name
         self.switch = None  # first prototype assumes one "bigswitch" per DC
+        self.containers = {}  # keep track of running containers
 
     def _get_next_dc_dpid(self):
         global DCDPID_BASE
@@ -46,10 +47,17 @@ class Datacenter(object):
         Create a new container as compute resource and connect it to this
         data center.
         """
-        #TODO connect container to DC's swtich
-        d1 = self.net.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
-        l1 = self.net.addLink(d1, self.switch)
+        # TODO ip management
+        d = self.net.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
+        self.net.addLink(d, self.switch, params1={"ip": "10.0.0.254/8"})
+        self.containers[name] = d
 
     def removeCompute(self, name):
-        #TODO disconnect container to DC's swtich
+        """
+        Stop and remove a container from this data center.
+        """
+        assert name in self.containers
+        self.net.removeLink(
+            link=None, node1=self.containers[name], node2=self.switch)
         self.net.removeDocker("%s.%s" % (self.name, name))
+        del self.containers[name]
