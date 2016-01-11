@@ -18,11 +18,11 @@ def main():
     c.connect("tcp://127.0.0.1:4242")
 
     # do some API tests
-    print c.compute_action_start("dc2", "my_new_container1")
+    print c.compute_action_start("dc2", "d1")
 
     time.sleep(10)
 
-    print c.compute_action_stop("dc2", "my_new_container1")
+    print c.compute_action_stop("dc2", "d1")
 
 
 if __name__ == '__main__':
