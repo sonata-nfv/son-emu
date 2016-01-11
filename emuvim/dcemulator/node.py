@@ -47,7 +47,8 @@ class Datacenter(object):
         data center.
         """
         #TODO connect container to DC's swtich
-        self.net.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
+        d1 = self.net.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
+        l1 = self.net.addLink(d1, self.switch)
 
     def removeCompute(self, name):
         #TODO disconnect container to DC's swtich

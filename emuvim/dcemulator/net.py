@@ -5,7 +5,7 @@ Distributed Cloud Emulator (dcemulator)
 import logging
 
 from mininet.net import Mininet
-from mininet.node import Controller, OVSKernelSwitch, Switch
+from mininet.node import Controller, OVSKernelSwitch, Switch, Docker, Host
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from mininet.link import TCLink, Link
@@ -53,13 +53,14 @@ class DCNetwork(object):
         logging.info("added switch: %s" % name)
         return s
 
-    def addLink(self, node1, node2):
+    def addLink(self, node1, node2, **params):
         """
         Able to handle Datacenter objects as link
         end points.
         """
         assert node1 is not None
         assert node2 is not None
+        logging.debug("addLink: n1=%s n2=%s" % (str(node1), str(node2)))
         # ensure type of node1
         if isinstance( node1, basestring ):
             if node1 in self.dcs:
@@ -76,13 +77,7 @@ class DCNetwork(object):
                 node2 = self.switches[node2]
         if isinstance( node2, Datacenter ):
             node2 = node2.switch
-        # create link if everything is correct
-        if (node1 is not None and isinstance(node1, OVSKernelSwitch)
-                and node2 is not None and isinstance(node2, OVSKernelSwitch)):
-            self.mnet.addLink(node1, node2)  # TODO we need TCLinks with user defined performance here
-        else:
-            raise Exception(
-                "one of the given nodes is not a Mininet switch or None")
+        self.mnet.addLink(node1, node2, **params)  # TODO we need TCLinks with user defined performance here
 
     def addDocker( self, name, **params ):
         """
