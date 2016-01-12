@@ -19,10 +19,12 @@ def main():
 
     # do some API tests
     print c.compute_action_start("dc2", "d1")
+    print c.compute_action_start("dc2", "d2")
 
-    time.sleep(10)
+    time.sleep(20)
 
     print c.compute_action_stop("dc2", "d1")
+    print c.compute_action_stop("dc2", "d2")
 
 
 if __name__ == '__main__':
