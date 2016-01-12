@@ -21,7 +21,14 @@ def main():
     print c.compute_action_start("dc2", "d1")
     print c.compute_action_start("dc2", "d2")
 
-    time.sleep(20)
+    time.sleep(1)
+    print c.compute_list("dc2")
+
+    time.sleep(1)
+    print c.compute_status("dc2", "d1")
+    print c.compute_status("dc2", "d2")
+
+    time.sleep(5)
 
     print c.compute_action_stop("dc2", "d1")
     print c.compute_action_stop("dc2", "d2")

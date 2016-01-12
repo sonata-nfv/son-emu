@@ -42,15 +42,25 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def addCompute(self, name):
+    def addCompute(self, name, image=None, network=None):
         """
         Create a new container as compute resource and connect it to this
         data center.
+
+        TODO: This interface will change to support multiple networks to which
+        a single container can be connected.
         """
-        # TODO ip management
-        d = self.net.addDocker("%s" % (name), dimage="ubuntu")
-        self.net.addLink(d, self.switch) #params1={"ip": "10.0.0.254/8"}
+        assert name is not None
+        # set default parameter
+        if image is None:
+            image = "ubuntu"
+        if network is None:
+            network = {}  # {"ip": "10.0.0.254/8"}
+        # create the container and connect it to the given network
+        d = self.net.addDocker("%s" % (name), dimage=image)
+        self.net.addLink(d, self.switch, params1=network)
         self.containers[name] = d
+        return name  # we might use UUIDs for naming later on
 
     def removeCompute(self, name):
         """
@@ -61,3 +71,11 @@ class Datacenter(object):
             link=None, node1=self.containers[name], node2=self.switch)
         self.net.removeDocker("%s" % (name))
         del self.containers[name]
+        return True
+
+    def listCompute(self):
+        """
+        Return a list of all running containers assigned to this
+        data center.
+        """
+        return self.containers.itervalues()
