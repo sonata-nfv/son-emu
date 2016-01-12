@@ -10,7 +10,7 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel, info
 from mininet.link import TCLink, Link
 
-from node import Datacenter
+from node import Datacenter, EmulatorCompute
 
 
 class DCNetwork(object):
@@ -103,7 +103,7 @@ class DCNetwork(object):
         """
         Wrapper for addDocker method provided by Dockernet.
         """
-        return self.mnet.addDocker( name, **params)
+        return self.mnet.addDocker( name, cls=EmulatorCompute, **params)
 
     def removeDocker( self, name, **params):
         """
