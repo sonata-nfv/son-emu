@@ -4,7 +4,7 @@ Distributed Cloud Emulator (dcemulator)
 """
 import logging
 
-from mininet.net import Mininet
+from mininet.net import Dockernet
 from mininet.node import Controller, OVSKernelSwitch, Switch, Docker, Host
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info
@@ -28,7 +28,7 @@ class DCNetwork(object):
 
         # create a Mininet/Dockernet network
         setLogLevel('info')  # set Mininet loglevel
-        self.mnet = Mininet(controller=Controller, switch=OVSKernelSwitch)
+        self.mnet = Dockernet(controller=Controller, switch=OVSKernelSwitch)
         self.mnet.addController('c0')
 
     def addDatacenter(self, name):
