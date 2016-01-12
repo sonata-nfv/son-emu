@@ -29,10 +29,7 @@
 
 ### TODO
 * DCemulator
- * correctly start and connect new compute resources at runtime
- * remove and disconnect compute resources at runtime
- * do IP management for new containers
- * list active compute resources
+ * ...
 * Cloud-like reference API with CLI for demonstrations
  * Write CLI client
  * Start compute
@@ -50,3 +47,8 @@
 * Define API endpoints in topology
  * call startAPI from topology definition and start it in a own thread
  * make it possible to start different API endpoints for different DCs
+* DCemulator
+ * correctly start and connect new compute resources at runtime
+ * remove and disconnect compute resources at runtime
+ * do IP management for new containers
+ * list active compute resources
