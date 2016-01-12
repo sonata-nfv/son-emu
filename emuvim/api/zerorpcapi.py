@@ -59,19 +59,34 @@ class MultiDatacenterApi(object):
     def compute_action_start(self, dc_name, compute_name):
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
-        if dc_name in self.dcs:
-            return self.dcs[dc_name].addCompute(compute_name)
+        try:
+            return self.dcs.get(dc_name).startCompute(compute_name)
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
 
     def compute_action_stop(self, dc_name, compute_name):
         logging.info("RPC CALL: compute stop")
-        if dc_name in self.dcs:
-            return self.dcs[dc_name].removeCompute(compute_name)
+        try:
+            return self.dcs.get(dc_name).stopCompute(compute_name)
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
 
     def compute_list(self, dc_name):
         logging.info("RPC CALL: compute list")
-        if dc_name in self.dcs:
-            return [(c.name, c.IP()) for c in self.dcs[dc_name].listCompute()]
+        try:
+            return [(c.name, c.IP())
+                    for c in self.dcs.get(dc_name).listCompute()]
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
 
     def compute_status(self, dc_name, compute_name):
         logging.info("RPC CALL: compute status")
-        # TODO implement
+        try:
+            return self.dcs.get(
+                dc_name).containers.get(compute_name).getStatus()
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message

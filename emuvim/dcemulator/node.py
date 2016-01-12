@@ -2,10 +2,41 @@
 Distributed Cloud Emulator (dcemulator)
 (c) 2015 by Manuel Peuster <manuel.peuster@upb.de>
 """
+from mininet.node import Docker
 import logging
 
 
 DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
+
+
+class EmulatorCompute(Docker):
+    """
+    Emulator specific compute node class.
+    Inherits from Dockernet's Docker host class.
+    Represents a single container connected to a (logical)
+    data center.
+    We can add emulator specific helper functions to it.
+    """
+
+    def __init__(
+            self, name, dimage, **kwargs):
+        logging.debug("Create EmulatorCompute instance: %s" % name)
+
+        # call original Docker.__init__
+        Docker.__init__(self, name, dimage, **kwargs)
+
+    def getNetworkStatus(self):
+        """
+        Helper method to receive information about the virtual networks
+        this compute instance is connected to.
+        """
+        return None
+
+    def getStatus(self):
+        """
+        Helper method to receive information about this compute instance.
+        """
+        return None
 
 
 class Datacenter(object):
@@ -42,7 +73,7 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def addCompute(self, name, image=None, network=None):
+    def startCompute(self, name, image=None, network=None):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -62,7 +93,7 @@ class Datacenter(object):
         self.containers[name] = d
         return name  # we might use UUIDs for naming later on
 
-    def removeCompute(self, name):
+    def stopCompute(self, name):
         """
         Stop and remove a container from this data center.
         """
