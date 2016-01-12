@@ -48,8 +48,8 @@ class Datacenter(object):
         data center.
         """
         # TODO ip management
-        d = self.net.addDocker("%s.%s" % (self.name, name), dimage="ubuntu")
-        self.net.addLink(d, self.switch, params1={"ip": "10.0.0.254/8"})
+        d = self.net.addDocker("%s" % (name), dimage="ubuntu")
+        self.net.addLink(d, self.switch) #params1={"ip": "10.0.0.254/8"}
         self.containers[name] = d
 
     def removeCompute(self, name):
@@ -59,5 +59,5 @@ class Datacenter(object):
         assert name in self.containers
         self.net.removeLink(
             link=None, node1=self.containers[name], node2=self.switch)
-        self.net.removeDocker("%s.%s" % (self.name, name))
+        self.net.removeDocker("%s" % (name))
         del self.containers[name]

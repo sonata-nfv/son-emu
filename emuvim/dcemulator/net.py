@@ -77,6 +77,18 @@ class DCNetwork(object):
                 node2 = self.switches[node2]
         if isinstance( node2, Datacenter ):
             node2 = node2.switch
+        # try to give containers a default IP
+        if isinstance( node1, Docker ):
+            if not "params1" in params:
+                params["params1"] = {}
+            if not "ip" in params["params1"]:
+                params["params1"]["ip"] = self.getNextIp()
+        if isinstance( node2, Docker ):
+            if not "params2" in params:
+                params["params2"] = {}
+            if not "ip" in params["params2"]:
+                params["params2"]["ip"] = self.getNextIp()
+
         return self.mnet.addLink(node1, node2, **params)  # TODO we need TCLinks with user defined performance here
 
     def removeLink(self, link=None, node1=None, node2=None):
@@ -98,6 +110,9 @@ class DCNetwork(object):
         Wrapper for removeHost. Just to be complete.
         """
         return self.mnet.removeDocker(name, **params)
+
+    def getNextIp(self):
+        return self.mnet.getNextIp()
 
     def start(self):
         # start
