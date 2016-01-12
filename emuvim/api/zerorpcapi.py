@@ -57,15 +57,21 @@ class MultiDatacenterApi(object):
         self.dcs = dcs
 
     def compute_action_start(self, dc_name, compute_name):
-        # TODO what to return UUID / IP ?
+        # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
         if dc_name in self.dcs:
-            self.dcs[dc_name].addCompute(compute_name)
+            return self.dcs[dc_name].addCompute(compute_name)
 
     def compute_action_stop(self, dc_name, compute_name):
-        logging.info("compute stop")
+        logging.info("RPC CALL: compute stop")
         if dc_name in self.dcs:
-            self.dcs[dc_name].removeCompute(compute_name)
+            return self.dcs[dc_name].removeCompute(compute_name)
 
-    def compute_list(self):
-        pass
+    def compute_list(self, dc_name):
+        logging.info("RPC CALL: compute list")
+        if dc_name in self.dcs:
+            return [(c.name, c.IP()) for c in self.dcs[dc_name].listCompute()]
+
+    def compute_status(self, dc_name, compute_name):
+        logging.info("RPC CALL: compute status")
+        # TODO implement
