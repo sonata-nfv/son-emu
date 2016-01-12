@@ -30,13 +30,27 @@ class EmulatorCompute(Docker):
         Helper method to receive information about the virtual networks
         this compute instance is connected to.
         """
-        return None
+        # format list of tuples (name, Ip, MAC, isUp, status)
+        return [(str(i), i.IP(), i.MAC(), i.isUp(), i.status())
+                for i in self.intfList()]
 
     def getStatus(self):
         """
         Helper method to receive information about this compute instance.
         """
-        return None
+        status = {}
+        status["name"] = self.name
+        status["network"] = self.getNetworkStatus()
+        status["image"] = self.dimage
+        status["cpu_quota"] = self.cpu_quota
+        status["cpu_period"] = self.cpu_period
+        status["cpu_shares"] = self.cpu_shares
+        status["cpuset"] = self.cpuset
+        status["mem_limit"] = self.mem_limit
+        status["memswap_limit"] = self.memswap_limit
+        status["state"] = self.dcli.inspect_container(self.dc)["State"]
+        status["id"] = self.dcli.inspect_container(self.dc)["Id"]
+        return status
 
 
 class Datacenter(object):

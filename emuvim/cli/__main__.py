@@ -8,10 +8,12 @@
  cli network create dc1 11.0.0.0/24
 """
 import time
+import pprint
 import zerorpc
 
 
 def main():
+    pp = pprint.PrettyPrinter(indent=4)
     print "Example CLI client"
     # create connection to remote Mininet instance
     c = zerorpc.Client()
@@ -25,8 +27,8 @@ def main():
     print c.compute_list("dc2")
 
     time.sleep(1)
-    print c.compute_status("dc2", "d1")
-    print c.compute_status("dc2", "d2")
+    pp.pprint(c.compute_status("dc2", "d1"))
+    pp.pprint(c.compute_status("dc2", "d2"))
 
     time.sleep(5)
 
