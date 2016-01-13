@@ -100,7 +100,7 @@ class Datacenter(object):
         """
         assert name is not None
         # no duplications
-        if name in self.containers:
+        if name in [c.name for c in self.net.getAllContainers()]:
             raise Exception("Container with name %s already exists." % name)
         # set default parameter
         if image is None:

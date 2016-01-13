@@ -20,7 +20,7 @@ import logging
 from dcemulator.net import DCNetwork
 from api.zerorpcapi import ZeroRpcApiEndpoint
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def create_topology1():

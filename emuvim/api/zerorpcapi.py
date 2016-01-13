@@ -7,7 +7,7 @@ import logging
 import threading
 import zerorpc
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 class ZeroRpcApiEndpoint(object):
@@ -66,7 +66,7 @@ class MultiDatacenterApi(object):
             return ex.message
 
     def compute_action_stop(self, dc_name, compute_name):
-        logging.info("RPC CALL: compute stop")
+        logging.debug("RPC CALL: compute stop")
         try:
             return self.dcs.get(dc_name).stopCompute(compute_name)
         except Exception as ex:
@@ -74,7 +74,7 @@ class MultiDatacenterApi(object):
             return ex.message
 
     def compute_list(self, dc_name):
-        logging.info("RPC CALL: compute list")
+        logging.debug("RPC CALL: compute list")
         try:
             if dc_name is None:
                 # return list with all compute nodes in all DCs
@@ -92,7 +92,7 @@ class MultiDatacenterApi(object):
             return ex.message
 
     def compute_status(self, dc_name, compute_name):
-        logging.info("RPC CALL: compute status")
+        logging.debug("RPC CALL: compute status")
         try:
             return self.dcs.get(
                 dc_name).containers.get(compute_name).getStatus()
