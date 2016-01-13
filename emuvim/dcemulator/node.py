@@ -99,6 +99,9 @@ class Datacenter(object):
         a single container can be connected.
         """
         assert name is not None
+        # no duplications
+        if name in self.containers:
+            raise Exception("Container with name %s already exists." % name)
         # set default parameter
         if image is None:
             image = "ubuntu"
@@ -116,7 +119,9 @@ class Datacenter(object):
         """
         Stop and remove a container from this data center.
         """
-        assert name in self.containers
+        assert name is not None
+        if name not in self.containers:
+            raise Exception("Container with name %s not found." % name)
         self.net.removeLink(
             link=None, node1=self.containers[name], node2=self.switch)
         self.net.removeDocker("%s" % (name))
