@@ -76,8 +76,17 @@ class MultiDatacenterApi(object):
     def compute_list(self, dc_name):
         logging.info("RPC CALL: compute list")
         try:
-            return [(c.name, c.IP())
-                    for c in self.dcs.get(dc_name).listCompute()]
+            if dc_name is None:
+                # return list with all compute nodes in all DCs
+                all_containers = []
+                for dc in self.dcs.itervalues():
+                    all_containers += dc.listCompute()
+                return [(c.name, c.getStatus())
+                        for c in all_containers]
+            else:
+                # return list of compute nodes for specified DC
+                return [(c.name, c.getStatus())
+                        for c in self.dcs.get(dc_name).listCompute()]
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message

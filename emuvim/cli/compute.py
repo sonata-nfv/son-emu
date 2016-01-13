@@ -1,9 +1,11 @@
 """
 son-emu compute CLI
+(c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
 """
 
 import argparse
 import pprint
+from tabulate import tabulate
 import zerorpc
 
 
@@ -14,7 +16,7 @@ class ZeroRpcClient(object):
 
     def __init__(self):
         self.c = zerorpc.Client()
-        self.c.connect("tcp://127.0.0.1:4242")  # yes, hard coded for now. we'll change this later
+        self.c.connect("tcp://127.0.0.1:4242")  # TODO hard coded for now. we'll change this later
         self.cmds = {}
 
     def execute_command(self, args):
@@ -35,10 +37,38 @@ class ZeroRpcClient(object):
         pp.pprint(r)
 
     def list(self, args):
-        print "TODO: Not implemented"
+        r = self.c.compute_list(
+            args.get("datacenter"))
+        table = []
+        for c in r:
+            # for each container add a line to the output table
+            if len(c) > 1:
+                name = c[0]
+                status = c[1]
+                eth0ip = None
+                eth0status = "down"
+                if len(status.get("network")) > 0:
+                    eth0ip = status.get("network")[0][1]
+                    eth0status = "up" if status.get(
+                        "network")[0][3] else "down"
+                table.append([status.get("datacenter"),
+                              name,
+                              status.get("image"),
+                              eth0ip,
+                              eth0status,
+                              status.get("state").get("Status")])
+        headers = ["Datacenter",
+                   "Container",
+                   "Image",
+                   "eth0 IP",
+                   "eth0 status",
+                   "Status"]
+        print tabulate(table, headers=headers, tablefmt="grid")
 
     def status(self, args):
-        print "TODO: Not implemented"
+        r = self.c.compute_status(
+            args.get("datacenter"), args.get("name"))
+        pp.pprint(r)
 
 
 parser = argparse.ArgumentParser(description='son-emu compute')

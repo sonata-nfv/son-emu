@@ -1,5 +1,6 @@
 """
 son-emu network CLI
+(c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
 """
 
 
