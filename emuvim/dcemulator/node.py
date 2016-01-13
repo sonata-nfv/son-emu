@@ -83,7 +83,7 @@ class Datacenter(object):
         TODO: This will be changed in the future to support multiple networks
         per data center
         """
-        self.switch = self.net.mnet.addSwitch(
+        self.switch = self.net.addSwitch(
             "%s.s1" % self.name, dpid=hex(self._get_next_dc_dpid())[2:])
         logging.debug("created data center switch: %s" % str(self.switch))
 
