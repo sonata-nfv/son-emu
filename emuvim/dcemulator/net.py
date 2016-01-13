@@ -114,6 +114,15 @@ class DCNetwork(object):
     def getNextIp(self):
         return self.mnet.getNextIp()
 
+    def getAllContainers(self):
+        """
+        Returns a list with all containers within all data centers.
+        """
+        all_containers = []
+        for dc in self.dcs.itervalues():
+            all_containers += dc.listCompute()
+        return all_containers
+
     def start(self):
         # start
         for dc in self.dcs.itervalues():
