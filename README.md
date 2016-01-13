@@ -30,17 +30,13 @@
 ### TODO
 * DCemulator
  * ...
-* Cloud-like reference API with CLI for demonstrations
- * Write CLI client
- * Start compute
- * Stop compute
-* Re-factor endpoint API so that API objects can be more or less statless (ask DCEmulator for available DCs instead of maintaining a own list)
+* Write unit tests
 * Create an Ansible-based automatic installation routine
 * Add resource constraints to datacenters
 * Check if we can use the Mininet GUI to visualize our DCs?
 
 
-### Features
+### Features / Done
 * Define a topology (Python script)
  * Add data centers
  * Add switches and links between the,
@@ -52,3 +48,7 @@
  * remove and disconnect compute resources at runtime
  * do IP management for new containers
  * list active compute resources
+* Cloud-like reference API with CLI for demonstrations
+ * Write CLI client
+ * Start compute
+ * Stop compute

@@ -13,23 +13,22 @@ from mininet.link import TCLink, Link
 from node import Datacenter, EmulatorCompute
 
 
-class DCNetwork(object):
+class DCNetwork(Dockernet):
     """
-    Wraps the original Mininet class and provides
+    Wraps the original Mininet/Dockernet class and provides
     methods to add data centers, switches, etc.
 
     This class is used by topology definition scripts.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.dcs = {}
-        self.switches = {}
-        self.links = []
-
         # create a Mininet/Dockernet network
         setLogLevel('info')  # set Mininet loglevel
-        self.mnet = Dockernet(controller=Controller, switch=OVSKernelSwitch)
-        self.mnet.addController('c0')
+        # call original Docker.__init__ and setup default controller
+        Dockernet.__init__(
+            self, controller=Controller, switch=OVSKernelSwitch, **kwargs)
+        self.addController('c0')
 
     def addDatacenter(self, name):
         """
@@ -44,15 +43,6 @@ class DCNetwork(object):
         logging.info("added data center: %s" % name)
         return dc
 
-    def addSwitch(self, name):
-        """
-        We can also add additional SDN switches between data centers.
-        """
-        s = self.mnet.addSwitch(name)
-        self.switches[name] = s
-        logging.info("added switch: %s" % name)
-        return s
-
     def addLink(self, node1, node2, **params):
         """
         Able to handle Datacenter objects as link
@@ -65,16 +55,12 @@ class DCNetwork(object):
         if isinstance( node1, basestring ):
             if node1 in self.dcs:
                 node1 = self.dcs[node1].switch
-            elif node1 in self.switches:
-                node1 = self.switches[node1]
         if isinstance( node1, Datacenter ):
             node1 = node1.switch
         # ensure type of node2
         if isinstance( node2, basestring ):
             if node2 in self.dcs:
                 node2 = self.dcs[node2].switch
-            elif node2 in self.switches:
-                node2 = self.switches[node2]
         if isinstance( node2, Datacenter ):
             node2 = node2.switch
         # try to give containers a default IP
@@ -89,30 +75,13 @@ class DCNetwork(object):
             if not "ip" in params["params2"]:
                 params["params2"]["ip"] = self.getNextIp()
 
-        return self.mnet.addLink(node1, node2, **params)  # TODO we need TCLinks with user defined performance here
-
-    def removeLink(self, link=None, node1=None, node2=None):
-        """
-        Removes a link. Can either be specified by link object,
-        or the nodes the link connects. Wraps Dockernet method.
-        """
-        logging.debug("removeLink: n1=%s n2=%s" % (str(node1), str(node2)))
-        return self.mnet.removeLink(link=link, node1=node1, node2=node2)
+        return Dockernet.addLink(self, node1, node2, **params)  # TODO we need TCLinks with user defined performance here
 
     def addDocker( self, name, **params ):
         """
-        Wrapper for addDocker method provided by Dockernet.
+        Wrapper for addDocker method to use custom container class.
         """
-        return self.mnet.addDocker( name, cls=EmulatorCompute, **params)
-
-    def removeDocker( self, name, **params):
-        """
-        Wrapper for removeHost. Just to be complete.
-        """
-        return self.mnet.removeDocker(name, **params)
-
-    def getNextIp(self):
-        return self.mnet.getNextIp()
+        return Dockernet.addDocker(self, name, cls=EmulatorCompute, **params)
 
     def getAllContainers(self):
         """
@@ -127,10 +96,10 @@ class DCNetwork(object):
         # start
         for dc in self.dcs.itervalues():
             dc.start()
-        self.mnet.start()
+        Dockernet.start(self)
 
     def stop(self):
-        self.mnet.stop()
+        Dockernet.stop(self)
 
     def CLI(self):
-        CLI(self.mnet)
+        CLI(self)
