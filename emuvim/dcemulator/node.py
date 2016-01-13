@@ -21,6 +21,7 @@ class EmulatorCompute(Docker):
     def __init__(
             self, name, dimage, **kwargs):
         logging.debug("Create EmulatorCompute instance: %s" % name)
+        self.datacenter = None  # pointer to current DC
 
         # call original Docker.__init__
         Docker.__init__(self, name, dimage, **kwargs)
@@ -50,6 +51,8 @@ class EmulatorCompute(Docker):
         status["memswap_limit"] = self.memswap_limit
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
+        status["datacenter"] = (None if self.datacenter is None
+                                else self.datacenter.name)
         return status
 
 
@@ -104,7 +107,9 @@ class Datacenter(object):
         # create the container and connect it to the given network
         d = self.net.addDocker("%s" % (name), dimage=image)
         self.net.addLink(d, self.switch, params1=network)
+        # do bookkeeping
         self.containers[name] = d
+        d.datacenter = self
         return name  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):

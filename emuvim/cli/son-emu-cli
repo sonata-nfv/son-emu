@@ -2,6 +2,8 @@
 """
  Simple CLI client to interact with a running emulator.
 
+ (c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
+
  The CLI offers different tools, e.g., compute, network, ...
  Each of these tools is implemented as an independent Python
  module.
