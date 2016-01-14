@@ -2,6 +2,15 @@
   tasks:
    - name: updates apt
      apt: update_cache=yes
+     
+   - name: install python-dev
+     apt: pkg=python-dev state=installed
+
+   - name: install python-zmq
+     apt: pkg=python-zmq state=installed
+
+   - name: install libzmq-dev
+     apt: pkg=libzmq-dev state=installed
 
    - name: install pip
      apt: pkg=python-pip state=installed
