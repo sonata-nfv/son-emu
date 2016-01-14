@@ -20,6 +20,26 @@
  * **test/** Unit tests
  * **example_topology.py** An example topology script to show how topologies can be specified
 
+### Installation
+Automatic installation is provide through an Ansible playbook.
+* Requires: Ubuntu 14.04 LTS
+* `sudo apt-get install ansible git`
+* `sudo vim /etc/ansible/hosts`
+* Add: `localhost ansible_connection=local`
+
+#### 1. Dockernet
+* `git clone https://github.com/mpeuster/dockernet.git`
+* `cd dockernet/ansible`
+* `sudo ansible-playbook install.yml`
+* Wait (and have a coffee) ...
+
+#### 2. Emulator
+* `cd`
+* `git clone https://github.com/mpeuster/emulator-strawman.git`
+* `cd emulator-strawman/ansible`
+* `sudo ansible-playbook install.yml`
+
+
 ### Run
 * First terminal:
  * `sudo python example_topology.py`
