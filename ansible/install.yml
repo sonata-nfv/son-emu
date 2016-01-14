@@ -23,6 +23,3 @@
 
    - name: install argparse
      pip: name=argparse
-
-   - name: install pprint
-     pip: name=pprint
