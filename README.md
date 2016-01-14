@@ -57,7 +57,6 @@ Automatic installation is provide through an Ansible playbook.
 * DCemulator
  * ...
 * Write unit tests
-* Create an Ansible-based automatic installation routine
 * Add resource constraints to datacenters
 * Check if we can use the Mininet GUI to visualize our DCs?
 
@@ -78,3 +77,4 @@ Automatic installation is provide through an Ansible playbook.
  * Write CLI client
  * Start compute
  * Stop compute
+* Create an Ansible-based automatic installation routine
