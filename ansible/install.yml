@@ -1,4 +1,4 @@
-hosts: localhost
+- hosts: localhost
   tasks:
    - name: updates apt
      apt: update_cache=yes
