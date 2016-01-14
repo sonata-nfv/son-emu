@@ -42,9 +42,15 @@ Automatic installation is provide through an Ansible playbook.
 
 ### Run
 * First terminal:
+ * `cd emulator-strawman/emuvim`
  * `sudo python example_topology.py`
 * Second terminal:
- * TODO add CLI commands here (e.g. request the start of a new compute resource)
+ * `cd emulator-strawman/emuvim/cli`
+ * `./son-emu-cli compute start -d dc1 -n vnf1`
+ * `./son-emu-cli compute start -d dc1 -n vnf2`
+ * `./son-emu-cli compute list`
+* First terminal:
+ * `dockernet> vnf1 ping -c 2 vnf2`
 
 
 ### TODO
