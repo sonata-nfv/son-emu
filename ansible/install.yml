@@ -1,0 +1,19 @@
+hosts: localhost
+  tasks:
+   - name: updates apt
+     apt: update_cache=yes
+
+   - name: install pip
+     apt: pkg=python-pip state=installed
+
+   - name: install zerorpc
+     pip: name=zerorpc
+
+   - name: install tabulate
+     pip: name=tabulate
+
+   - name: install argparse
+     pip: name=argparse
+
+   - name: install pprint
+     pip: name=pprint
