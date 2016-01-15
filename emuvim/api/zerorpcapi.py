@@ -60,7 +60,8 @@ class MultiDatacenterApi(object):
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
         try:
-            return self.dcs.get(dc_name).startCompute(compute_name)
+            c = self.dcs.get(dc_name).startCompute(compute_name)
+            return str(c.name)
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message

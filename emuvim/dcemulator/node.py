@@ -113,7 +113,7 @@ class Datacenter(object):
         # do bookkeeping
         self.containers[name] = d
         d.datacenter = self
-        return name  # we might use UUIDs for naming later on
+        return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
         """
