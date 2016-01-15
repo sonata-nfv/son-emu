@@ -75,7 +75,7 @@ def create_topology1():
 
     """
     5.1. For our example, we create a second endpoint to illustrate that
-         this is support by our design. This feature allows us to have
+         this is supported by our design. This feature allows us to have
          one API endpoint for each data center. This makes the emulation
          environment more realistic because you can easily create one
          OpenStack-like REST API endpoint for *each* data center.
