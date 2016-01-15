@@ -133,4 +133,4 @@ class Datacenter(object):
         Return a list of all running containers assigned to this
         data center.
         """
-        return self.containers.itervalues()
+        return list(self.containers.itervalues())
