@@ -17,6 +17,7 @@ The original Mininet API has to be completely hidden and not be used by this
 script.
 """
 import logging
+from mininet.log import setLogLevel
 from dcemulator.net import DCNetwork
 from api.zerorpcapi import ZeroRpcApiEndpoint
 
@@ -101,6 +102,7 @@ def create_topology1():
 
 
 def main():
+    setLogLevel('info')  # set Mininet loglevel
     create_topology1()
 
 

@@ -24,7 +24,6 @@ class DCNetwork(Dockernet):
     def __init__(self, **kwargs):
         self.dcs = {}
         # create a Mininet/Dockernet network
-        setLogLevel('info')  # set Mininet loglevel
         # call original Docker.__init__ and setup default controller
         Dockernet.__init__(
             self, controller=Controller, switch=OVSKernelSwitch, **kwargs)
