@@ -56,9 +56,10 @@ Automatic installation is provide through an Ansible playbook.
 ### TODO
 * DCemulator
  * ...
-* Write unit tests
+
 * Add resource constraints to datacenters
 * Check if we can use the Mininet GUI to visualize our DCs?
+* (Unit tests for zerorpc API endpoint)
 
 
 ### Features / Done
@@ -78,3 +79,4 @@ Automatic installation is provide through an Ansible playbook.
  * Start compute
  * Stop compute
 * Create an Ansible-based automatic installation routine
+* Unit tests
