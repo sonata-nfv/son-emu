@@ -28,7 +28,7 @@ class ZeroRpcClient(object):
 
     def start(self, args):
         r = self.c.compute_action_start(
-            args.get("datacenter"), args.get("name"))
+            args.get("datacenter"), args.get("name"), args.get("image"))
         pp.pprint(r)
 
     def stop(self, args):
@@ -77,6 +77,8 @@ parser.add_argument(
     "--datacenter", "-d", dest="datacenter", help="Data center.")
 parser.add_argument(
     "--name", "-n", dest="name", help="Compute name.")
+parser.add_argument(
+    "--image", "-i", dest="image", help="Name of container image to be used.")
 # TODO: IP, image, etc. pp.
 
 

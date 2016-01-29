@@ -76,7 +76,7 @@ Automatic installation is provide through an Ansible playbook.
  * list active compute resources
 * Cloud-like reference API with CLI for demonstrations
  * Write CLI client
- * Start compute
+ * Start compute (name, DC, image)
  * Stop compute
 * Create an Ansible-based automatic installation routine
 * Unit tests
