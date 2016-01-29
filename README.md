@@ -55,7 +55,10 @@ Automatic installation is provide through an Ansible playbook.
 
 ### TODO
 * DCemulator
- * ...
+ * Advanced network model
+  * improve network management, multiple interfaces per container
+  * API to create multiple networks (per DC?)
+
 
 * Add resource constraints to datacenters
 * Check if we can use the Mininet GUI to visualize our DCs?
@@ -76,7 +79,7 @@ Automatic installation is provide through an Ansible playbook.
  * list active compute resources
 * Cloud-like reference API with CLI for demonstrations
  * Write CLI client
- * Start compute (name, DC, image)
+ * Start compute (name, DC, image, network)
  * Stop compute
 * Create an Ansible-based automatic installation routine
 * Unit tests
