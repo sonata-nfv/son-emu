@@ -27,8 +27,14 @@ class ZeroRpcClient(object):
             print "Command not implemented."
 
     def start(self, args):
+        network = {}
+        if args.get("network") is not None:
+            network = {"ip": args.get("network")}
         r = self.c.compute_action_start(
-            args.get("datacenter"), args.get("name"), args.get("image"))
+            args.get("datacenter"),
+            args.get("name"),
+            args.get("image"),
+            network)
         pp.pprint(r)
 
     def stop(self, args):
@@ -72,14 +78,21 @@ class ZeroRpcClient(object):
 
 
 parser = argparse.ArgumentParser(description='son-emu compute')
-parser.add_argument("command", help="Action to be executed.")
 parser.add_argument(
-    "--datacenter", "-d", dest="datacenter", help="Data center.")
+    "command",
+    help="Action to be executed: start|stop|list")
 parser.add_argument(
-    "--name", "-n", dest="name", help="Compute name.")
+    "--datacenter", "-d", dest="datacenter",
+    help="Data center to in which the compute instance should be executed")
 parser.add_argument(
-    "--image", "-i", dest="image", help="Name of container image to be used.")
-# TODO: IP, image, etc. pp.
+    "--name", "-n", dest="name",
+    help="Name of compute instance e.g. 'vnf1'")
+parser.add_argument(
+    "--image", dest="image",
+    help="Name of container image to be used e.g. 'ubuntu'")
+parser.add_argument(
+    "--net", dest="network",
+    help="Network properties of compute instance e.g. '10.0.0.123/8'")
 
 
 def main(argv):

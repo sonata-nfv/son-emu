@@ -56,11 +56,13 @@ class MultiDatacenterApi(object):
     def __init__(self, dcs):
         self.dcs = dcs
 
-    def compute_action_start(self, dc_name, compute_name, image):
+    def compute_action_start(self, dc_name, compute_name, image, network):
+        # network e.g. {"ip": "10.0.0.254/8"}
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
         try:
-            c = self.dcs.get(dc_name).startCompute(compute_name, image=image)
+            c = self.dcs.get(dc_name).startCompute(
+                compute_name, image=image, network=network)
             return str(c.name)
         except Exception as ex:
             logging.exception("RPC error.")
