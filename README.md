@@ -84,3 +84,4 @@ Automatic installation is provide through an Ansible playbook.
  * Stop compute
 * Create an Ansible-based automatic installation routine
 * Unit tests
+
