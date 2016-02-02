@@ -1,0 +1,25 @@
+- hosts: localhost
+  tasks:
+   - name: updates apt
+     apt: update_cache=yes
+     
+   - name: install python-dev
+     apt: pkg=python-dev state=installed
+
+   - name: install python-zmq
+     apt: pkg=python-zmq state=installed
+
+   - name: install libzmq-dev
+     apt: pkg=libzmq-dev state=installed
+
+   - name: install pip
+     apt: pkg=python-pip state=installed
+
+   - name: install zerorpc
+     pip: name=zerorpc
+
+   - name: install tabulate
+     pip: name=tabulate
+
+   - name: install argparse
+     pip: name=argparse
