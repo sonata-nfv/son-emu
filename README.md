@@ -1,9 +1,9 @@
-# emulator-strawman
+# Distributed Cloud Emulator
 
-(c) 2015 by Manuel Peuster
+Contributors:
 
+* Manuel Peuster <manuel.peuster@upb.de>
 
-## emu-vim
 
 ### Requirements
 * needs the latest Dockernet to be installed in the system
@@ -34,8 +34,9 @@ Automatic installation is provide through an Ansible playbook.
 * Wait (and have a coffee) ...
 
 #### 2. Emulator
+* Fork the repository.
 * `cd`
-* `git clone https://github.com/mpeuster/emulator-strawman.git`
+* `git clone https://github.com/<user>/son-emu.git`
 * `cd emulator-strawman/ansible`
 * `sudo ansible-playbook install.yml`
 
