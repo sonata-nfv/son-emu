@@ -6,11 +6,11 @@ Contributors:
 
 
 ### Requirements
-* needs the latest Dockernet to be installed in the system
- * the wrapper uses standard Python imports to use the Dockernet modules
-* Uses ZeroMQ based RPC to open a cloud-like interface that can be used by a demo CLI client
- * pip install import zerorpc
- * This will be replaced / extended by a REST API later
+* needs the latest [Dockernet](https://github.com/mpeuster/dockernet) to be installed on the system
+ * the emulator is implemented against Dockernet's APIs
+* The emulator uses ZeroMQ based RPC to for communication between demo CLI client and cloud-like APIs
+ * `pip install zerorpc`
+ * (This will be replaced / extended by a REST API later)
 
 ### Project structure
 * **emuvim/** all emulator code 
@@ -21,15 +21,16 @@ Contributors:
  * **example_topology.py** An example topology script to show how topologies can be specified
 
 ### Installation
-Automatic installation is provide through an Ansible playbook.
+Automatic installation is provide through Ansible playbooks.
 * Requires: Ubuntu 14.04 LTS
 * `sudo apt-get install ansible git`
 * `sudo vim /etc/ansible/hosts`
 * Add: `localhost ansible_connection=local`
 
 #### 1. Dockernet
+* `cd`
 * `git clone https://github.com/mpeuster/dockernet.git`
-* `cd dockernet/ansible`
+* `cd ~/dockernet/ansible`
 * `sudo ansible-playbook install.yml`
 * Wait (and have a coffee) ...
 
@@ -37,21 +38,25 @@ Automatic installation is provide through an Ansible playbook.
 * Fork the repository.
 * `cd`
 * `git clone https://github.com/<user>/son-emu.git`
-* `cd son-emu/ansible`
+* `cd ~/son-emu/ansible`
 * `sudo ansible-playbook install.yml`
 
 
 ### Run
 * First terminal:
- * `cd son-emu/emuvim`
+ * `cd ~/son-emu/emuvim`
  * `sudo python example_topology.py`
 * Second terminal:
- * `cd emulator-strawman/emuvim/cli`
+ * `cd ~/son-emu/emuvim/cli`
  * `./son-emu-cli compute start -d dc1 -n vnf1`
  * `./son-emu-cli compute start -d dc1 -n vnf2`
  * `./son-emu-cli compute list`
 * First terminal:
  * `dockernet> vnf1 ping -c 2 vnf2`
+
+### Run Unit Tests
+* `cd ~/son-emu/emuvim`
+* `sudo python test` or `sudo python test -v` for more outputs
 
 
 ### TODO
@@ -59,11 +64,11 @@ Automatic installation is provide through an Ansible playbook.
  * Advanced network model
   * improve network management, multiple interfaces per container
   * API to create multiple networks (per DC?)
-
-
+* SDN Controller
+ * simple API to chain running VNFs
 * Add resource constraints to datacenters
 * Check if we can use the Mininet GUI to visualize our DCs?
-* (Unit tests for zerorpc API endpoint)
+* (Unit tests for zerorpc API endpoint, and any other new endpoint)
 
 
 ### Features / Done

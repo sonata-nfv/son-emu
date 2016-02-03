@@ -17,6 +17,8 @@ from mininet.log import setLogLevel
 
 def runTests( testDir, verbosity=1, emuonly=False, apionly=False ):
     "discover and run all tests in testDir"
+    # ensure inport paths work
+    sys.path.append("%s/.." % testDir)
     # ensure root and cleanup before starting tests
     ensureRoot()
     cleanup()
