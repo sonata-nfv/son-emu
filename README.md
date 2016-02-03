@@ -37,13 +37,13 @@ Automatic installation is provide through an Ansible playbook.
 * Fork the repository.
 * `cd`
 * `git clone https://github.com/<user>/son-emu.git`
-* `cd emulator-strawman/ansible`
+* `cd son-emu/ansible`
 * `sudo ansible-playbook install.yml`
 
 
 ### Run
 * First terminal:
- * `cd emulator-strawman/emuvim`
+ * `cd son-emu/emuvim`
  * `sudo python example_topology.py`
 * Second terminal:
  * `cd emulator-strawman/emuvim/cli`
