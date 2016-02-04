@@ -52,7 +52,7 @@ class EmulatorCompute(Docker):
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
         status["datacenter"] = (None if self.datacenter is None
-                                else self.datacenter.name)
+                                else self.datacenter.label)
         return status
 
 
@@ -64,9 +64,15 @@ class Datacenter(object):
     Will also implement resource bookkeeping in later versions.
     """
 
-    def __init__(self, name):
+    DC_COUNTER = 1
+
+    def __init__(self, label):
         self.net = None  # DCNetwork to which we belong
-        self.name = name
+        # each node (DC) has a short internal name used by Mininet
+        # this is caused by Mininets naming limitations for swtiches etc.
+        self.name = "dc%d" % Datacenter.DC_COUNTER
+        Datacenter.DC_COUNTER += 1
+        self.label = label  # use this for user defined names
         self.switch = None  # first prototype assumes one "bigswitch" per DC
         self.containers = {}  # keep track of running containers
 
