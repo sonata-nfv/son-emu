@@ -55,7 +55,7 @@ class simpleTestTopology( unittest.TestCase ):
                 self.net.addLink(self.s[i], self.s[i + 1])
         # add some data centers
         for i in range(0, ndatacenter):
-            self.dc.append(self.net.addDatacenter('dc%d' % i))
+            self.dc.append(self.net.addDatacenter('datacenter%d' % i))
         # add some hosts
         for i in range(0, nhosts):
             self.h.append(self.net.addHost('h%d' % i))
