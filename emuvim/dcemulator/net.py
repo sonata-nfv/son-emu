@@ -29,17 +29,17 @@ class DCNetwork(Dockernet):
             self, controller=Controller, switch=OVSKernelSwitch, **kwargs)
         self.addController('c0')
 
-    def addDatacenter(self, name):
+    def addDatacenter(self, label):
         """
         Create and add a logical cloud data center to the network.
         """
-        if name in self.dcs:
-            raise Exception("Data center name already exists: %s" % name)
-        dc = Datacenter(name)
+        if label in self.dcs:
+            raise Exception("Data center label already exists: %s" % label)
+        dc = Datacenter(label)
         dc.net = self  # set reference to network
-        self.dcs[name] = dc
+        self.dcs[label] = dc
         dc.create()  # finally create the data center in our Mininet instance
-        logging.info("added data center: %s" % name)
+        logging.info("added data center: %s" % label)
         return dc
 
     def addLink(self, node1, node2, **params):
@@ -76,11 +76,11 @@ class DCNetwork(Dockernet):
 
         return Dockernet.addLink(self, node1, node2, **params)  # TODO we need TCLinks with user defined performance here
 
-    def addDocker( self, name, **params ):
+    def addDocker( self, label, **params ):
         """
         Wrapper for addDocker method to use custom container class.
         """
-        return Dockernet.addDocker(self, name, cls=EmulatorCompute, **params)
+        return Dockernet.addDocker(self, label, cls=EmulatorCompute, **params)
 
     def getAllContainers(self):
         """
