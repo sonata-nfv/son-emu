@@ -28,9 +28,9 @@ class ZeroRpcApiEndpoint(object):
             self.__class__.__name__, self.ip, self.port))
 
     def connectDatacenter(self, dc):
-        self.dcs[dc.name] = dc
+        self.dcs[dc.label] = dc
         logging.info("Connected DC(%s) to API endpoint %s(%s:%d)" % (
-            dc.name, self.__class__.__name__, self.ip, self.port))
+            dc.label, self.__class__.__name__, self.ip, self.port))
 
     def start(self):
         thread = threading.Thread(target=self._api_server_thread, args=())
