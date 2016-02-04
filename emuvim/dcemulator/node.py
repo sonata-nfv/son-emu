@@ -66,13 +66,16 @@ class Datacenter(object):
 
     DC_COUNTER = 1
 
-    def __init__(self, label):
+    def __init__(self, label, metadata={}):
         self.net = None  # DCNetwork to which we belong
         # each node (DC) has a short internal name used by Mininet
         # this is caused by Mininets naming limitations for swtiches etc.
         self.name = "dc%d" % Datacenter.DC_COUNTER
         Datacenter.DC_COUNTER += 1
-        self.label = label  # use this for user defined names
+        # use this for user defined names that can be longer than self.name
+        self.label = label  
+        # dict to store arbitrary metadata (e.g. latitude and longitude)
+        self.metadata = metadata
         self.switch = None  # first prototype assumes one "bigswitch" per DC
         self.containers = {}  # keep track of running containers
 
@@ -145,4 +148,10 @@ class Datacenter(object):
         """
         Return a dict with status information about this DC.
         """
-        return {"label": self.label}
+        return {
+            "label": self.label,
+            "internalname": self.name,
+            "switch": self.switch.name,
+            "n_running_containers": len(self.containers),
+            "metadata": self.metadata
+        }
