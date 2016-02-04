@@ -29,13 +29,13 @@ class DCNetwork(Dockernet):
             self, controller=Controller, switch=OVSKernelSwitch, **kwargs)
         self.addController('c0')
 
-    def addDatacenter(self, label):
+    def addDatacenter(self, label, metadata={}):
         """
         Create and add a logical cloud data center to the network.
         """
         if label in self.dcs:
             raise Exception("Data center label already exists: %s" % label)
-        dc = Datacenter(label)
+        dc = Datacenter(label, metadata=metadata)
         dc.net = self  # set reference to network
         self.dcs[label] = dc
         dc.create()  # finally create the data center in our Mininet instance

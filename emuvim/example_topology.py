@@ -37,8 +37,10 @@ def create_topology1():
     """
     dc1 = net.addDatacenter("datacenter1")
     dc2 = net.addDatacenter("datacenter2")
-    dc3 = net.addDatacenter("a_very_long_data_center_name3")
-    dc4 = net.addDatacenter("datacenter4")
+    dc3 = net.addDatacenter("long_data_center_name3")
+    dc4 = net.addDatacenter(
+        "datacenter4",
+        metadata={"mydata": "we can also add arbitrary metadata to each DC"})
 
     """
     3. You can add additional SDN switches for data center
@@ -71,6 +73,8 @@ def create_topology1():
     # connect data centers to this endpoint
     zapi1.connectDatacenter(dc1)
     zapi1.connectDatacenter(dc2)
+    zapi1.connectDatacenter(dc3)
+    zapi1.connectDatacenter(dc4)
     # run API endpoint server (in another thread, don't block)
     zapi1.start()
 
