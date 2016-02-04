@@ -56,30 +56,30 @@ class MultiDatacenterApi(object):
     def __init__(self, dcs):
         self.dcs = dcs
 
-    def compute_action_start(self, dc_name, compute_name, image, network):
+    def compute_action_start(self, dc_label, compute_name, image, network):
         # network e.g. {"ip": "10.0.0.254/8"}
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
         try:
-            c = self.dcs.get(dc_name).startCompute(
+            c = self.dcs.get(dc_label).startCompute(
                 compute_name, image=image, network=network)
             return str(c.name)
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
 
-    def compute_action_stop(self, dc_name, compute_name):
+    def compute_action_stop(self, dc_label, compute_name):
         logging.debug("RPC CALL: compute stop")
         try:
-            return self.dcs.get(dc_name).stopCompute(compute_name)
+            return self.dcs.get(dc_label).stopCompute(compute_name)
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
 
-    def compute_list(self, dc_name):
+    def compute_list(self, dc_label):
         logging.debug("RPC CALL: compute list")
         try:
-            if dc_name is None:
+            if dc_label is None:
                 # return list with all compute nodes in all DCs
                 all_containers = []
                 for dc in self.dcs.itervalues():
@@ -89,16 +89,32 @@ class MultiDatacenterApi(object):
             else:
                 # return list of compute nodes for specified DC
                 return [(c.name, c.getStatus())
-                        for c in self.dcs.get(dc_name).listCompute()]
+                        for c in self.dcs.get(dc_label).listCompute()]
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
 
-    def compute_status(self, dc_name, compute_name):
+    def compute_status(self, dc_label, compute_name):
         logging.debug("RPC CALL: compute status")
         try:
             return self.dcs.get(
-                dc_name).containers.get(compute_name).getStatus()
+                dc_label).containers.get(compute_name).getStatus()
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
+    def datacenter_list(self):
+        logging.debug("RPC CALL: datacenter list")
+        try:
+            return [d.getStatus() for d in self.dcs.itervalues()]
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
+    def datacenter_status(self, dc_label):
+        logging.debug("RPC CALL: datacenter status")
+        try:
+                return self.dcs.get(dc_label).getStatus()
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
