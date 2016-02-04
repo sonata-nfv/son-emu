@@ -140,3 +140,9 @@ class Datacenter(object):
         data center.
         """
         return list(self.containers.itervalues())
+
+    def getStatus(self):
+        """
+        Return a dict with status information about this DC.
+        """
+        return {"label": self.label}
