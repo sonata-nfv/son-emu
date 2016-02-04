@@ -102,3 +102,11 @@ class MultiDatacenterApi(object):
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
+
+    def datacenter_list(self):
+        logging.debug("RPC CALL: datacenter list")
+        try:
+            return [d.getStatus() for d in self.dcs.itervalues()]
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
