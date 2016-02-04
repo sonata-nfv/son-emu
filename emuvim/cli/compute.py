@@ -80,7 +80,8 @@ class ZeroRpcClient(object):
 parser = argparse.ArgumentParser(description='son-emu compute')
 parser.add_argument(
     "command",
-    help="Action to be executed: start|stop|list")
+    choices=['start', 'stop', 'list', 'status'],
+    help="Action to be executed.")
 parser.add_argument(
     "--datacenter", "-d", dest="datacenter",
     help="Data center to in which the compute instance should be executed")

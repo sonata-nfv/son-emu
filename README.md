@@ -58,6 +58,9 @@ Automatic installation is provide through Ansible playbooks.
 * `cd ~/son-emu/emuvim`
 * `sudo python test` or `sudo python test -v` for more outputs
 
+### CLI
+* [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
+
 
 ### TODO
 * DCemulator
