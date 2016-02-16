@@ -54,6 +54,10 @@ Automatic installation is provide through Ansible playbooks.
 * First terminal:
  * `dockernet> vnf1 ping -c 2 vnf2`
 
+#### Example scripts:
+ * `./start_dcnetwork` starts an example datacenter network with monitoring api endpoint
+ * `./start_example_chain` sets up an example service chain, using the example docker container from `package_samples` https://github.com/sonata-nfv/packaging_samples/tree/master/VNFs
+
 ### Run Unit Tests
 * `cd ~/son-emu/emuvim`
 * `sudo python test` or `sudo python test -v` for more outputs
