@@ -16,7 +16,7 @@ import sys
 import compute
 import network
 import datacenter
-
+import monitor
 
 def main():
     if len(sys.argv) < 2:
@@ -28,6 +28,8 @@ def main():
         network.main(sys.argv[2:])
     elif sys.argv[1] == "datacenter":
         datacenter.main(sys.argv[2:])
+	elif sys.argv[1] == "monitor":
+        monitor.main(sys.argv[2:])
 
 if __name__ == '__main__':
     main()
