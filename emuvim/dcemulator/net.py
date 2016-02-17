@@ -148,10 +148,10 @@ class DCNetwork(Dockernet):
             next_node = self.getNodeByName(next_hop)
 
             if next_hop == vnf_dst_name:
-                return 0
+                return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
             elif not isinstance( next_node, OVSSwitch ):
-                logging.info("Next node: {0} is not a switch".format(next_hop1))
-                return 0
+                logging.info("Next node: {0} is not a switch".format(next_hop))
+                return "Next node: {0} is not a switch".format(next_hop)
 
 
             switch_inport = self.DCNetwork_graph[current_hop][next_hop]['dst_port']
@@ -177,4 +177,4 @@ class DCNetwork(Dockernet):
 
             current_hop = next_hop
 
-        return 1
+        return "destination node: {0} not reached".format(vnf_dst_name)
