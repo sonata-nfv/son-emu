@@ -23,3 +23,9 @@
 
    - name: install argparse
      pip: name=argparse
+
+   - name: install networkx
+     pip: name=networkx
+
+   - name: install ryu
+     pip: name=ryu

@@ -48,11 +48,15 @@ Automatic installation is provide through Ansible playbooks.
  * `sudo python example_topology.py`
 * Second terminal:
  * `cd ~/son-emu/emuvim/cli`
- * `./son-emu-cli compute start -d dc1 -n vnf1`
- * `./son-emu-cli compute start -d dc1 -n vnf2`
+ * `./son-emu-cli compute start -d datacenter1 -n vnf1`
+ * `./son-emu-cli compute start -d datacenter1 -n vnf2`
  * `./son-emu-cli compute list`
 * First terminal:
  * `dockernet> vnf1 ping -c 2 vnf2`
+
+#### Example scripts:
+ * `./start_dcnetwork` starts an example datacenter network with monitoring api endpoint
+ * `./start_example_chain` sets up an example service chain, using the example docker container from `package_samples` https://github.com/sonata-nfv/packaging_samples/tree/master/VNFs
 
 ### Run Unit Tests
 * `cd ~/son-emu/emuvim`

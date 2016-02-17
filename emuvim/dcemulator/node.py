@@ -99,7 +99,7 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, network=None):
+    def startCompute(self, name, image=None, command=None,network=None):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -117,7 +117,7 @@ class Datacenter(object):
         if network is None:
             network = {}  # {"ip": "10.0.0.254/8"}
         # create the container and connect it to the given network
-        d = self.net.addDocker("%s" % (name), dimage=image)
+        d = self.net.addDocker("%s" % (name), dimage=image, dcmd=command)
         self.net.addLink(d, self.switch, params1=network)
         # do bookkeeping
         self.containers[name] = d
