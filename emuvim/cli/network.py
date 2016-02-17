@@ -57,8 +57,6 @@ parser.add_argument(
     help="vnf name of the destination of the chain")
 
 def main(argv):
-    print "This is the son-emu network CLI."
-    print "Arguments: %s" % str(argv)
     args = vars(parser.parse_args(argv))
     c = ZeroRpcClient()
     c.execute_command(args)
