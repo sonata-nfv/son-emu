@@ -20,6 +20,7 @@ import logging
 from mininet.log import setLogLevel
 from dcemulator.net import DCNetwork
 from api.zerorpcapi import ZeroRpcApiEndpoint
+from api.zerorpcapi_DCNetwork import ZeroRpcApiEndpointDCNetwork
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,6 +30,13 @@ def create_topology1():
     1. Create a data center network object (DCNetwork)
     """
     net = DCNetwork()
+
+    """
+    1b. add a monitoring agent to the DCNetwork
+    """
+    mon_api = ZeroRpcApiEndpointDCNetwork("0.0.0.0", 5151)
+    mon_api.connectDCNetwork(net)
+    mon_api.start()
 
     """
     2. Add (logical) data centers to the topology
@@ -102,6 +110,8 @@ def create_topology1():
     net.start()
     net.CLI()
     # when the user types exit in the CLI, we stop the emulator
+    # we need to explicitly stop the monitoring api, so the Ryu controller is also terminated
+    mon_api.stop()
     net.stop()
 
 
