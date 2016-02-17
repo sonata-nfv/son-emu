@@ -32,9 +32,10 @@ class ZeroRpcApiEndpointDCNetwork(object):
 
         # start Ryu controller with rest-API
         python_install_path = site.getsitepackages()[0]
-        ryu_path = python_install_path + '/ryu/app/ofctl_rest.py'
+        ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
+        ryu_path2 =  python_install_path + '/ryu/app/ofctl_rest.py'
         ryu_cmd =  'ryu-manager'
-        self.ryu_process = Popen([ryu_cmd,ryu_path])
+        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2])
 
 
     def connectDCNetwork(self, net):
