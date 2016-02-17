@@ -20,6 +20,7 @@ import logging
 from mininet.log import setLogLevel
 from dcemulator.net import DCNetwork
 from api.zerorpcapi import ZeroRpcApiEndpoint
+from api.zerorpcapi_DCNetwork import ZeroRpcApiEndpointDCNetwork
 
 logging.basicConfig(level=logging.INFO)
 

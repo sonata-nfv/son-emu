@@ -39,8 +39,8 @@ class ZeroRpcApiEndpointDCNetwork(object):
 
     def connectDCNetwork(self, net):
         self.net = net
-        logging.info("Connected DCNetwork(%s) to API endpoint %s(%s:%d)" % (
-            net.name, self.__class__.__name__, self.ip, self.port))
+        logging.info("Connected DCNetwork to API endpoint %s(%s:%d)" % (
+            self.__class__.__name__, self.ip, self.port))
 
     def start(self):
         thread = threading.Thread(target=self._api_server_thread, args=())

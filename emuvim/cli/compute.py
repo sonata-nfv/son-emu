@@ -34,6 +34,7 @@ class ZeroRpcClient(object):
             args.get("datacenter"),
             args.get("name"),
             args.get("image"),
+            args.get("docker_command"),
             network)
         pp.pprint(r)
 
@@ -89,8 +90,11 @@ parser.add_argument(
     "--name", "-n", dest="name",
     help="Name of compute instance e.g. 'vnf1'")
 parser.add_argument(
-    "--image", dest="image",
+    "--image","-i", dest="image",
     help="Name of container image to be used e.g. 'ubuntu'")
+parser.add_argument(
+    "--dcmd", "-c", dest="docker_command",
+    help="Startup command of the container e.g. './start.sh'")
 parser.add_argument(
     "--net", dest="network",
     help="Network properties of compute instance e.g. '10.0.0.123/8'")

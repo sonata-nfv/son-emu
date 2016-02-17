@@ -97,15 +97,15 @@ class DCNetwork(Dockernet):
         """
         Wrapper for addDocker method to use custom container class.
         """
-        self.DCNetwork_graph.add_node(name)
-        return Dockernet.addDocker(self, name, cls=EmulatorCompute, **params)
+        self.DCNetwork_graph.add_node(label)
+        return Dockernet.addDocker(self, label, cls=EmulatorCompute, **params)
 
-    def removeDocker( self, name, **params ):
+    def removeDocker( self, label, **params ):
         """
         Wrapper for removeDocker method to update graph.
         """
-        self.DCNetwork_graph.remove_node(name)
-        return Dockernet.removeDocker(self, name, **params)
+        self.DCNetwork_graph.remove_node(label)
+        return Dockernet.removeDocker(self, label, **params)
 
     def addSwitch( self, name, add_to_graph=True, **params ):
         """
