@@ -29,7 +29,7 @@ class DCNetwork(Dockernet):
         # call original Docker.__init__ and setup default controller
         Dockernet.__init__(
             self, controller=RemoteController, switch=OVSKernelSwitch, **kwargs)
-        #self.addController('c0')
+        self.addController('c0')
 
         # graph of the complete DC network
         self.DCNetwork_graph=nx.DiGraph()
