@@ -48,8 +48,8 @@ Automatic installation is provide through Ansible playbooks.
  * `sudo python example_topology.py`
 * Second terminal:
  * `cd ~/son-emu/emuvim/cli`
- * `./son-emu-cli compute start -d dc1 -n vnf1`
- * `./son-emu-cli compute start -d dc1 -n vnf2`
+ * `./son-emu-cli compute start -d datacenter1 -n vnf1`
+ * `./son-emu-cli compute start -d datacenter1 -n vnf2`
  * `./son-emu-cli compute list`
 * First terminal:
  * `dockernet> vnf1 ping -c 2 vnf2`
