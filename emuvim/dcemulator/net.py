@@ -5,9 +5,9 @@ Distributed Cloud Emulator (dcemulator)
 import logging
 
 from mininet.net import Dockernet
-from mininet.node import Controller, OVSKernelSwitch, Switch, Docker, Host
+from mininet.node import Controller, OVSSwitch, OVSKernelSwitch, Switch, Docker, Host, RemoteController
 from mininet.cli import CLI
-from mininet.log import setLogLevel, info
+from mininet.log import setLogLevel, info, debug
 from mininet.link import TCLink, Link
 import networkx as nx
 from monitoring import DCNetworkMonitor
