@@ -53,6 +53,8 @@ Automatic installation is provide through Ansible playbooks.
  * `./son-emu-cli compute list`
 * First terminal:
  * `dockernet> vnf1 ping -c 2 vnf2`
+* Second terminal:
+ *  `./son-emu-cli monitor get_rate -vnf vnf1` 
 
 #### Example scripts:
  * `./start_dcnetwork` starts an example datacenter network with monitoring api endpoint
