@@ -29,3 +29,6 @@
 
    - name: install ryu
      pip: name=ryu
+     
+   - name: install oslo.config
+     pip: name=oslo.config
