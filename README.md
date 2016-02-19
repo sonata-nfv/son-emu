@@ -29,7 +29,7 @@ Automatic installation is provide through Ansible playbooks.
 
 #### 1. Dockernet
 * `cd`
-* `git clone https://github.com/mpeuster/dockernet.git`
+* `git clone -b dockernet-sonata https://github.com/mpeuster/dockernet.git`
 * `cd ~/dockernet/ansible`
 * `sudo ansible-playbook install.yml`
 * Wait (and have a coffee) ...
@@ -66,36 +66,4 @@ Automatic installation is provide through Ansible playbooks.
 
 ### CLI
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
-
-
-### TODO
-* DCemulator
- * Advanced network model
-  * improve network management, multiple interfaces per container
-  * API to create multiple networks (per DC?)
-* SDN Controller
- * simple API to chain running VNFs
-* Add resource constraints to datacenters
-* Check if we can use the Mininet GUI to visualize our DCs?
-* (Unit tests for zerorpc API endpoint, and any other new endpoint)
-
-
-### Features / Done
-* Define a topology (Python script)
- * Add data centers
- * Add switches and links between the,
-* Define API endpoints in topology
- * call startAPI from topology definition and start it in a own thread
- * make it possible to start different API endpoints for different DCs
-* DCemulator
- * correctly start and connect new compute resources at runtime
- * remove and disconnect compute resources at runtime
- * do IP management for new containers
- * list active compute resources
-* Cloud-like reference API with CLI for demonstrations
- * Write CLI client
- * Start compute (name, DC, image, network)
- * Stop compute
-* Create an Ansible-based automatic installation routine
-* Unit tests
 
