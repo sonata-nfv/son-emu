@@ -34,9 +34,12 @@ class ZeroRpcApiEndpointDCNetwork(object):
         python_install_path = site.getsitepackages()[0]
         ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
         ryu_path2 =  python_install_path + '/ryu/app/ofctl_rest.py'
+        # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
+        # Ryu still uses 6633 as default
+        ryu_option = '--ofp-tcp-listen-port'
+        ryu_of_port = '6653'
         ryu_cmd =  'ryu-manager'
-        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2])
-
+        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port])
 
     def connectDCNetwork(self, net):
         self.net = net

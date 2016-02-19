@@ -37,7 +37,6 @@ def create_topology1():
     mon_api = ZeroRpcApiEndpointDCNetwork("0.0.0.0", 5151)
     mon_api.connectDCNetwork(net)
     mon_api.start()
-
     """
     2. Add (logical) data centers to the topology
        (each data center is one "bigswitch" in our simplified
