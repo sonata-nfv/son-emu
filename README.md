@@ -29,7 +29,7 @@ Automatic installation is provide through Ansible playbooks.
 
 #### 1. Dockernet
 * `cd`
-* `git clone https://github.com/mpeuster/dockernet.git`
+* `git clone -b dockernet-sonata https://github.com/mpeuster/dockernet.git`
 * `cd ~/dockernet/ansible`
 * `sudo ansible-playbook install.yml`
 * Wait (and have a coffee) ...
