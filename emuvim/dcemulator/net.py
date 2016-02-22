@@ -4,6 +4,10 @@ Distributed Cloud Emulator (dcemulator)
 """
 import logging
 
+import site
+from subprocess import Popen
+import os
+
 from mininet.net import Dockernet
 from mininet.node import Controller, OVSSwitch, OVSKernelSwitch, Switch, Docker, Host, RemoteController
 from mininet.cli import CLI
@@ -38,6 +42,9 @@ class DCNetwork(Dockernet):
 
         # monitoring agent
         self.monitor_agent = DCNetworkMonitor(self)
+
+        # start Ryu controller
+        self.startRyu()
 
 
     def addDatacenter(self, label, metadata={}):
@@ -133,6 +140,9 @@ class DCNetwork(Dockernet):
         Dockernet.start(self)
 
     def stop(self):
+        # stop Ryu controller
+        self.ryu_process.terminate()
+        #self.ryu_process.kill()
         Dockernet.stop(self)
 
     def CLI(self):
@@ -180,3 +190,17 @@ class DCNetwork(Dockernet):
             current_hop = next_hop
 
         return "destination node: {0} not reached".format(vnf_dst_name)
+
+    # start Ryu Openflow controller as Remote Controller for the DCNetwork
+    def startRyu(self):
+        # start Ryu controller with rest-API
+        python_install_path = site.getsitepackages()[0]
+        ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
+        ryu_path2 =  python_install_path + '/ryu/app/ofctl_rest.py'
+        # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
+        # Ryu still uses 6633 as default
+        ryu_option = '--ofp-tcp-listen-port'
+        ryu_of_port = '6653'
+        ryu_cmd =  'ryu-manager'
+        FNULL = open(os.devnull, 'w')
+        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)

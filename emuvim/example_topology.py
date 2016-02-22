@@ -110,7 +110,7 @@ def create_topology1():
     net.CLI()
     # when the user types exit in the CLI, we stop the emulator
     # we need to explicitly stop the monitoring api, so the Ryu controller is also terminated
-    mon_api.stop()
+    #mon_api.stop()
     net.stop()
 
 

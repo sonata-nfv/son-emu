@@ -6,8 +6,7 @@ Distributed Cloud Emulator (dcemulator)
 import logging
 import threading
 import zerorpc
-import site
-from subprocess import Popen
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,17 +29,6 @@ class ZeroRpcApiEndpointDCNetwork(object):
         logging.debug("Created monitoring API endpoint %s(%s:%d)" % (
             self.__class__.__name__, self.ip, self.port))
 
-        # start Ryu controller with rest-API
-        python_install_path = site.getsitepackages()[0]
-        ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
-        ryu_path2 =  python_install_path + '/ryu/app/ofctl_rest.py'
-        # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
-        # Ryu still uses 6633 as default
-        ryu_option = '--ofp-tcp-listen-port'
-        ryu_of_port = '6653'
-        ryu_cmd =  'ryu-manager'
-        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port])
-
     def connectDCNetwork(self, net):
         self.net = net
         logging.info("Connected DCNetwork to API endpoint %s(%s:%d)" % (
@@ -59,17 +47,17 @@ class ZeroRpcApiEndpointDCNetwork(object):
         s.run()
 
     def stop(self):
-        # stop ryu controller
         logging.info("Stop the monitoring API endpoint")
-        self.ryu_process.terminate()
-        #self.ryu_process.kill()
         return
 
 
 class DCNetworkApi(object):
     """
+        The networking and monitoring commands need the scope of the
+        whole DC network to find the requested vnf. So this API is intended
+        to work with a DCNetwork.
         Just pass through the corresponding request to the
-        selected data center. Do not implement provisioning
+        selected data center network. Do not implement provisioning
         logic here because will will have multiple API
         endpoint implementations at the end.
     """
