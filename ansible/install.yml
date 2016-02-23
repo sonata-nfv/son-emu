@@ -15,6 +15,9 @@
    - name: install pip
      apt: pkg=python-pip state=installed
 
+   - name: install setuptools
+     pip: name=setuptools state=latest
+
    - name: install zerorpc
      pip: name=zerorpc
 
