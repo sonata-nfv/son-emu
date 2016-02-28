@@ -27,15 +27,17 @@ class ZeroRpcClient(object):
             print "Command not implemented."
 
     def start(self, args):
-        network = {}
+        nw_list = list()
         if args.get("network") is not None:
-            network = {"ip": args.get("network")}
+            networks = args.get("network").split(",")
+            for nw in networks:
+                nw_list.append({"ip": nw})
         r = self.c.compute_action_start(
             args.get("datacenter"),
             args.get("name"),
             args.get("image"),
             args.get("docker_command"),
-            network)
+            nw_list)
         pp.pprint(r)
 
     def stop(self, args):
@@ -97,7 +99,8 @@ parser.add_argument(
     help="Startup command of the container e.g. './start.sh'")
 parser.add_argument(
     "--net", dest="network",
-    help="Network properties of compute instance e.g. '10.0.0.123/8'")
+    help="Network properties of compute instance e.g. \
+          '10.0.0.123/8' or '10.0.0.123/8,11.0.0.123/24' for multiple interfaces.")
 
 
 def main(argv):

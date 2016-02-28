@@ -57,7 +57,15 @@ class MultiDatacenterApi(object):
         self.dcs = dcs
 
     def compute_action_start(self, dc_label, compute_name, image, command, network):
-        # network e.g. {"ip": "10.0.0.254/8"}
+        """
+        Start a new compute instance: A docker container
+        :param dc_label: name of the DC
+        :param compute_name: compute container name
+        :param image: image name
+        :param command: command to execute
+        :param network:
+        :return: networks list({"ip": "10.0.0.254/8"}, {"ip": "11.0.0.254/24"})
+        """
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
         try:

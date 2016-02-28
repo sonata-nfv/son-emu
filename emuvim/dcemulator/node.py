@@ -99,13 +99,15 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, command=None,network=None):
+    def startCompute(self, name, image=None, command=None, network=None):
         """
         Create a new container as compute resource and connect it to this
         data center.
-
-        TODO: This interface will change to support multiple networks to which
-        a single container can be connected.
+        :param name: name (string)
+        :param image: image name (string)
+        :param command: command (string)
+        :param network: networks list({"ip": "10.0.0.254/8"}, {"ip": "11.0.0.254/24"})
+        :return:
         """
         assert name is not None
         # no duplications
@@ -116,9 +118,17 @@ class Datacenter(object):
             image = "ubuntu"
         if network is None:
             network = {}  # {"ip": "10.0.0.254/8"}
-        # create the container and connect it to the given network
+        if isinstance(network, dict):
+            network = [network]  # if we have only one network, put it in a list
+        if isinstance(network, list):
+            if len(network) < 1:
+                network.append({})
+
+        # create the container
         d = self.net.addDocker("%s" % (name), dimage=image, dcmd=command)
-        self.net.addLink(d, self.switch, params1=network)
+        # connect all given networks
+        for nw in network:
+            self.net.addLink(d, self.switch, params1=nw)
         # do bookkeeping
         self.containers[name] = d
         d.datacenter = self
