@@ -81,6 +81,12 @@ class simpleTestTopology( unittest.TestCase ):
                 base_url='unix://var/run/docker.sock')
         return self.docker_cli
 
+    def getDockernetContainers(self):
+        """
+        List the containers managed by dockernet
+        """
+        return self.getDockerCli().containers(filters={"label": "com.dockernet"})
+
     @staticmethod
     def setUp():
         pass
@@ -91,7 +97,7 @@ class simpleTestTopology( unittest.TestCase ):
         # make sure that all pending docker containers are killed
         with open(os.devnull, 'w') as devnull:
             subprocess.call(
-                "sudo docker rm -f $(sudo docker ps -a -q)",
+                "sudo docker rm -f $(sudo docker ps --filter 'label=com.dockernet' -a -q)",
                 stdout=devnull,
                 stderr=devnull,
                 shell=True)
@@ -117,7 +123,7 @@ class testEmulatorTopology( simpleTestTopology ):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 0)
+        assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 1)
         # check connectivity by using ping
@@ -138,7 +144,7 @@ class testEmulatorTopology( simpleTestTopology ):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 0)
+        assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 2)
         # check connectivity by using ping
@@ -163,7 +169,7 @@ class testEmulatorTopology( simpleTestTopology ):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 0)
+        assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 5)
         # check connectivity by using ping
@@ -194,7 +200,7 @@ class testEmulatorCompute( simpleTestTopology ):
         # add compute resources
         vnf1 = self.dc[0].startCompute("vnf1")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 1)
+        assert(len(self.getDockernetContainers()) == 1)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 1)
         # check compute list result
@@ -220,7 +226,7 @@ class testEmulatorCompute( simpleTestTopology ):
         # add compute resources
         vnf1 = self.dc[0].startCompute("vnf1")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 1)
+        assert(len(self.getDockernetContainers()) == 1)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 1)
         # check compute list result
@@ -230,7 +236,7 @@ class testEmulatorCompute( simpleTestTopology ):
         # remove compute resources
         self.dc[0].stopCompute("vnf1")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 0)
+        assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 1)
         assert(len(self.net.switches) == 1)
         # check compute list result
@@ -252,7 +258,7 @@ class testEmulatorCompute( simpleTestTopology ):
         # add compute resources
         vnf1 = self.dc[0].startCompute("vnf1")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 1)
+        assert(len(self.getDockernetContainers()) == 1)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 1)
         # check compute list result
@@ -286,7 +292,7 @@ class testEmulatorCompute( simpleTestTopology ):
         vnf1 = self.dc[0].startCompute("vnf1")
         vnf2 = self.dc[1].startCompute("vnf2")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 2)
+        assert(len(self.getDockernetContainers()) == 2)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 5)
         # check compute list result
@@ -315,7 +321,7 @@ class testEmulatorCompute( simpleTestTopology ):
         vnf1 = self.dc[0].startCompute("vnf1")
         vnf2 = self.dc[1].startCompute("vnf2")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 2)
+        assert(len(self.getDockernetContainers()) == 2)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 5)
         # check compute list result
@@ -326,7 +332,7 @@ class testEmulatorCompute( simpleTestTopology ):
         # remove compute resources
         self.dc[0].stopCompute("vnf1")
         # check number of running nodes
-        assert(len(self.getDockerCli().containers()) == 1)
+        assert(len(self.getDockernetContainers()) == 1)
         assert(len(self.net.hosts) == 1)
         assert(len(self.net.switches) == 5)
         # check compute list result
