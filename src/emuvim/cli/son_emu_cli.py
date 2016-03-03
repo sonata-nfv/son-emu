@@ -13,10 +13,10 @@
 """
 
 import sys
-import compute
-import network
-import datacenter
-import monitor
+from emuvim.cli import compute
+from emuvim.cli import network
+from emuvim.cli import datacenter
+from emuvim.cli import monitor
 
 def main():
     if len(sys.argv) < 2:
