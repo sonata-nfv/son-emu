@@ -14,9 +14,9 @@ from mininet.cli import CLI
 from mininet.log import setLogLevel, info, debug
 from mininet.link import TCLink, Link
 import networkx as nx
-from monitoring import DCNetworkMonitor
+from emuvim.dcemulator.monitoring import DCNetworkMonitor
 
-from node import Datacenter, EmulatorCompute
+from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 
 
 class DCNetwork(Dockernet):
