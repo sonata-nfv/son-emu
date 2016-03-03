@@ -13,7 +13,7 @@ Contributors:
  * (This will be replaced / extended by a REST API later)
 
 ### Project structure
-* **emuvim/** all emulator code 
+* **src/emuvim/** all emulator code 
  * **api/** Data center API endpoint implementations (zerorpc, OpenStack REST, ...)
  * **cli/** CLI client to interact with a running emulator
  * **dcemulator/** Dockernet wrapper that introduces the notion of data centers and API endpoints
@@ -44,10 +44,10 @@ Automatic installation is provide through Ansible playbooks.
 
 ### Run
 * First terminal:
- * `cd ~/son-emu/emuvim`
+ * `cd ~/son-emu/src/emuvim`
  * `sudo python example_topology.py`
 * Second terminal:
- * `cd ~/son-emu/emuvim/cli`
+ * `cd ~/son-emu/src/emuvim/cli`
  * `./son-emu-cli compute start -d datacenter1 -n vnf1`
  * `./son-emu-cli compute start -d datacenter1 -n vnf2`
  * `./son-emu-cli compute list`
@@ -61,7 +61,7 @@ Automatic installation is provide through Ansible playbooks.
  * `./start_example_chain` sets up an example service chain, using the example docker container from `package_samples` https://github.com/sonata-nfv/packaging_samples/tree/master/VNFs
 
 ### Run Unit Tests
-* `cd ~/son-emu/emuvim`
+* `cd ~/son-emu/src/emuvim`
 * `sudo python test` or `sudo python test -v` for more outputs
 
 ### CLI
