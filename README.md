@@ -43,26 +43,31 @@ Automatic installation is provide through Ansible playbooks.
 
 
 ### Run
+
+In the `~/son-emu` directory:
+
+* During development:
+ * `python setup.py develop`
+* Otherwise, for a classic installation:
+ * `python setup.py install`
 * First terminal:
- * `cd ~/son-emu/src/emuvim`
- * `sudo python example_topology.py`
+ * `sudo python src/emuvim/example_topology.py`
 * Second terminal:
- * `cd ~/son-emu/src/emuvim/cli`
- * `./son-emu-cli compute start -d datacenter1 -n vnf1`
- * `./son-emu-cli compute start -d datacenter1 -n vnf2`
- * `./son-emu-cli compute list`
+ * `son-emu-cli compute start -d datacenter1 -n vnf1`
+ * `son-emu-cli compute start -d datacenter1 -n vnf2`
+ * `son-emu-cli compute list`
 * First terminal:
  * `dockernet> vnf1 ping -c 2 vnf2`
 * Second terminal:
- *  `./son-emu-cli monitor get_rate -vnf vnf1` 
+ *  `son-emu-cli monitor get_rate -vnf vnf1`
 
 #### Example scripts:
  * `./start_dcnetwork` starts an example datacenter network with monitoring api endpoint
  * `./start_example_chain` sets up an example service chain, using the example docker container from `package_samples` https://github.com/sonata-nfv/packaging_samples/tree/master/VNFs
 
 ### Run Unit Tests
-* `cd ~/son-emu/src/emuvim`
-* `sudo python test` or `sudo python test -v` for more outputs
+* `cd ~/son-emu`
+* `sudo py.test -v src/emuvim` (equivalent to `python setup.py test -v --addopts 'src/emuvim'` but with direct access to the commandline arguments)
 
 ### CLI
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
