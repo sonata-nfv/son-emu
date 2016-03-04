@@ -11,8 +11,8 @@ import os
 import time
 import subprocess
 import docker
-from dcemulator.net import DCNetwork
-from dcemulator.node import EmulatorCompute
+from emuvim.dcemulator.net import DCNetwork
+from emuvim.dcemulator.node import EmulatorCompute
 from mininet.node import Host, Controller, OVSSwitch, Docker
 from mininet.link import TCLink
 from mininet.topo import SingleSwitchTopo, LinearTopo

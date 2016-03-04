@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # start DC Network
-cd emuvim/
-python example_topology.py
+python src/emuvim/example_topology.py
 
 
