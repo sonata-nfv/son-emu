@@ -35,3 +35,6 @@
      
    - name: install oslo.config
      pip: name=oslo.config
+
+   - name: install pytest
+     pip: name=pytest
