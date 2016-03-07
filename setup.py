@@ -11,7 +11,6 @@ setup(name='emuvim',
       packages=find_packages('src'),
       install_requires=[
           'pyaml',
-          'six',
           'zerorpc',
           'tabulate',
           'argparse',
