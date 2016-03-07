@@ -11,6 +11,15 @@ setup(name='emuvim',
       packages=find_packages('src'),
       install_requires=[
           'pyaml',
+          'six',
+          'zerorpc',
+          'tabulate',
+          'argparse',
+          'networkx',
+          'six',
+          'ryu',
+          'oslo.config',
+          'pytest'
       ],
       zip_safe=False,
       entry_points={
