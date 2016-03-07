@@ -30,6 +30,9 @@
    - name: install networkx
      pip: name=networkx
 
+   - name: install six
+     pip: name=six
+
    - name: install ryu
      pip: name=ryu
      
