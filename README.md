@@ -1,8 +1,9 @@
 # Distributed Cloud Emulator
 
-Contributors:
+Lead developers (able to merge pull requests):
 
 * Manuel Peuster <manuel.peuster@upb.de>
+* Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 
 
 ### Requirements
