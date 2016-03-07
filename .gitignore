@@ -64,3 +64,6 @@ target/
 
 #Pytest
 .pytest.restart
+
+# JUnit xml
+utils/ci/junit-xml/*.xml
