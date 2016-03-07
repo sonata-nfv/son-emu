@@ -52,7 +52,8 @@ In the `~/son-emu` directory:
 * Otherwise, for a classic installation:
  * `python setup.py install`
 * First terminal:
- * `sudo python src/emuvim/example_topology.py`
+ * `sudo python src/emuvim/examples/simple_topology.py 
+`
 * Second terminal:
  * `son-emu-cli compute start -d datacenter1 -n vnf1`
  * `son-emu-cli compute start -d datacenter1 -n vnf2`
