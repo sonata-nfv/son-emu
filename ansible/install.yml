@@ -19,25 +19,25 @@
      pip: name=setuptools state=latest
 
    - name: install zerorpc
-     pip: name=zerorpc
+     pip: name=zerorpc state=latest
 
    - name: install tabulate
-     pip: name=tabulate
+     pip: name=tabulate state=latest
 
    - name: install argparse
-     pip: name=argparse
+     pip: name=argparse state=latest
 
    - name: install networkx
-     pip: name=networkx
+     pip: name=networkx state=latest
 
    - name: install six
-     pip: name=six
+     pip: name=six state=latest
 
    - name: install ryu
-     pip: name=ryu
+     pip: name=ryu state=latest
      
    - name: install oslo.config
-     pip: name=oslo.config
+     pip: name=oslo.config state=latest
 
    - name: install pytest
-     pip: name=pytest
+     pip: name=pytest state=latest

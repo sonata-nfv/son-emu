@@ -16,7 +16,7 @@ setup(name='emuvim',
           'tabulate',
           'argparse',
           'networkx',
-          'six',
+          'six>=1.9',
           'ryu',
           'oslo.config',
           'pytest'
