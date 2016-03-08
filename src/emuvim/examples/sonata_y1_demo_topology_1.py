@@ -18,8 +18,8 @@ def create_topology1():
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
     s1 = net.addSwitch("s1")
-    net.addLink(dc1, s1)
-    net.addLink(dc2, s1)
+    net.addLink(dc1, s1, delay="10ms")
+    net.addLink(dc2, s1, delay="20ms")
 
     # create a new instance of a endpoint implementation
     zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
