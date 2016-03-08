@@ -7,7 +7,7 @@ A simple topology with two PoPs for the y1 demo story board.
 import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
-from emuvim.api.zerorpcapi import ZeroRpcApiEndpoint
+from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 
 logging.basicConfig(level=logging.INFO)
 
