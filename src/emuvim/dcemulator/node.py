@@ -80,6 +80,9 @@ class Datacenter(object):
         self.switch = None  # first prototype assumes one "bigswitch" per DC
         self.containers = {}  # keep track of running containers
 
+    def __repr__(self):
+        return self.label
+
     def _get_next_dc_dpid(self):
         global DCDPID_BASE
         DCDPID_BASE += 1

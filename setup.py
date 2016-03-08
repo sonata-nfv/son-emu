@@ -18,7 +18,9 @@ setup(name='emuvim',
           'six>=1.9',
           'ryu',
           'oslo.config',
-          'pytest'
+          'pytest',
+          'Flask',
+          'flask_restful'
       ],
       zip_safe=False,
       entry_points={

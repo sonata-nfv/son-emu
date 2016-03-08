@@ -41,3 +41,9 @@
 
    - name: install pytest
      pip: name=pytest state=latest
+
+   - name: install Flask
+     pip: name=Flask state=latest
+
+   - name: install flask_restful
+     pip: name=flask_restful state=latest
