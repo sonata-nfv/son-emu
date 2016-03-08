@@ -12,7 +12,7 @@ from mininet.net import Dockernet
 from mininet.node import Controller, OVSSwitch, OVSKernelSwitch, Switch, Docker, Host, RemoteController
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info, debug
-from mininet.link import TCLink, Link
+from mininet.link import TCLink
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 
@@ -82,17 +82,22 @@ class DCNetwork(Dockernet):
             node2 = node2.switch
         # try to give containers a default IP
         if isinstance( node1, Docker ):
-            if not "params1" in params:
+            if "params1" not in params:
                 params["params1"] = {}
-            if not "ip" in params["params1"]:
+            if "ip" not in params["params1"]:
                 params["params1"]["ip"] = self.getNextIp()
         if isinstance( node2, Docker ):
-            if not "params2" in params:
+            if "params2" not in params:
                 params["params2"] = {}
-            if not "ip" in params["params2"]:
+            if "ip" not in params["params2"]:
                 params["params2"]["ip"] = self.getNextIp()
+        # ensure that we allow TCLinks between data centers
+        # TODO this is not optimal, we use cls=Link for containers and TCLink for data centers
+        # see Dockernet issue: https://github.com/mpeuster/dockernet/issues/3
+        if "cls" not in params:
+            params["cls"] = TCLink
 
-        link = Dockernet.addLink(self, node1, node2, **params)  # TODO we need TCLinks with user defined performance here
+        link = Dockernet.addLink(self, node1, node2, **params)
 
         # add edge and assigned port number to graph in both directions between node1 and node2
         self.DCNetwork_graph.add_edge(node1.name, node2.name, \

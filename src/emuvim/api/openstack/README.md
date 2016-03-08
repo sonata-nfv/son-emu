@@ -1,0 +1,1 @@
+This is a placeholder. This folder will contain a OpenStack/HEAT like interface to the emulator.

@@ -19,8 +19,8 @@ script.
 import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
-from emuvim.api.zerorpcapi import ZeroRpcApiEndpoint
-from emuvim.api.zerorpcapi_DCNetwork import ZeroRpcApiEndpointDCNetwork
+from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
+from emuvim.api.zerorpc.network import ZeroRpcApiEndpointDCNetwork
 
 logging.basicConfig(level=logging.INFO)
 
