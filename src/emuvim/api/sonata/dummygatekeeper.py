@@ -9,6 +9,7 @@ import logging
 import os
 import uuid
 import hashlib
+import json
 from flask import Flask, request
 import flask_restful as fr
 
@@ -48,7 +49,10 @@ class Packages(fr.Resource):
 
     def post(self):
         """
+        Upload a *.son service package to the dummy gatekeeper.
+
         We expect request with a *.son file and store it in UPLOAD_FOLDER
+        :return: UUID
         """
         try:
             # get file contents
@@ -71,18 +75,38 @@ class Packages(fr.Resource):
             return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed"}
 
     def get(self):
+        """
+        Return a list of UUID's of uploaded service packages.
+        :return: dict/list
+        """
         return {"service_uuid_list": list(GK.packages.iterkeys())}
 
 
 class Instantiations(fr.Resource):
 
     def post(self):
-        # TODO implement method
-        pass
+        """
+        Instantiate a service specified by its UUID.
+        Will return a new UUID to identify the running service instance.
+        :return: UUID
+        """
+        # TODO implement method (start real service)
+        json_data = request.get_json(force=True)
+        service_uuid = json_data.get("service_uuid")
+        if service_uuid is not None:
+            service_instance_uuid = str(uuid.uuid4())
+            GK.instantiations[service_instance_uuid] = service_uuid
+            logging.info("Starting service %r" % service_uuid)
+            return {"service_instance_uuid": service_instance_uuid}
+        return None
 
     def get(self):
+        """
+        Returns a list of UUIDs containing all running services.
+        :return: dict / list
+        """
         # TODO implement method
-        pass
+        return {"service_instance_uuid_list": list(GK.instantiations.iterkeys())}
 
 # create a single, global GK object
 GK = Gatekeeper()
