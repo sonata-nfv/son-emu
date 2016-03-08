@@ -3,6 +3,7 @@ Distributed Cloud Emulator (dcemulator)
 (c) 2015 by Manuel Peuster <manuel.peuster@upb.de>
 """
 from mininet.node import Docker
+from mininet.link import Link
 import logging
 
 
@@ -79,6 +80,9 @@ class Datacenter(object):
         self.switch = None  # first prototype assumes one "bigswitch" per DC
         self.containers = {}  # keep track of running containers
 
+    def __repr__(self):
+        return self.label
+
     def _get_next_dc_dpid(self):
         global DCDPID_BASE
         DCDPID_BASE += 1
@@ -128,7 +132,8 @@ class Datacenter(object):
         d = self.net.addDocker("%s" % (name), dimage=image, dcmd=command)
         # connect all given networks
         for nw in network:
-            self.net.addLink(d, self.switch, params1=nw)
+            # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
+            self.net.addLink(d, self.switch, params1=nw, cls=Link)
         # do bookkeeping
         self.containers[name] = d
         d.datacenter = self
