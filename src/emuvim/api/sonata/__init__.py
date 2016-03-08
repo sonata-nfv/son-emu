@@ -11,6 +11,13 @@ import dummygatekeeper as dgk
 
 
 class SonataDummyGatekeeperEndpoint(object):
+    """
+    Creates and starts a REST API based on Flask in an
+    additional thread.
+
+    Can connect this API to data centers defined in an emulator
+    topology.
+    """
 
     def __init__(self, listenip, port):
         self.dcs = {}

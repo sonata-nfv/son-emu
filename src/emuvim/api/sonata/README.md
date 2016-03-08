@@ -12,11 +12,11 @@ To list all uploaded packages do:
 
 To instantiate (start) a service do:
 
-* `curl ...`
+* `curl -X POST http://127.0.0.1:8000/api/instantiations -d "{\"service_uuid\":\"59446b64-f941-40a8-b511-effb0512c21b\"}"`
 
 To list all running services do:
 
-* `curl ...`
+* `curl http://127.0.0.1:8000/api/instantiations`
 
 
 ## API definition
