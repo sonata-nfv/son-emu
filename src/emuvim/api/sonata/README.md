@@ -66,6 +66,10 @@ _Note: This API should converge to the API of the original GK as much as possibl
 </tr>
 </table>
 
+## Run REST API as part of the emulator:
+
+* `sudo python src/emuvim/examples/sonata_y1_demo_topology_1.py`
+
 ## Run REST API in standalone mode (without emulator):
 
 * `sudo python src/emuvim/api/sonata/dummygatekeeper.py`
