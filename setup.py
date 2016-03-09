@@ -17,7 +17,7 @@ setup(name='emuvim',
           'networkx',
           'six>=1.9',
           'ryu',
-          'oslo.config',
+          'ryu',
           'pytest',
           'Flask',
           'flask_restful'
