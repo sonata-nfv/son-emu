@@ -22,7 +22,8 @@ class EmulatorCompute(Docker):
     def __init__(
             self, name, dimage, **kwargs):
         logging.debug("Create EmulatorCompute instance: %s" % name)
-        self.datacenter = None  # pointer to current DC
+        self.datacenter = kwargs.get("datacenter")  # pointer to current DC
+        self.flavor_name = kwargs.get("flavor_name")
 
         # call original Docker.__init__
         Docker.__init__(self, name, dimage, **kwargs)
@@ -77,8 +78,12 @@ class Datacenter(object):
         self.label = label  
         # dict to store arbitrary metadata (e.g. latitude and longitude)
         self.metadata = metadata
-        self.switch = None  # first prototype assumes one "bigswitch" per DC
-        self.containers = {}  # keep track of running containers
+        # first prototype assumes one "bigswitch" per DC
+        self.switch = None
+        # keep track of running containers
+        self.containers = {}
+        # pointer to assigned resource model
+        self._resource_model = None
 
     def __repr__(self):
         return self.label
@@ -103,7 +108,7 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, command=None, network=None):
+    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny"):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -111,6 +116,7 @@ class Datacenter(object):
         :param image: image name (string)
         :param command: command (string)
         :param network: networks list({"ip": "10.0.0.254/8"}, {"ip": "11.0.0.254/24"})
+        :param flavor_name: name of the flavor for this compute container
         :return:
         """
         assert name is not None
@@ -128,15 +134,23 @@ class Datacenter(object):
             if len(network) < 1:
                 network.append({})
 
+        # allocate in resource resource model and compute resource limits for new container
+        if self._resource_model is not None:
+            # TODO pass resource limits to new container (cf. Dockernet API)
+            cpu_limit, mem_limit, disk_limit = self._resource_model.allocate(name, flavor_name)
         # create the container
-        d = self.net.addDocker("%s" % (name), dimage=image, dcmd=command)
+        d = self.net.addDocker(
+            "%s" % (name),
+            dimage=image,
+            dcmd=command,
+            datacenter=self,
+            flavor_name=flavor_name)
         # connect all given networks
         for nw in network:
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
             self.net.addLink(d, self.switch, params1=nw, cls=Link)
         # do bookkeeping
         self.containers[name] = d
-        d.datacenter = self
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
@@ -150,6 +164,9 @@ class Datacenter(object):
             link=None, node1=self.containers[name], node2=self.switch)
         self.net.removeDocker("%s" % (name))
         del self.containers[name]
+        # call resource model and free resources
+        if self._resource_model is not None:
+            self._resource_model.free(name)
         return True
 
     def listCompute(self):
@@ -170,3 +187,11 @@ class Datacenter(object):
             "n_running_containers": len(self.containers),
             "metadata": self.metadata
         }
+
+    def assignResourceModel(self, rm):
+        if self._resource_model is not None:
+            raise Exception("There is already an resource model assigned to this DC.")
+        self._resource_model = rm
+        self.net.rm_registrar.register(self, rm)
+        logging.info("Assigned RM: %r to DC: %r" % (rm, self))
+
