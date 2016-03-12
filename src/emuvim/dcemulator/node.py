@@ -136,8 +136,9 @@ class Datacenter(object):
 
         # allocate in resource resource model and compute resource limits for new container
         if self._resource_model is not None:
-            # TODO pass resource limits to new container (cf. Dockernet API)
-            cpu_limit, mem_limit, disk_limit = self._resource_model.allocate(name, flavor_name)
+            # TODO pass resource limits to new container (cf. Dockernet API) Issue #47
+            (cpu_limit, mem_limit, disk_limit) = alloc = self._resource_model.allocate(name, flavor_name)
+            logging.info("Allocation result: %r" % str(alloc))
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
