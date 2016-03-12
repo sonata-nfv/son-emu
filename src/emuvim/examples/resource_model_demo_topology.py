@@ -8,7 +8,7 @@ from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
-from emuvim.dcemulator.resourcemodel.upbrm import UpbSimpleCloudDcApproxRM
+from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcApproxRM
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,8 +25,8 @@ def create_topology1():
     net.addLink(dc2, s1, delay="20ms")
 
     # create and assign resource models for each DC
-    rm1 = UpbSimpleCloudDcApproxRM()
-    rm2 = UpbSimpleCloudDcApproxRM()
+    rm1 = UpbSimpleCloudDcApproxRM(max_cu=10, max_mu=1024)
+    rm2 = UpbSimpleCloudDcApproxRM(max_cu=20)
     dc1.assignResourceModel(rm1)
     dc2.assignResourceModel(rm2)
 
