@@ -5,13 +5,13 @@ Distributed Cloud Emulator (dcemulator)
 import logging
 
 import site
+import time
 from subprocess import Popen
 import os
 
 from mininet.net import Dockernet
-from mininet.node import Controller, OVSSwitch, OVSKernelSwitch, Switch, Docker, Host, RemoteController
+from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
-from mininet.log import setLogLevel, info, debug
 from mininet.link import TCLink
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
@@ -27,7 +27,7 @@ class DCNetwork(Dockernet):
     This class is used by topology definition scripts.
     """
 
-    def __init__(self, dc_emulation_max_cpu=1.0, **kwargs):
+    def __init__(self, controller=RemoteController, dc_emulation_max_cpu=1.0, **kwargs):
         """
         Create an extended version of a Dockernet network
         :param dc_emulation_max_cpu: max. CPU time used by containers in data centers
@@ -38,19 +38,19 @@ class DCNetwork(Dockernet):
 
         # call original Docker.__init__ and setup default controller
         Dockernet.__init__(
-            self, controller=RemoteController, switch=OVSKernelSwitch, **kwargs)
-
-        # ass a remote controller to be able to use Ryu
-        self.addController('c0', controller=RemoteController)
-
-        # graph of the complete DC network
-        self.DCNetwork_graph=nx.DiGraph()
-
-        # monitoring agent
-        self.monitor_agent = DCNetworkMonitor(self)
+            self, switch=OVSKernelSwitch, **kwargs)
 
         # start Ryu controller
         self.startRyu()
+
+        # add a remote controller to be able to use Ryu
+        self.addController('c0', controller=controller)
+
+        # graph of the complete DC network
+        self.DCNetwork_graph = nx.DiGraph()
+
+        # monitoring agent
+        self.monitor_agent = DCNetworkMonitor(self)
 
         # initialize resource model registrar
         self.rm_registrar = ResourceModelRegistrar(dc_emulation_max_cpu)
@@ -154,9 +154,8 @@ class DCNetwork(Dockernet):
 
     def stop(self):
         # stop Ryu controller
-        self.ryu_process.terminate()
-        #self.ryu_process.kill()
         Dockernet.stop(self)
+        self.stopRyu()
 
     def CLI(self):
         CLI(self)
@@ -215,5 +214,12 @@ class DCNetwork(Dockernet):
         ryu_option = '--ofp-tcp-listen-port'
         ryu_of_port = '6653'
         ryu_cmd =  'ryu-manager'
-        FNULL = open(os.devnull, 'w')
+        FNULL = open("/tmp/ryu.log", 'w')
         self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        time.sleep(1)
+
+    def stopRyu(self):
+        if self.ryu_process:
+            self.ryu_process.terminate()
+            self.ryu_process.kill()
+

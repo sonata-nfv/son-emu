@@ -8,6 +8,7 @@ import subprocess
 import docker
 from emuvim.dcemulator.net import DCNetwork
 from mininet.clean import cleanup
+from mininet.node import Controller
 
 class SimpleTestTopology(unittest.TestCase):
     """
@@ -32,7 +33,7 @@ class SimpleTestTopology(unittest.TestCase):
         Creates a Mininet instance and automatically adds some
         nodes to it.
         """
-        self.net = net = DCNetwork()
+        self.net = DCNetwork()
 
         # add some switches
         for i in range(0, nswitches):

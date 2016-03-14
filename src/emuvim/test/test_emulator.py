@@ -6,6 +6,7 @@ Python API.
 Does not test API endpoints. This is done in separated test suites.
 """
 
+import time
 import unittest
 from emuvim.dcemulator.node import EmulatorCompute
 from emuvim.test.base import SimpleTestTopology
@@ -39,6 +40,7 @@ class testEmulatorTopology( SimpleTestTopology ):
         # stop Mininet network
         self.stopNet()
 
+    #@unittest.skip("disabled to test if CI fails because this is the first test.")
     def testMultipleDatacenterDirect(self):
         """
         Create a two data centers and interconnect them.
