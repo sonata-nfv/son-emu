@@ -20,7 +20,8 @@ setup(name='emuvim',
           'ryu',
           'pytest',
           'Flask',
-          'flask_restful'
+          'flask_restful',
+          'docker-py'
       ],
       zip_safe=False,
       entry_points={
