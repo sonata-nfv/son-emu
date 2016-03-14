@@ -11,6 +11,7 @@ import uuid
 import hashlib
 import zipfile
 import yaml
+from docker import Client as DockerClient
 from flask import Flask, request
 import flask_restful as fr
 
@@ -58,7 +59,7 @@ class Service(object):
         self.manifest = None
         self.nsd = None
         self.vnfds = dict()
-        self.docker_files = dict()
+        self.local_docker_files = dict()
         self.instances = dict()
 
     def start_service(self, service_uuid):
@@ -81,6 +82,8 @@ class Service(object):
         self._load_vnfd()
         self._load_docker_files()
         # 3. prepare container images (e.g. download or build Dockerfile)
+        self._build_images_from_dockerfiles()
+        self._download_predefined_dockerimages()
 
         LOG.info("On-boarded service: %r" % self.manifest.get("package_name"))
 
@@ -139,12 +142,26 @@ class Service(object):
                         self.package_content_path,
                         make_relative_path(df.get("name")))
                     # FIXME: Mapping to docker image names is hardcoded because of the missing mapping in the example package
-                    self.docker_files[helper_map_docker_name(df.get("name"))] = docker_path
+                    self.local_docker_files[helper_map_docker_name(df.get("name"))] = docker_path
                     LOG.debug("Found Dockerfile: %r" % docker_path)
 
-    def _build_images_from_dockerfile(self):
-        pass
+    def _build_images_from_dockerfiles(self):
+        """
+        Build Docker images for each local Dockerfile found in the package: self.local_docker_files
+        """
+        dc = DockerClient()
+        LOG.info("Building %d Docker images (this may take several minutes) ..." % len(self.local_docker_files))
+        for k, v in self.local_docker_files.iteritems():
+            for line in dc.build(path=v.replace("Dockerfile", ""), tag=k, rm=False, nocache=False):
+                LOG.debug("DOCKER BUILD: %s" % line)
+            LOG.info("Docker image created: %s" % k)
+
+    def _download_predefined_dockerimages(self):
+        """
+        If the package contains URLs to pre-build Docker images, we download them with this method.
+        """
         # TODO implement
+        pass
 
 
 """
