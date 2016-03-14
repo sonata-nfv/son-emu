@@ -15,8 +15,8 @@ from mininet.log import setLogLevel, info, debug
 from mininet.link import TCLink
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
-
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
+from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
 
 class DCNetwork(Dockernet):
@@ -27,14 +27,20 @@ class DCNetwork(Dockernet):
     This class is used by topology definition scripts.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, dc_emulation_max_cpu=1.0, **kwargs):
+        """
+        Create an extended version of a Dockernet network
+        :param dc_emulation_max_cpu: max. CPU time used by containers in data centers
+        :param kwargs: path through for Mininet parameters
+        :return:
+        """
         self.dcs = {}
-        # create a Mininet/Dockernet network
+
         # call original Docker.__init__ and setup default controller
-        #Dockernet.__init__(
-        #    self, controller=RemoteController, switch=OVSKernelSwitch, **kwargs)
         Dockernet.__init__(
             self, controller=RemoteController, switch=OVSKernelSwitch, **kwargs)
+
+        # ass a remote controller to be able to use Ryu
         self.addController('c0', controller=RemoteController)
 
         # graph of the complete DC network
@@ -46,6 +52,8 @@ class DCNetwork(Dockernet):
         # start Ryu controller
         self.startRyu()
 
+        # initialize resource model registrar
+        self.rm_registrar = ResourceModelRegistrar(dc_emulation_max_cpu)
 
     def addDatacenter(self, label, metadata={}):
         """
