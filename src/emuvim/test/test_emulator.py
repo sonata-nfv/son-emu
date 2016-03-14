@@ -40,6 +40,7 @@ class testEmulatorTopology( SimpleTestTopology ):
         # stop Mininet network
         self.stopNet()
 
+    @unittest.skip("disabled to test if CI fails because this is the first test.")
     def testMultipleDatacenterDirect(self):
         """
         Create a two data centers and interconnect them.
@@ -82,7 +83,6 @@ class testEmulatorTopology( SimpleTestTopology ):
         assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 5)
-        time.sleep(5)
         # check connectivity by using ping
         assert(self.net.ping([self.h[0], self.h[1]]) <= 0.0)
         # stop Mininet network
