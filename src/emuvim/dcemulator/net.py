@@ -154,9 +154,8 @@ class DCNetwork(Dockernet):
 
     def stop(self):
         # stop Ryu controller
-        self.ryu_process.terminate()
-        #self.ryu_process.kill()
         Dockernet.stop(self)
+        self.stopRyu()
 
     def CLI(self):
         CLI(self)
@@ -218,3 +217,9 @@ class DCNetwork(Dockernet):
         FNULL = open("/tmp/ryu.log", 'w')
         self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
+
+    def stopRyu(self):
+        if self.ryu_process:
+            self.ryu_process.terminate()
+            self.ryu_process.kill()
+
