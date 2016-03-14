@@ -10,6 +10,7 @@ import os
 import uuid
 import hashlib
 import zipfile
+import yaml
 from flask import Flask, request
 import flask_restful as fr
 
@@ -54,8 +55,11 @@ class Service(object):
         self.package_file_hash = package_file_hash
         self.package_file_path = package_file_path
         self.package_content_path = os.path.join(CATALOG_FOLDER, "services/%s" % self.uuid)
+        self.manifest = None
+        self.nsd = None
+        self.vnfds = dict()
+        self.docker_files = dict()
         self.instances = dict()
-        LOG.info("Created service: %r" % self.uuid)
 
     def start_service(self, service_uuid):
         # TODO implement method
@@ -72,7 +76,13 @@ class Service(object):
         # 1. extract the contents of the package and store them in our catalog
         self._unpack_service_package()
         # 2. read in all descriptor files
+        self._load_package_descriptor()
+        self._load_nsd()
+        self._load_vnfd()
+        self._load_docker_files()
         # 3. prepare container images (e.g. download or build Dockerfile)
+
+        LOG.info("On-boarded service: %r" % self.manifest.get("package_name"))
 
     def _unpack_service_package(self):
         """
@@ -80,6 +90,57 @@ class Service(object):
         """
         with zipfile.ZipFile(self.package_file_path, "r") as z:
             z.extractall(self.package_content_path)
+
+    def _load_package_descriptor(self):
+        """
+        Load the main package descriptor YAML and keep it as dict.
+        :return:
+        """
+        self.manifest = load_yaml(
+            os.path.join(
+                self.package_content_path, "META-INF/MANIFEST.MF"))
+
+    def _load_nsd(self):
+        """
+        Load the entry NSD YAML and keep it as dict.
+        :return:
+        """
+        if "entry_service_template" in self.manifest:
+            nsd_path = os.path.join(
+                self.package_content_path,
+                make_relative_path(self.manifest.get("entry_service_template")))
+            self.nsd = load_yaml(nsd_path)
+            LOG.debug("Loaded NSD: %r" % self.nsd.get("ns_name"))
+
+    def _load_vnfd(self):
+        """
+        Load all VNFD YAML files referenced in MANIFEST.MF and keep them in dict.
+        :return:
+        """
+        if "package_content" in self.manifest:
+            for pc in self.manifest.get("package_content"):
+                if pc.get("content-type") == "application/sonata.function_descriptor":
+                    vnfd_path = os.path.join(
+                        self.package_content_path,
+                        make_relative_path(pc.get("name")))
+                    vnfd = load_yaml(vnfd_path)
+                    self.vnfds[vnfd.get("vnf_name")] = vnfd
+                    LOG.debug("Loaded VNFD: %r" % vnfd.get("vnf_name"))
+
+    def _load_docker_files(self):
+        """
+        Get all paths to Dockerfiles from MANIFEST.MF and store them in dict.
+        :return:
+        """
+        if "package_content" in self.manifest:
+            for df in self.manifest.get("package_content"):
+                if df.get("content-type") == "application/sonata.docker_files":
+                    docker_path = os.path.join(
+                        self.package_content_path,
+                        make_relative_path(df.get("name")))
+                    # FIXME: Mapping to docker image names is hardcoded because of the missing mapping in the example package
+                    self.docker_files[helper_map_docker_name(df.get("name"))] = docker_path
+                    LOG.debug("Found Dockerfile: %r" % docker_path)
 
     def _build_images_from_dockerfile(self):
         pass
@@ -177,7 +238,36 @@ def start_rest_api(host, port):
 
 def ensure_dir(name):
     if not os.path.exists(name):
-       os.makedirs(name)
+        os.makedirs(name)
+
+
+def load_yaml(path):
+    with open(path, "r") as f:
+        try:
+            r = yaml.load(f)
+        except yaml.YAMLError as exc:
+            LOG.exception("YAML parse error")
+            r = dict()
+    return r
+
+
+def make_relative_path(path):
+    if path.startswith("/"):
+        return path.replace("/", "", 1)
+    return path
+
+
+def helper_map_docker_name(name):
+    """
+    Quick hack to fix missing dependency in example package.
+    """
+    # TODO remove this when package description is fixed
+    mapping = {
+        "/docker_files/iperf/Dockerfile": "iperf_docker",
+        "/docker_files/firewall/Dockerfile": "fw_docker",
+        "/docker_files/tcpdump/Dockerfile": "tcpdump_docker"
+    }
+    return mapping.get(name)
 
 
 if __name__ == '__main__':
