@@ -8,6 +8,9 @@ LOG.setLevel(logging.DEBUG)
 
 
 class ResourceModelRegistrar(object):
+    """
+    Global registry to keep track of all existing resource models.
+    """
 
     def __init__(self, dc_emulation_max_cpu):
         self.e_cpu = dc_emulation_max_cpu
@@ -16,15 +19,17 @@ class ResourceModelRegistrar(object):
         LOG.info("Resource model registrar created with dc_emulation_max_cpu=%r" % dc_emulation_max_cpu)
 
     def register(self, dc, rm):
+        """
+        Register a new resource model.
+        :param dc: Data center to which it is assigned.
+        :param rm: The resource model object.
+        :return: None
+        """
         if dc in self._resource_models:
             raise Exception("There is already an resource model assigned to this DC.")
         self._resource_models[dc] = rm
         rm.registrar = self
         LOG.info("Registrar: Added resource model: %r" % rm)
-
-    @property
-    def num_models(self):
-        return len(self._resource_models)
 
     @property
     def resource_models(self):
@@ -52,16 +57,19 @@ class BaseResourceModel(object):
     """
 
     def __init__(self):
-        self._flavors=dict()
+        self._flavors = dict()
         self._initDefaultFlavors()
         self.registrar = None  # pointer to registrar
+        self.allocated_compute_instances = dict()
         LOG.info("Resource model %r initialized" % self)
 
     def __repr__(self):
         return self.__class__.__name__
 
     def _initDefaultFlavors(self):
-        # initialize some default flavours (inspired by OpenStack)
+        """
+        initialize some default flavours (naming/sizes inspired by OpenStack)
+        """
         self.addFlavour(ResourceFlavor(
             "tiny",  {"compute": 1, "memory": 32, "disk": 1}))
         self.addFlavour(ResourceFlavor(
@@ -91,6 +99,7 @@ class BaseResourceModel(object):
         :return: 3-tuple: (CPU-fraction, Mem-limit, Disk-limit)
         """
         LOG.warning("Allocating in BaseResourceModel: %r with flavor: %r" % (name, flavor_name))
+        self.allocated_compute_instances[name] = flavor_name
         return -1.0, -1.0, -1.0  # return invalid values to indicate that this RM is a dummy
 
     def free(self, name):
@@ -100,4 +109,5 @@ class BaseResourceModel(object):
         :return: True/False
         """
         LOG.warning("Free in BaseResourceModel: %r" % name)
+        del self.allocated_compute_instances[name]
         return True
