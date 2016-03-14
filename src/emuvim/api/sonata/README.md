@@ -2,13 +2,13 @@
 
 ## Upload a package (*.son) file:
 
-To upload the file `simplest-example.son` do:
+To upload the file `sonata-demo.son` (from son-schema repo) do:
 
-* `curl -i -X POST -F file=@simplest-example.son http://127.0.0.1:8000/api/packages/uploads`
+* `curl -i -X POST -F file=@sonata-demo.son http://127.0.0.1:8000/api/packages`
 
 To list all uploaded packages do:
 
-* `curl http://127.0.0.1:8000/api/packages/uploads`
+* `curl http://127.0.0.1:8000/api/packages`
 
 To instantiate (start) a service do:
 
@@ -37,14 +37,14 @@ _Note: This API should converge to the API of the original GK as much as possibl
 <th>Response:</th>
 </tr>
 <tr>
-<td>/api/packages/uploads</td>
+<td>/api/packages</td>
 <td>POST</td>
 <td>-</td>
 <td>{file-content} as enctype=multipart/form-data</td>
 <td>{"service_uuid": "c880aaab-f3b9-43ac-ac6b-3d27b46146b7", size=456, sha1=49ee6468dfa4ecbad440d669b249d523a38651be, error: null}</td>
 </tr>
 <tr>
-<td>/api/packages/uploads</td>
+<td>/api/packages</td>
 <td>GET</td>
 <td>-</td>
 <td></td>

@@ -9,10 +9,12 @@ import logging
 import os
 import uuid
 import hashlib
-import json
+import zipfile
 from flask import Flask, request
 import flask_restful as fr
 
+LOG = logging.getLogger("sonata-dummy-gatekeeper")
+LOG.setLevel(logging.DEBUG)
 logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 
@@ -23,14 +25,37 @@ CATALOG_FOLDER = "/tmp/son-dummy-gk/catalog/"
 class Gatekeeper(object):
 
     def __init__(self):
-        self.packages = dict()
-        self.instantiations = dict()
-        logging.info("Create SONATA dummy gatekeeper.")
+        self.services = dict()
+        LOG.info("Create SONATA dummy gatekeeper.")
 
-    def unpack_service_package(self, service_uuid):
-        # TODO implement method
-        # 1. unzip *.son file and store contents in CATALOG_FOLDER/services/<service_uuid>/
-        pass
+    def register_service_package(self, service_uuid, service):
+        """
+        register new service package
+        :param service_uuid
+        :param service object
+        """
+        self.services[service_uuid] = service
+        # lets perform all steps needed to onboard the service
+        service.onboard()
+
+
+class Service(object):
+    """
+    This class represents a NS uploaded as a *.son package to the
+    dummy gatekeeper.
+    Can have multiple running instances of this service.
+    """
+
+    def __init__(self,
+                 service_uuid,
+                 package_file_hash,
+                 package_file_path):
+        self.uuid = service_uuid
+        self.package_file_hash = package_file_hash
+        self.package_file_path = package_file_path
+        self.package_content_path = os.path.join(CATALOG_FOLDER, "services/%s" % self.uuid)
+        self.instances = dict()
+        LOG.info("Created service: %r" % self.uuid)
 
     def start_service(self, service_uuid):
         # TODO implement method
@@ -38,6 +63,27 @@ class Gatekeeper(object):
         # 2. do the corresponding dc.startCompute(name="foobar") calls
         # 3. store references to the compute objects in self.instantiations
         pass
+
+    def onboard(self):
+        """
+        Do all steps to prepare this service to be instantiated
+        :return:
+        """
+        # 1. extract the contents of the package and store them in our catalog
+        self._unpack_service_package()
+        # 2. read in all descriptor files
+        # 3. prepare container images (e.g. download or build Dockerfile)
+
+    def _unpack_service_package(self):
+        """
+        unzip *.son file and store contents in CATALOG_FOLDER/services/<service_uuid>/
+        """
+        with zipfile.ZipFile(self.package_file_path, "r") as z:
+            z.extractall(self.package_content_path)
+
+    def _build_images_from_dockerfile(self):
+        pass
+        # TODO implement
 
 
 """
@@ -56,22 +102,23 @@ class Packages(fr.Resource):
         """
         try:
             # get file contents
-            file = request.files['file']
+            son_file = request.files['file']
             # generate a uuid to reference this package
             service_uuid = str(uuid.uuid4())
-            hash = hashlib.sha1(str(file)).hexdigest()
+            file_hash = hashlib.sha1(str(son_file)).hexdigest()
             # ensure that upload folder exists
             ensure_dir(UPLOAD_FOLDER)
             upload_path = os.path.join(UPLOAD_FOLDER, "%s.son" % service_uuid)
             # store *.son file to disk
-            file.save(upload_path)
+            son_file.save(upload_path)
             size = os.path.getsize(upload_path)
-            # store a reference to the uploaded package in our gatekeeper
-            GK.packages[service_uuid] = upload_path
+            # create a service object and register it
+            s = Service(service_uuid, file_hash, upload_path)
+            GK.register_service_package(service_uuid, s)
             # generate the JSON result
-            return {"service_uuid": service_uuid, "size": size, "sha1": hash, "error": None}
+            return {"service_uuid": service_uuid, "size": size, "sha1": file_hash, "error": None}
         except Exception as ex:
-            logging.exception("Service package upload failed:")
+            LOG.exception("Service package upload failed:")
             return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed"}
 
     def get(self):
@@ -79,7 +126,7 @@ class Packages(fr.Resource):
         Return a list of UUID's of uploaded service packages.
         :return: dict/list
         """
-        return {"service_uuid_list": list(GK.packages.iterkeys())}
+        return {"service_uuid_list": list(GK.services.iterkeys())}
 
 
 class Instantiations(fr.Resource):
@@ -95,8 +142,7 @@ class Instantiations(fr.Resource):
         service_uuid = json_data.get("service_uuid")
         if service_uuid is not None:
             service_instance_uuid = str(uuid.uuid4())
-            GK.instantiations[service_instance_uuid] = service_uuid
-            logging.info("Starting service %r" % service_uuid)
+            LOG.info("Starting service %r" % service_uuid)
             return {"service_instance_uuid": service_instance_uuid}
         return None
 
@@ -106,7 +152,8 @@ class Instantiations(fr.Resource):
         :return: dict / list
         """
         # TODO implement method
-        return {"service_instance_uuid_list": list(GK.instantiations.iterkeys())}
+        return {"service_instance_uuid_list": list()}
+
 
 # create a single, global GK object
 GK = Gatekeeper()
@@ -115,7 +162,7 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
 api = fr.Api(app)
 # define endpoints
-api.add_resource(Packages, '/api/packages/uploads')
+api.add_resource(Packages, '/api/packages')
 api.add_resource(Instantiations, '/api/instantiations')
 
 
