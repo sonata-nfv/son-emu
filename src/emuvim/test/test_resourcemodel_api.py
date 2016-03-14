@@ -35,7 +35,7 @@ class testResourceModel(SimpleTestTopology):
         assert(len(self.net.switches) == 1)
         # check resource model and resource model registrar
         assert(self.dc[0]._resource_model is not None)
-        assert(self.net.rm_registrar.num_models == 1)
+        assert(len(self.net.rm_registrar.resource_models) == 1)
 
         # check if alloc was called during startCompute
         assert(len(r.allocated_compute_instances) == 0)
