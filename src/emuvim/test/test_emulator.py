@@ -6,6 +6,7 @@ Python API.
 Does not test API endpoints. This is done in separated test suites.
 """
 
+import time
 import unittest
 from emuvim.dcemulator.node import EmulatorCompute
 from emuvim.test.base import SimpleTestTopology
@@ -55,6 +56,7 @@ class testEmulatorTopology( SimpleTestTopology ):
         assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 2)
+        time.sleep(5)
         # check connectivity by using ping
         assert(self.net.ping([self.h[0], self.h[1]]) <= 0.0)
         # stop Mininet network
@@ -80,6 +82,7 @@ class testEmulatorTopology( SimpleTestTopology ):
         assert(len(self.getDockernetContainers()) == 0)
         assert(len(self.net.hosts) == 2)
         assert(len(self.net.switches) == 5)
+        time.sleep(5)
         # check connectivity by using ping
         assert(self.net.ping([self.h[0], self.h[1]]) <= 0.0)
         # stop Mininet network
