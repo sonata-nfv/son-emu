@@ -28,7 +28,7 @@ class Gatekeeper(object):
 
     def __init__(self):
         self.services = dict()
-        self.dcs = list()
+        self.dcs = dict()
         LOG.info("Create SONATA dummy gatekeeper.")
 
     def register_service_package(self, service_uuid, service):
@@ -63,19 +63,6 @@ class Service(object):
         self.local_docker_files = dict()
         self.instances = dict()
 
-    def start_service(self):
-        # TODO implement method
-        instance_uuid = str(uuid.uuid4())
-        # 1. parse descriptors and get name of each docker container
-        for vnfd in self.vnfds.itervalues():
-            for u in vnfd.get("virtual_deployment_units"):
-                docker_name = u.get("vm_image")
-                # 2. do the corresponding dc.startCompute(name="foobar") calls
-                print "start %r" % docker_name
-                print "available dcs: %r " % GK.dcs
-                # 3. store references to the compute objects in self.instantiations
-        return instance_uuid
-
     def onboard(self):
         """
         Do all steps to prepare this service to be instantiated
@@ -93,6 +80,21 @@ class Service(object):
         self._download_predefined_dockerimages()
 
         LOG.info("On-boarded service: %r" % self.manifest.get("package_name"))
+
+    def start_service(self):
+        # TODO implement method
+        # each service instance gets a new uuid to identify it
+        instance_uuid = str(uuid.uuid4())
+        # compute placement of this service instance (adds DC names to VNFDs)
+        self._calculate_placement(FirstDcPlacement)
+        # 1. parse descriptors and get name of each docker container
+        for vnfd in self.vnfds.itervalues():
+            for u in vnfd.get("virtual_deployment_units"):
+                docker_name = u.get("vm_image")
+                # 2. do the corresponding dc.startCompute(name="foobar") calls
+                print "start %r" % docker_name
+                # 3. store references to the compute objects in self.instantiations
+        return instance_uuid
 
     def _unpack_service_package(self):
         """
@@ -169,6 +171,36 @@ class Service(object):
         """
         # TODO implement
         pass
+
+    def _calculate_placement(self, algorithm):
+        """
+        Do placement by adding the a field "dc" to
+        each VNFD that points to one of our
+        data center objects known to the gatekeeper.
+        """
+        assert(len(self.vnfds) > 0)
+        assert(len(GK.dcs) > 0)
+        # instantiate algorithm an place
+        p = algorithm()
+        p.place(self.nsd, self.vnfds, GK.dcs)
+        LOG.info("Using placement algorithm: %r" % p.__class__.__name__)
+        # lets print the placement result
+        for name, vnfd in self.vnfds.iteritems():
+            LOG.info("Placed VNF %r on DC %r" % (name, str(vnfd.get("dc"))))
+
+
+"""
+Some (simple) placement algorithms
+"""
+
+
+class FirstDcPlacement(object):
+    """
+    Placement: Always use one and the same data center from the GK.dcs dict.
+    """
+    def place(self, nsd, vnfds, dcs):
+        for name, vnfd in vnfds.iteritems():
+            vnfd["dc"] = list(dcs.itervalues())[0]
 
 
 """
@@ -252,7 +284,7 @@ api.add_resource(Packages, '/api/packages')
 api.add_resource(Instantiations, '/api/instantiations')
 
 
-def start_rest_api(host, port, datacenters=list()):
+def start_rest_api(host, port, datacenters=dict()):
     GK.dcs = datacenters
     # start the Flask server (not the best performance but ok for our use case)
     app.run(host=host,
