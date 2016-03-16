@@ -288,9 +288,17 @@ class Instantiations(fr.Resource):
         Will return a new UUID to identify the running service instance.
         :return: UUID
         """
+        # try to extract the service uuid from the request
         json_data = request.get_json(force=True)
-        service_uuid = list(GK.services.iterkeys())[0] #json_data.get("service_uuid") # TODO only for quick testing
+        service_uuid = json_data.get("service_uuid")
+
+        # lets be a bit fuzzy here to make testing easier
+        if service_uuid is None and len(GK.services) > 0:
+            # if we don't get a service uuid, we simple start the first service in the list
+            service_uuid = list(GK.services.iterkeys())[0]
+
         if service_uuid in GK.services:
+            # ok, we have a service uuid, lets start the service
             service_instance_uuid = GK.services.get(service_uuid).start_service()
             return {"service_instance_uuid": service_instance_uuid}
         return "Service not found", 404
@@ -300,8 +308,8 @@ class Instantiations(fr.Resource):
         Returns a list of UUIDs containing all running services.
         :return: dict / list
         """
-        # TODO implement method
-        return {"service_instance_uuid_list": list()}
+        return {"service_instance_list": [
+            list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
 
 
 # create a single, global GK object
