@@ -195,12 +195,16 @@ class Service(object):
         """
         If the package contains URLs to pre-build Docker images, we download them with this method.
         """
-        # TODO implement
+        # TODO implement this if we want to be able to download docker images instead of building them
         pass
 
     def _check_docker_image_exists(self, image_name):
-        # TODO implement
-        return True
+        """
+        Query the docker service and check if the given image exists
+        :param image_name: name of the docker image
+        :return:
+        """
+        return len(DockerClient().images(image_name)) > 0
 
     def _calculate_placement(self, algorithm):
         """
@@ -284,7 +288,6 @@ class Instantiations(fr.Resource):
         Will return a new UUID to identify the running service instance.
         :return: UUID
         """
-        # TODO implement method (start real service)
         json_data = request.get_json(force=True)
         service_uuid = list(GK.services.iterkeys())[0] #json_data.get("service_uuid") # TODO only for quick testing
         if service_uuid in GK.services:
@@ -347,7 +350,7 @@ def helper_map_docker_name(name):
     """
     Quick hack to fix missing dependency in example package.
     """
-    # TODO remove this when package description is fixed
+    # FIXME remove this when package description is fixed
     mapping = {
         "/docker_files/iperf/Dockerfile": "iperf_docker",
         "/docker_files/firewall/Dockerfile": "fw_docker",
