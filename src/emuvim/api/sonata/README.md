@@ -1,5 +1,10 @@
 # SONATA dummy gatekeeper API:
 
+## Run emulator example with active SONATA dummy gatekeeper:
+The example starts a small network with two data centers.
+
+* `sudo python src/emuvim/examples/sonata_y1_demo_topology_1.py`
+
 ## Upload a package (*.son) file:
 
 To upload the file `sonata-demo.son` (from son-schema repo) do:
@@ -76,10 +81,7 @@ _Note: This API should converge to the API of the original GK as much as possibl
 </tr>
 </table>
 
-## Run REST API as part of the emulator:
-
-* `sudo python src/emuvim/examples/sonata_y1_demo_topology_1.py`
 
 ## Run REST API in standalone mode (without emulator):
-
+This is not working yet!!!
 * `sudo python src/emuvim/api/sonata/dummygatekeeper.py`
