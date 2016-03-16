@@ -28,6 +28,7 @@ class Gatekeeper(object):
 
     def __init__(self):
         self.services = dict()
+        self.dcs = list()
         LOG.info("Create SONATA dummy gatekeeper.")
 
     def register_service_package(self, service_uuid, service):
@@ -62,12 +63,18 @@ class Service(object):
         self.local_docker_files = dict()
         self.instances = dict()
 
-    def start_service(self, service_uuid):
+    def start_service(self):
         # TODO implement method
-        # 1. parse descriptors
-        # 2. do the corresponding dc.startCompute(name="foobar") calls
-        # 3. store references to the compute objects in self.instantiations
-        pass
+        instance_uuid = str(uuid.uuid4())
+        # 1. parse descriptors and get name of each docker container
+        for vnfd in self.vnfds.itervalues():
+            for u in vnfd.get("virtual_deployment_units"):
+                docker_name = u.get("vm_image")
+                # 2. do the corresponding dc.startCompute(name="foobar") calls
+                print "start %r" % docker_name
+                print "available dcs: %r " % GK.dcs
+                # 3. store references to the compute objects in self.instantiations
+        return instance_uuid
 
     def onboard(self):
         """
@@ -217,12 +224,13 @@ class Instantiations(fr.Resource):
         """
         # TODO implement method (start real service)
         json_data = request.get_json(force=True)
-        service_uuid = json_data.get("service_uuid")
-        if service_uuid is not None:
-            service_instance_uuid = str(uuid.uuid4())
+        service_uuid = list(GK.services.iterkeys())[0] #json_data.get("service_uuid") # TODO only for quick testing
+        if service_uuid in GK.services:
             LOG.info("Starting service %r" % service_uuid)
+            service_instance_uuid = GK.services.get(service_uuid).start_service()
+            LOG.info("Service started. Instance id: %r" % service_instance_uuid)
             return {"service_instance_uuid": service_instance_uuid}
-        return None
+        return "Service not found", 404
 
     def get(self):
         """
@@ -244,7 +252,8 @@ api.add_resource(Packages, '/api/packages')
 api.add_resource(Instantiations, '/api/instantiations')
 
 
-def start_rest_api(host, port):
+def start_rest_api(host, port, datacenters=list()):
+    GK.dcs = datacenters
     # start the Flask server (not the best performance but ok for our use case)
     app.run(host=host,
             port=port,
