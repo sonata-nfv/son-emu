@@ -28,12 +28,16 @@ class SimpleTestTopology(unittest.TestCase):
     def createNet(
             self,
             nswitches=0, ndatacenter=0, nhosts=0, ndockers=0,
-            autolinkswitches=False):
+            autolinkswitches=False, controller=Controller):
         """
         Creates a Mininet instance and automatically adds some
         nodes to it.
+
+        Attention, we should always use Mininet's default controller
+        for our tests. Only use other controllers if you want to test
+        specific controller functionality.
         """
-        self.net = DCNetwork()
+        self.net = DCNetwork(controller=controller)
 
         # add some switches
         for i in range(0, nswitches):

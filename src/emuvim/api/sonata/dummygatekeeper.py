@@ -28,6 +28,8 @@ class Gatekeeper(object):
 
     def __init__(self):
         self.services = dict()
+        self.dcs = dict()
+        self.vnf_counter = 0  # used to generate short names for VNFs (Mininet limitation)
         LOG.info("Create SONATA dummy gatekeeper.")
 
     def register_service_package(self, service_uuid, service):
@@ -39,6 +41,10 @@ class Gatekeeper(object):
         self.services[service_uuid] = service
         # lets perform all steps needed to onboard the service
         service.onboard()
+
+    def get_next_vnf_name(self):
+        self.vnf_counter += 1
+        return "sonvnf%d" % self.vnf_counter
 
 
 class Service(object):
@@ -62,13 +68,6 @@ class Service(object):
         self.local_docker_files = dict()
         self.instances = dict()
 
-    def start_service(self, service_uuid):
-        # TODO implement method
-        # 1. parse descriptors
-        # 2. do the corresponding dc.startCompute(name="foobar") calls
-        # 3. store references to the compute objects in self.instantiations
-        pass
-
     def onboard(self):
         """
         Do all steps to prepare this service to be instantiated
@@ -86,6 +85,42 @@ class Service(object):
         self._download_predefined_dockerimages()
 
         LOG.info("On-boarded service: %r" % self.manifest.get("package_name"))
+
+    def start_service(self):
+        """
+        This methods creates and starts a new service instance.
+        It computes placements, iterates over all VNFDs, and starts
+        each VNFD as a Docker container in the data center selected
+        by the placement algorithm.
+        :return:
+        """
+        LOG.info("Starting service %r" % self.uuid)
+        # 1. each service instance gets a new uuid to identify it
+        instance_uuid = str(uuid.uuid4())
+        # build a instances dict (a bit like a NSR :))
+        self.instances[instance_uuid] = dict()
+        self.instances[instance_uuid]["vnf_instances"] = list()
+        # 2. compute placement of this service instance (adds DC names to VNFDs)
+        self._calculate_placement(FirstDcPlacement)
+        # iterate over all vnfds that we have to start
+        for vnfd in self.vnfds.itervalues():
+            # iterate over all deployment units within each VNFDs
+            for u in vnfd.get("virtual_deployment_units"):
+                # 3. get the name of the docker image to start and the assigned DC
+                docker_name = u.get("vm_image")
+                target_dc = vnfd.get("dc")
+                # 4. perform some checks to ensure we can start the container
+                assert(docker_name is not None)
+                assert(target_dc is not None)
+                if not self._check_docker_image_exists(docker_name):
+                    raise Exception("Docker image %r not found. Abort." % docker_name)
+                # 5. do the dc.startCompute(name="foobar") call to run the container
+                # TODO consider flavors, and other annotations
+                vnfi = target_dc.startCompute(GK.get_next_vnf_name(), image=docker_name, flavor_name="small")
+                # 6. store references to the compute objects in self.instances
+                self.instances[instance_uuid]["vnf_instances"].append(vnfi)
+        LOG.info("Service started. Instance id: %r" % instance_uuid)
+        return instance_uuid
 
     def _unpack_service_package(self):
         """
@@ -160,8 +195,46 @@ class Service(object):
         """
         If the package contains URLs to pre-build Docker images, we download them with this method.
         """
-        # TODO implement
+        # TODO implement this if we want to be able to download docker images instead of building them
         pass
+
+    def _check_docker_image_exists(self, image_name):
+        """
+        Query the docker service and check if the given image exists
+        :param image_name: name of the docker image
+        :return:
+        """
+        return len(DockerClient().images(image_name)) > 0
+
+    def _calculate_placement(self, algorithm):
+        """
+        Do placement by adding the a field "dc" to
+        each VNFD that points to one of our
+        data center objects known to the gatekeeper.
+        """
+        assert(len(self.vnfds) > 0)
+        assert(len(GK.dcs) > 0)
+        # instantiate algorithm an place
+        p = algorithm()
+        p.place(self.nsd, self.vnfds, GK.dcs)
+        LOG.info("Using placement algorithm: %r" % p.__class__.__name__)
+        # lets print the placement result
+        for name, vnfd in self.vnfds.iteritems():
+            LOG.info("Placed VNF %r on DC %r" % (name, str(vnfd.get("dc"))))
+
+
+"""
+Some (simple) placement algorithms
+"""
+
+
+class FirstDcPlacement(object):
+    """
+    Placement: Always use one and the same data center from the GK.dcs dict.
+    """
+    def place(self, nsd, vnfds, dcs):
+        for name, vnfd in vnfds.iteritems():
+            vnfd["dc"] = list(dcs.itervalues())[0]
 
 
 """
@@ -215,22 +288,28 @@ class Instantiations(fr.Resource):
         Will return a new UUID to identify the running service instance.
         :return: UUID
         """
-        # TODO implement method (start real service)
+        # try to extract the service uuid from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
-        if service_uuid is not None:
-            service_instance_uuid = str(uuid.uuid4())
-            LOG.info("Starting service %r" % service_uuid)
+
+        # lets be a bit fuzzy here to make testing easier
+        if service_uuid is None and len(GK.services) > 0:
+            # if we don't get a service uuid, we simple start the first service in the list
+            service_uuid = list(GK.services.iterkeys())[0]
+
+        if service_uuid in GK.services:
+            # ok, we have a service uuid, lets start the service
+            service_instance_uuid = GK.services.get(service_uuid).start_service()
             return {"service_instance_uuid": service_instance_uuid}
-        return None
+        return "Service not found", 404
 
     def get(self):
         """
         Returns a list of UUIDs containing all running services.
         :return: dict / list
         """
-        # TODO implement method
-        return {"service_instance_uuid_list": list()}
+        return {"service_instance_list": [
+            list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
 
 
 # create a single, global GK object
@@ -244,7 +323,8 @@ api.add_resource(Packages, '/api/packages')
 api.add_resource(Instantiations, '/api/instantiations')
 
 
-def start_rest_api(host, port):
+def start_rest_api(host, port, datacenters=dict()):
+    GK.dcs = datacenters
     # start the Flask server (not the best performance but ok for our use case)
     app.run(host=host,
             port=port,
@@ -278,7 +358,7 @@ def helper_map_docker_name(name):
     """
     Quick hack to fix missing dependency in example package.
     """
-    # TODO remove this when package description is fixed
+    # FIXME remove this when package description is fixed
     mapping = {
         "/docker_files/iperf/Dockerfile": "iperf_docker",
         "/docker_files/firewall/Dockerfile": "fw_docker",
