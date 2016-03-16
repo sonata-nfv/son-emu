@@ -29,6 +29,7 @@ class Gatekeeper(object):
     def __init__(self):
         self.services = dict()
         self.dcs = dict()
+        self.vnf_counter = 0  # used to generate short names for VNFs (Mininet limitation)
         LOG.info("Create SONATA dummy gatekeeper.")
 
     def register_service_package(self, service_uuid, service):
@@ -40,6 +41,10 @@ class Gatekeeper(object):
         self.services[service_uuid] = service
         # lets perform all steps needed to onboard the service
         service.onboard()
+
+    def get_next_vnf_name(self):
+        self.vnf_counter += 1
+        return "sonvnf%d" % self.vnf_counter
 
 
 class Service(object):
@@ -82,18 +87,39 @@ class Service(object):
         LOG.info("On-boarded service: %r" % self.manifest.get("package_name"))
 
     def start_service(self):
-        # TODO implement method
-        # each service instance gets a new uuid to identify it
+        """
+        This methods creates and starts a new service instance.
+        It computes placements, iterates over all VNFDs, and starts
+        each VNFD as a Docker container in the data center selected
+        by the placement algorithm.
+        :return:
+        """
+        LOG.info("Starting service %r" % self.uuid)
+        # 1. each service instance gets a new uuid to identify it
         instance_uuid = str(uuid.uuid4())
-        # compute placement of this service instance (adds DC names to VNFDs)
+        # build a instances dict (a bit like a NSR :))
+        self.instances[instance_uuid] = dict()
+        self.instances[instance_uuid]["vnf_instances"] = list()
+        # 2. compute placement of this service instance (adds DC names to VNFDs)
         self._calculate_placement(FirstDcPlacement)
-        # 1. parse descriptors and get name of each docker container
+        # iterate over all vnfds that we have to start
         for vnfd in self.vnfds.itervalues():
+            # iterate over all deployment units within each VNFDs
             for u in vnfd.get("virtual_deployment_units"):
+                # 3. get the name of the docker image to start and the assigned DC
                 docker_name = u.get("vm_image")
-                # 2. do the corresponding dc.startCompute(name="foobar") calls
-                print "start %r" % docker_name
-                # 3. store references to the compute objects in self.instantiations
+                target_dc = vnfd.get("dc")
+                # 4. perform some checks to ensure we can start the container
+                assert(docker_name is not None)
+                assert(target_dc is not None)
+                if not self._check_docker_image_exists(docker_name):
+                    raise Exception("Docker image %r not found. Abort." % docker_name)
+                # 5. do the dc.startCompute(name="foobar") call to run the container
+                # TODO consider flavors, and other annotations
+                vnfi = target_dc.startCompute(GK.get_next_vnf_name(), image=docker_name, flavor_name="small")
+                # 6. store references to the compute objects in self.instances
+                self.instances[instance_uuid]["vnf_instances"].append(vnfi)
+        LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
 
     def _unpack_service_package(self):
@@ -171,6 +197,10 @@ class Service(object):
         """
         # TODO implement
         pass
+
+    def _check_docker_image_exists(self, image_name):
+        # TODO implement
+        return True
 
     def _calculate_placement(self, algorithm):
         """
@@ -258,9 +288,7 @@ class Instantiations(fr.Resource):
         json_data = request.get_json(force=True)
         service_uuid = list(GK.services.iterkeys())[0] #json_data.get("service_uuid") # TODO only for quick testing
         if service_uuid in GK.services:
-            LOG.info("Starting service %r" % service_uuid)
             service_instance_uuid = GK.services.get(service_uuid).start_service()
-            LOG.info("Service started. Instance id: %r" % service_instance_uuid)
             return {"service_instance_uuid": service_instance_uuid}
         return "Service not found", 404
 
