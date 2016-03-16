@@ -6,6 +6,9 @@ from mininet.node import Docker
 from mininet.link import Link
 import logging
 
+LOG = logging.getLogger("dcemulator")
+LOG.setLevel(logging.DEBUG)
+
 
 DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
 
@@ -21,10 +24,9 @@ class EmulatorCompute(Docker):
 
     def __init__(
             self, name, dimage, **kwargs):
-        logging.debug("Create EmulatorCompute instance: %s" % name)
         self.datacenter = kwargs.get("datacenter")  # pointer to current DC
         self.flavor_name = kwargs.get("flavor_name")
-
+        LOG.debug("Starting compute instance %r in data center %r" % (name, str(self.datacenter)))
         # call original Docker.__init__
         Docker.__init__(self, name, dimage, **kwargs)
 
@@ -103,7 +105,7 @@ class Datacenter(object):
         """
         self.switch = self.net.addSwitch(
             "%s.s1" % self.name, dpid=hex(self._get_next_dc_dpid())[2:])
-        logging.debug("created data center switch: %s" % str(self.switch))
+        LOG.debug("created data center switch: %s" % str(self.switch))
 
     def start(self):
         pass
@@ -138,7 +140,7 @@ class Datacenter(object):
         if self._resource_model is not None:
             # TODO pass resource limits to new container (cf. Dockernet API) Issue #47
             (cpu_limit, mem_limit, disk_limit) = alloc = self._resource_model.allocate(name, flavor_name)
-            logging.info("Allocation result: %r" % str(alloc))
+            LOG.debug("Allocation result: %r" % str(alloc))
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
@@ -194,5 +196,5 @@ class Datacenter(object):
             raise Exception("There is already an resource model assigned to this DC.")
         self._resource_model = rm
         self.net.rm_registrar.register(self, rm)
-        logging.info("Assigned RM: %r to DC: %r" % (rm, self))
+        LOG.info("Assigned RM: %r to DC: %r" % (rm, self))
 

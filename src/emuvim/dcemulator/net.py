@@ -40,10 +40,13 @@ class DCNetwork(Dockernet):
         Dockernet.__init__(
             self, switch=OVSKernelSwitch, **kwargs)
 
-        # start Ryu controller
-        self.startRyu()
+        # Ryu management
+        self.ryu_process = None
+        if controller == RemoteController:
+            # start Ryu controller
+            self.startRyu()
 
-        # add a remote controller to be able to use Ryu
+        # add the specified controller
         self.addController('c0', controller=controller)
 
         # graph of the complete DC network
@@ -208,18 +211,18 @@ class DCNetwork(Dockernet):
         # start Ryu controller with rest-API
         python_install_path = site.getsitepackages()[0]
         ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
-        ryu_path2 =  python_install_path + '/ryu/app/ofctl_rest.py'
+        ryu_path2 = python_install_path + '/ryu/app/ofctl_rest.py'
         # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
         # Ryu still uses 6633 as default
         ryu_option = '--ofp-tcp-listen-port'
         ryu_of_port = '6653'
-        ryu_cmd =  'ryu-manager'
+        ryu_cmd = 'ryu-manager'
         FNULL = open("/tmp/ryu.log", 'w')
         self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
     def stopRyu(self):
-        if self.ryu_process:
+        if self.ryu_process is not None:
             self.ryu_process.terminate()
             self.ryu_process.kill()
 

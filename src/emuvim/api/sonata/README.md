@@ -1,5 +1,10 @@
 # SONATA dummy gatekeeper API:
 
+## Run emulator example with active SONATA dummy gatekeeper:
+The example starts a small network with two data centers.
+
+* `sudo python src/emuvim/examples/sonata_y1_demo_topology_1.py`
+
 ## Upload a package (*.son) file:
 
 To upload the file `sonata-demo.son` (from son-schema repo) do:
@@ -12,7 +17,8 @@ To list all uploaded packages do:
 
 To instantiate (start) a service do:
 
-* `curl -X POST http://127.0.0.1:8000/api/instantiations -d "{\"service_uuid\":\"59446b64-f941-40a8-b511-effb0512c21b\"}"`
+* Specific service: `curl -X POST http://127.0.0.1:8000/api/instantiations -d "{\"service_uuid\":\"59446b64-f941-40a8-b511-effb0512c21b\"}"`
+* Last uploaded service (makes manual tests easier): `curl -X POST http://127.0.0.1:8000/api/instantiations -d "{}"`
 
 To list all running services do:
 
@@ -62,14 +68,20 @@ _Note: This API should converge to the API of the original GK as much as possibl
 <td>GET</td>
 <td>-</td>
 <td></td>
-<td>{service_instance_uuid_list: ["de4567-f3b9-43ac-ac6b-3d27b461123", "de4567-f3b9-43ac-ac6b-3d27b461124", "de4567-f3b9-43ac-ac6b-3d27b461125"]}</td>
+<td>
+{
+    "service_instance_list": [
+        [
+            "9da044b3-1f7a-40e6-a9b3-9e83a9834249", 
+            "9371df14-a595-436a-92b5-fc243b74a9d7"
+        ]
+    ]
+}
+</td>
 </tr>
 </table>
 
-## Run REST API as part of the emulator:
-
-* `sudo python src/emuvim/examples/sonata_y1_demo_topology_1.py`
 
 ## Run REST API in standalone mode (without emulator):
-
+This is not working yet!!!
 * `sudo python src/emuvim/api/sonata/dummygatekeeper.py`

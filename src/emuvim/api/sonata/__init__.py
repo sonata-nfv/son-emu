@@ -40,4 +40,4 @@ class SonataDummyGatekeeperEndpoint(object):
         logging.debug("Started API endpoint %s" % self)
 
     def _api_server_thread(self):
-        dgk.start_rest_api(self.ip, self.port)
+        dgk.start_rest_api(self.ip, self.port, self.dcs)
