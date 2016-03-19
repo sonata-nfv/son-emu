@@ -137,17 +137,37 @@ class Datacenter(object):
                 network.append({})
 
         # allocate in resource resource model and compute resource limits for new container
+        cpu_limit = mem_limit = disk_limit = -1
+        cpu_period = cpu_quota = None
         if self._resource_model is not None:
-            # TODO pass resource limits to new container (cf. Dockernet API) Issue #47
+            # call allocate in resource model to calculate resource limit for this container
             (cpu_limit, mem_limit, disk_limit) = alloc = self._resource_model.allocate(name, flavor_name)
             LOG.debug("Allocation result: %r" % str(alloc))
+            # check if we have a cpu_limit given by the used resource model
+            if cpu_limit > 0:
+                # calculate cpu period and quota for CFS
+                # (see: https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
+                # TODO consider multi core machines etc! non trivial!
+                # Attention minimum cpu_quota is 1ms (micro)
+                cpu_period = 100000  # lets consider a fixed period of 100000 microseconds for now
+                cpu_quota = cpu_period * cpu_limit  # calculate the fraction of cpu time for this container
+                LOG.debug(
+                    "CPU limit: cpu_quota = cpu_period * cpu_limit = %f * %f = %f" % (cpu_period, cpu_limit, cpu_quota))
+                # ATTENTION >= 1000 to avoid a invalid argument system error ... no idea why
+                if cpu_quota < 1000:
+                    cpu_quota = 1000
+                    LOG.warning("Increased CPU quota for %d to avoid system error." % name)
+            # TODO add memory and disc limitations
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
             dimage=image,
             dcmd=command,
             datacenter=self,
-            flavor_name=flavor_name)
+            flavor_name=flavor_name,
+            cpu_period=int(cpu_period) if cpu_limit > 0 else None,  # set cpu limits if needed
+            cpu_quota=int(cpu_quota) if cpu_limit > 0 else None,
+        )
         # connect all given networks
         for nw in network:
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
