@@ -29,11 +29,24 @@ class ResourceModelRegistrar(object):
             raise Exception("There is already an resource model assigned to this DC.")
         self._resource_models[dc] = rm
         rm.registrar = self
+        rm.dcs.append(dc)
         LOG.info("Registrar: Added resource model: %r" % rm)
 
     @property
     def resource_models(self):
+        """
+        List of registered resource models
+        :return:
+        """
         return list(self._resource_models.itervalues())
+
+    @property
+    def num_dcs_with_rms(self):
+        """
+        Total number of data centers that are connected to a resource model
+        :return:
+        """
+        return sum([len(rm.dcs) for rm in list(self._resource_models.itervalues())])
 
 
 class ResourceFlavor(object):
@@ -60,6 +73,7 @@ class BaseResourceModel(object):
         self._flavors = dict()
         self._initDefaultFlavors()
         self.registrar = None  # pointer to registrar
+        self.dcs = list()
         self.allocated_compute_instances = dict()
         LOG.info("Resource model %r initialized" % self)
 
