@@ -192,6 +192,11 @@ class Datacenter(object):
         }
 
     def assignResourceModel(self, rm):
+        """
+        Assign a resource model to this DC.
+        :param rm: a BaseResourceModel object
+        :return:
+        """
         if self._resource_model is not None:
             raise Exception("There is already an resource model assigned to this DC.")
         self._resource_model = rm
