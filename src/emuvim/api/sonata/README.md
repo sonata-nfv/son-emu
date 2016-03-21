@@ -1,5 +1,15 @@
 # SONATA dummy gatekeeper API:
 
+## Requirements
+
+* uuid
+* hashlib
+* zipfile
+* yaml
+* docker-py
+* flask
+* flask_restful
+
 ## Run emulator example with active SONATA dummy gatekeeper:
 The example starts a small network with two data centers.
 
@@ -84,4 +94,4 @@ _Note: This API should converge to the API of the original GK as much as possibl
 
 ## Run REST API in standalone mode (without emulator):
 This is not working yet!!!
-* `sudo python src/emuvim/api/sonata/dummygatekeeper.py`
+* `python src/emuvim/api/sonata/dummygatekeeper.py`
