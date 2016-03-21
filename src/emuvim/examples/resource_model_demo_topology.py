@@ -5,10 +5,11 @@ A simple topology to test resource model support.
 import logging
 import time
 from mininet.log import setLogLevel
+from mininet.node import Controller
 from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
-from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcApproxRM
+from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 def create_topology1():
     # create topology
     # use a maximum of 50% cpu time for containers added to data centers
-    net = DCNetwork(dc_emulation_max_cpu=0.5)
+    net = DCNetwork(dc_emulation_max_cpu=0.5, controller=Controller)
     # add some data centers and create a topology
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
@@ -25,8 +26,8 @@ def create_topology1():
     net.addLink(dc2, s1, delay="20ms")
 
     # create and assign resource models for each DC
-    rm1 = UpbSimpleCloudDcApproxRM(max_cu=10, max_mu=1024)
-    rm2 = UpbSimpleCloudDcApproxRM(max_cu=20)
+    rm1 = UpbSimpleCloudDcRM(max_cu=10, max_mu=1024)
+    rm2 = UpbSimpleCloudDcRM(max_cu=20)
     dc1.assignResourceModel(rm1)
     dc2.assignResourceModel(rm2)
 
