@@ -20,9 +20,9 @@ LOG = logging.getLogger("sonata-dummy-gatekeeper")
 LOG.setLevel(logging.DEBUG)
 logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
-
-UPLOAD_FOLDER = "/tmp/son-dummy-gk/uploads/"
-CATALOG_FOLDER = "/tmp/son-dummy-gk/catalog/"
+GK_STORAGE = "/tmp/son-dummy-gk/"
+UPLOAD_FOLDER = os.path.join(GK_STORAGE, "uploads/")
+CATALOG_FOLDER = os.path.join(GK_STORAGE, "catalog/")
 
 # flag to indicate that we run without the emulator (only the bare API for integration testing)
 GK_STANDALONE_MODE = False

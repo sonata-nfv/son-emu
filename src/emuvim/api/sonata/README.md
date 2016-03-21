@@ -10,6 +10,9 @@
 * flask
 * flask_restful
 
+## Run REST API in standalone mode (without emulator):
+* `python src/emuvim/api/sonata/dummygatekeeper.py`
+
 ## Run emulator example with active SONATA dummy gatekeeper:
 The example starts a small network with two data centers.
 
@@ -92,6 +95,10 @@ _Note: This API should converge to the API of the original GK as much as possibl
 </table>
 
 
-## Run REST API in standalone mode (without emulator):
-This is not working yet!!!
-* `python src/emuvim/api/sonata/dummygatekeeper.py`
+
+
+
+## Cleanup
+The dummy GK will store some files in your tmp folder in order to fake "catalogues" and "repositories" etc.
+
+* ` sudo rm -r /tmp/son-dummy-gk/`
