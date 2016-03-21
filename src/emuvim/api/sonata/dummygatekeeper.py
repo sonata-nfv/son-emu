@@ -15,13 +15,17 @@ from docker import Client as DockerClient
 from flask import Flask, request
 import flask_restful as fr
 
+logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
 LOG.setLevel(logging.DEBUG)
 logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
+GK_STORAGE = "/tmp/son-dummy-gk/"
+UPLOAD_FOLDER = os.path.join(GK_STORAGE, "uploads/")
+CATALOG_FOLDER = os.path.join(GK_STORAGE, "catalog/")
 
-UPLOAD_FOLDER = "/tmp/son-dummy-gk/uploads/"
-CATALOG_FOLDER = "/tmp/son-dummy-gk/catalog/"
+# flag to indicate that we run without the emulator (only the bare API for integration testing)
+GK_STANDALONE_MODE = False
 
 
 class Gatekeeper(object):
@@ -44,7 +48,7 @@ class Gatekeeper(object):
 
     def get_next_vnf_name(self):
         self.vnf_counter += 1
-        return "sonvnf%d" % self.vnf_counter
+        return "vnf%d" % self.vnf_counter
 
 
 class Service(object):
@@ -101,26 +105,38 @@ class Service(object):
         self.instances[instance_uuid] = dict()
         self.instances[instance_uuid]["vnf_instances"] = list()
         # 2. compute placement of this service instance (adds DC names to VNFDs)
-        self._calculate_placement(FirstDcPlacement)
+        if not GK_STANDALONE_MODE:
+            self._calculate_placement(FirstDcPlacement)
         # iterate over all vnfds that we have to start
         for vnfd in self.vnfds.itervalues():
-            # iterate over all deployment units within each VNFDs
-            for u in vnfd.get("virtual_deployment_units"):
-                # 3. get the name of the docker image to start and the assigned DC
-                docker_name = u.get("vm_image")
-                target_dc = vnfd.get("dc")
-                # 4. perform some checks to ensure we can start the container
-                assert(docker_name is not None)
-                assert(target_dc is not None)
-                if not self._check_docker_image_exists(docker_name):
-                    raise Exception("Docker image %r not found. Abort." % docker_name)
-                # 5. do the dc.startCompute(name="foobar") call to run the container
-                # TODO consider flavors, and other annotations
-                vnfi = target_dc.startCompute(GK.get_next_vnf_name(), image=docker_name, flavor_name="small")
-                # 6. store references to the compute objects in self.instances
-                self.instances[instance_uuid]["vnf_instances"].append(vnfi)
+            vnfi = None
+            if not GK_STANDALONE_MODE:
+                vnfi = self._start_vnfd(vnfd)
+            self.instances[instance_uuid]["vnf_instances"].append(vnfi)
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
+
+    def _start_vnfd(self, vnfd):
+        """
+        Start a single VNFD of this service
+        :param vnfd: vnfd descriptor dict
+        :return:
+        """
+        # iterate over all deployment units within each VNFDs
+        for u in vnfd.get("virtual_deployment_units"):
+            # 1. get the name of the docker image to start and the assigned DC
+            docker_name = u.get("vm_image")
+            target_dc = vnfd.get("dc")
+            # 2. perform some checks to ensure we can start the container
+            assert(docker_name is not None)
+            assert(target_dc is not None)
+            if not self._check_docker_image_exists(docker_name):
+                raise Exception("Docker image %r not found. Abort." % docker_name)
+            # 3. do the dc.startCompute(name="foobar") call to run the container
+            # TODO consider flavors, and other annotations
+            vnfi = target_dc.startCompute(GK.get_next_vnf_name(), image=docker_name, flavor_name="small")
+            # 6. store references to the compute objects in self.instances
+            return vnfi
 
     def _unpack_service_package(self):
         """
@@ -184,6 +200,8 @@ class Service(object):
         """
         Build Docker images for each local Dockerfile found in the package: self.local_docker_files
         """
+        if GK_STANDALONE_MODE:
+            return  # do not build anything in standalone mode
         dc = DockerClient()
         LOG.info("Building %d Docker images (this may take several minutes) ..." % len(self.local_docker_files))
         for k, v in self.local_docker_files.iteritems():
@@ -371,6 +389,7 @@ if __name__ == '__main__':
     """
     Lets allow to run the API in standalone mode.
     """
+    GK_STANDALONE_MODE = True
     logging.getLogger("werkzeug").setLevel(logging.INFO)
     start_rest_api("0.0.0.0", 8000)
 
