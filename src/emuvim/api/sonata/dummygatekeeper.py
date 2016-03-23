@@ -271,6 +271,7 @@ class Packages(fr.Resource):
         """
         try:
             # get file contents
+            print request.files
             son_file = request.files['file']
             # generate a uuid to reference this package
             service_uuid = str(uuid.uuid4())
