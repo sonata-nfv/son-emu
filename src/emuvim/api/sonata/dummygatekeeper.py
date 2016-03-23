@@ -125,7 +125,7 @@ class Service(object):
         # iterate over all deployment units within each VNFDs
         for u in vnfd.get("virtual_deployment_units"):
             # 1. get the name of the docker image to start and the assigned DC
-            docker_name = u.get("vm_image")
+            docker_name = vnfd.get("vnf_name")
             target_dc = vnfd.get("dc")
             # 2. perform some checks to ensure we can start the container
             assert(docker_name is not None)
@@ -183,17 +183,17 @@ class Service(object):
 
     def _load_docker_files(self):
         """
-        Get all paths to Dockerfiles from MANIFEST.MF and store them in dict.
+        Get all paths to Dockerfiles from VNFDs and store them in dict.
         :return:
         """
-        if "package_content" in self.manifest:
-            for df in self.manifest.get("package_content"):
-                if df.get("content-type") == "application/sonata.docker_files":
+        for k, v in self.vnfds.iteritems():
+            for vu in v.get("virtual_deployment_units"):
+                if vu.get("vm_image_format") == "docker":
+                    vm_image = vu.get("vm_image")
                     docker_path = os.path.join(
                         self.package_content_path,
-                        make_relative_path(df.get("name")))
-                    # FIXME: Mapping to docker image names is hardcoded because of the missing mapping in the example package
-                    self.local_docker_files[helper_map_docker_name(df.get("name"))] = docker_path
+                        make_relative_path(vm_image))
+                    self.local_docker_files[k] = docker_path
                     LOG.debug("Found Dockerfile: %r" % docker_path)
 
     def _build_images_from_dockerfiles(self):
@@ -271,6 +271,7 @@ class Packages(fr.Resource):
         """
         try:
             # get file contents
+            print request.files
             son_file = request.files['file']
             # generate a uuid to reference this package
             service_uuid = str(uuid.uuid4())
@@ -367,22 +368,11 @@ def load_yaml(path):
 
 
 def make_relative_path(path):
+    if path.startswith("file://"):
+        path = path.replace("file://", "", 1)
     if path.startswith("/"):
-        return path.replace("/", "", 1)
+        path = path.replace("/", "", 1)
     return path
-
-
-def helper_map_docker_name(name):
-    """
-    Quick hack to fix missing dependency in example package.
-    """
-    # FIXME remove this when package description is fixed
-    mapping = {
-        "/docker_files/iperf/Dockerfile": "iperf_docker",
-        "/docker_files/firewall/Dockerfile": "fw_docker",
-        "/docker_files/tcpdump/Dockerfile": "tcpdump_docker"
-    }
-    return mapping.get(name)
 
 
 if __name__ == '__main__':
