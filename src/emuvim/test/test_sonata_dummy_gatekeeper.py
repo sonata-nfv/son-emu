@@ -1,5 +1,6 @@
 import time
 import requests
+import os
 from emuvim.test.base import SimpleTestTopology
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
@@ -24,13 +25,19 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.startNet()
         time.sleep(1)
 
-        # TODO download original son package
+        # download example from GitHub
+        print "downloading latest son-demo.son from GitHub"
+        download = requests.get("https://github.com/sonata-nfv/son-schema/blob/master/package-descriptor/examples/sonata-demo.son?raw=true")
+        with open("son-demo.son", 'wb') as f:
+            f.write(download.content)
 
+        print "starting tests"
         # board package
-        files = {"file": open("/home/manuel/Desktop/sonata-demo.son", "rb")}
+        files = {"file": open("son-demo.son", "rb")}
         r = requests.post("http://127.0.0.1:5000/api/packages", files=files)
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json().get("service_uuid") is not None)
+        os.remove("son-demo.son")
 
         # instantiate service
         service_uuid = r.json().get("service_uuid")
