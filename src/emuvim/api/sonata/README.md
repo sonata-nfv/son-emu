@@ -22,20 +22,20 @@ The example starts a small network with two data centers.
 
 To upload the file `sonata-demo.son` (from son-schema repo) do:
 
-* `curl -i -X POST -F file=@sonata-demo.son http://127.0.0.1:8000/api/packages`
+* `curl -i -X POST -F file=@sonata-demo.son http://127.0.0.1:5000/api/packages`
 
 To list all uploaded packages do:
 
-* `curl http://127.0.0.1:8000/api/packages`
+* `curl http://127.0.0.1:5000/api/packages`
 
 To instantiate (start) a service do:
 
-* Specific service: `curl -X POST http://127.0.0.1:8000/api/instantiations -d "{\"service_uuid\":\"59446b64-f941-40a8-b511-effb0512c21b\"}"`
-* Last uploaded service (makes manual tests easier): `curl -X POST http://127.0.0.1:8000/api/instantiations -d "{}"`
+* Specific service: `curl -X POST http://127.0.0.1:5000/api/instantiations -d "{\"service_uuid\":\"59446b64-f941-40a8-b511-effb0512c21b\"}"`
+* Last uploaded service (makes manual tests easier): `curl -X POST http://127.0.0.1:5000/api/instantiations -d "{}"`
 
 To list all running services do:
 
-* `curl http://127.0.0.1:8000/api/instantiations`
+* `curl http://127.0.0.1:5000/api/instantiations`
 
 
 ## API definition
@@ -59,7 +59,7 @@ _Note: This API should converge to the API of the original GK as much as possibl
 <td>/api/packages</td>
 <td>POST</td>
 <td>-</td>
-<td>{file-content} as enctype=multipart/form-data</td>
+<td>{file-content} as "content-type": "multipart/form-data"</td>
 <td>{"service_uuid": "c880aaab-f3b9-43ac-ac6b-3d27b46146b7", size=456, sha1=49ee6468dfa4ecbad440d669b249d523a38651be, error: null}</td>
 </tr>
 <tr>
