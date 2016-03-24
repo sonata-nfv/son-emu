@@ -24,6 +24,9 @@ The following lead developers are responsible for this repository and have admin
 * pytest-runner
 * Flask
 * flask_restful
+* requests 
+* docker-py
+
 
 ### Project structure
 
