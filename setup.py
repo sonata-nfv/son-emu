@@ -21,7 +21,8 @@ setup(name='emuvim',
           'pytest',
           'Flask',
           'flask_restful',
-          'docker-py'
+          'docker-py',
+          'requests'
       ],
       zip_safe=False,
       entry_points={

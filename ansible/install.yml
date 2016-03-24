@@ -47,3 +47,9 @@
 
    - name: install flask_restful
      pip: name=flask_restful state=latest
+
+   - name: install requests
+     pip: name=requests state=latest
+
+   - name: install docker-py
+     pip: name=docker-py state=latest
