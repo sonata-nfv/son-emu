@@ -12,11 +12,13 @@ class ResourceModelRegistrar(object):
     Global registry to keep track of all existing resource models.
     """
 
-    def __init__(self, dc_emulation_max_cpu):
+    def __init__(self, dc_emulation_max_cpu, dc_emulation_max_mem):
         self.e_cpu = dc_emulation_max_cpu
+        self.e_mem = dc_emulation_max_mem
         # pointer to all resource models assigned to DCs
         self._resource_models = dict()
-        LOG.info("Resource model registrar created with dc_emulation_max_cpu=%r" % dc_emulation_max_cpu)
+        LOG.info("Resource model registrar created with dc_emulation_max_cpu=%r and dc_emulation_max_mem=%r"
+                 % (dc_emulation_max_cpu, dc_emulation_max_mem))
 
     def register(self, dc, rm):
         """
