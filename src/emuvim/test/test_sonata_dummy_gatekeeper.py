@@ -54,14 +54,14 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.assertEqual(len(r4.json().get("service_instance_list")), 1)
 
         # check number of running nodes
-        assert(len(self.getDockernetContainers()) == 3)
-        assert(len(self.net.hosts) == 5)
-        assert(len(self.net.switches) == 2)
+        self.assertTrue(len(self.getDockernetContainers()) == 3)
+        self.assertTrue(len(self.net.hosts) == 5)
+        self.assertTrue(len(self.net.switches) == 2)
         # check compute list result
-        assert(len(self.dc[0].listCompute()) == 3)
+        self.assertTrue(len(self.dc[0].listCompute()) == 3)
         # check connectivity by using ping
         for vnf in self.dc[0].listCompute():
-            assert(self.net.ping([self.h[0], vnf]) <= 0.0)
+            self.assertTrue(self.net.ping([self.h[0], vnf]) <= 0.0)
         # stop Mininet network
         self.stopNet()
 
