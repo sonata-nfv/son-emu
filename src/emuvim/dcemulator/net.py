@@ -27,7 +27,10 @@ class DCNetwork(Dockernet):
     This class is used by topology definition scripts.
     """
 
-    def __init__(self, controller=RemoteController, dc_emulation_max_cpu=1.0, **kwargs):
+    def __init__(self, controller=RemoteController,
+                 dc_emulation_max_cpu=1.0,  # fraction of overall CPU time for emulation
+                 dc_emulation_max_mem=512,  # emulation max mem in MB
+                 **kwargs):
         """
         Create an extended version of a Dockernet network
         :param dc_emulation_max_cpu: max. CPU time used by containers in data centers
@@ -56,7 +59,8 @@ class DCNetwork(Dockernet):
         self.monitor_agent = DCNetworkMonitor(self)
 
         # initialize resource model registrar
-        self.rm_registrar = ResourceModelRegistrar(dc_emulation_max_cpu)
+        self.rm_registrar = ResourceModelRegistrar(
+            dc_emulation_max_cpu, dc_emulation_max_mem)
 
     def addDatacenter(self, label, metadata={}):
         """
