@@ -156,8 +156,15 @@ class Datacenter(object):
                 # ATTENTION >= 1000 to avoid a invalid argument system error ... no idea why
                 if cpu_quota < 1000:
                     cpu_quota = 1000
-                    LOG.warning("Increased CPU quota for %d to avoid system error." % name)
-            # TODO add memory and disc limitations
+                    LOG.warning("Increased CPU quota for %r to avoid system error." % name)
+            # check if we have a mem_limit given by the used resource model
+            if mem_limit > 0:
+                LOG.debug(
+                    "MEM limit: mem_limit = %f MB" % mem_limit)
+                # ATTENTION minimum mem_limit per container is 4MB
+                if mem_limit < 4:
+                    mem_limit = 4
+                    LOG.warning("Increased MEM limit for %r because it was less than 4.0 MB." % name)
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
@@ -167,6 +174,8 @@ class Datacenter(object):
             flavor_name=flavor_name,
             cpu_period=int(cpu_period) if cpu_limit > 0 else None,  # set cpu limits if needed
             cpu_quota=int(cpu_quota) if cpu_limit > 0 else None,
+            mem_limit="%dm" % int(mem_limit) if mem_limit > 0 else None,  # set mem limits if needed
+            memswap_limit="%dm" % int(mem_limit) if mem_limit > 0 else None  # lets set swap to mem limit for now
         )
         # connect all given networks
         for nw in network:

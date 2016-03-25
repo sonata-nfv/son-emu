@@ -77,35 +77,52 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         # config
         E_CPU = 1.0
         MAX_CU = 100
+        E_MEM = 512
+        MAX_MU = 2048
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=1.0)
-        rm = UpbSimpleCloudDcRM(max_cu=100, max_mu=100)
+        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
         res = rm.allocate("c1", "tiny")  # calculate allocation
-        self.assertTrue(res[0] == E_CPU / MAX_CU * 1)   # validate compute result
-        self.assertTrue(res[1] < 0)   # validate memory result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 1)   # validate compute result
+        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 32)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c2", "small")  # calculate allocation
-        self.assertTrue(res[0] == E_CPU / MAX_CU * 4)   # validate compute result
-        self.assertTrue(res[1] < 0)   # validate memory result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 4)   # validate compute result
+        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 128)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c3", "medium")  # calculate allocation
-        self.assertTrue(res[0] == E_CPU / MAX_CU * 8)   # validate compute result
-        self.assertTrue(res[1] < 0)   # validate memory result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 8)   # validate compute result
+        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 256)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c4", "large")  # calculate allocation
-        self.assertTrue(res[0] == E_CPU / MAX_CU * 16)   # validate compute result
-        self.assertTrue(res[1] < 0)   # validate memory result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 16)   # validate compute result
+        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 512)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c5", "xlarge")  # calculate allocation
-        self.assertTrue(res[0] == E_CPU / MAX_CU * 32)   # validate compute result
-        self.assertTrue(res[1] < 0)   # validate memory result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 32)   # validate compute result
+        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 1024)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
+
+    def testAllocationCpuLimit(self):
+        """
+        Test CPU allocation limit
+        :return:
+        """
+        # config
+        E_CPU = 1.0
+        MAX_CU = 100
+        E_MEM = 512
+        MAX_MU = 4096
+        # create dummy resource model environment
+        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
+        reg.register("test_dc", rm)
 
         # test over provisioning exeption
         exception = False
@@ -115,7 +132,33 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
             rm.allocate("c8", "xlarge")  # calculate allocation
             rm.allocate("c9", "xlarge")  # calculate allocation
         except Exception as e:
-            self.assertTrue("Not enough compute" in e.message)
+            self.assertIn("Not enough compute", e.message)
+            exception = True
+        self.assertTrue(exception)
+
+    def testAllocationMemLimit(self):
+        """
+        Test MEM allocation limit
+        :return:
+        """
+        # config
+        E_CPU = 1.0
+        MAX_CU = 500
+        E_MEM = 512
+        MAX_MU = 2048
+        # create dummy resource model environment
+        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
+        reg.register("test_dc", rm)
+
+        # test over provisioning exeption
+        exception = False
+        try:
+            rm.allocate("c6", "xlarge")  # calculate allocation
+            rm.allocate("c7", "xlarge")  # calculate allocation
+            rm.allocate("c8", "xlarge")  # calculate allocation
+        except Exception as e:
+            self.assertIn("Not enough memory", e.message)
             exception = True
         self.assertTrue(exception)
 
@@ -128,7 +171,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         E_CPU = 1.0
         MAX_CU = 100
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=1.0)
+        reg = ResourceModelRegistrar(dc_emulation_max_cpu=1.0, dc_emulation_max_mem=512)
         rm = UpbSimpleCloudDcRM(max_cu=100, max_mu=100)
         reg.register("test_dc", rm)
         rm.allocate("c1", "tiny")  # calculate allocation
