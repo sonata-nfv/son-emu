@@ -26,6 +26,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.dc_max_cu = max_cu
         self.dc_max_mu = max_mu
         self.dc_alloc_cu = 0
+        self.dc_alloc_mu = 0
         super(self.__class__, self).__init__()
 
     def allocate(self, name, flavor_name):
@@ -35,27 +36,13 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         :param flavor_name: Flavor name.
         :return:
         """
-        # TODO Add memory model calculation (split in private methods for each tuple component)
         # bookkeeping and flavor handling
         if flavor_name not in self._flavors:
             raise Exception("Flavor %r does not exist" % flavor_name)
         fl = self._flavors.get(flavor_name)
-        fl_cu = fl.get("compute")
         self.allocated_compute_instances[name] = flavor_name
-        # check for over provisioning
-        if self.dc_alloc_cu + fl_cu > self.dc_max_cu:
-            raise Exception("Not enough compute resources left.")
-        self.dc_alloc_cu += fl_cu
-        #
-        # calculate cpu limitation:
-        #
-        # get cpu time fraction for entire emulation
-        e_cpu = self.registrar.e_cpu
-        # calculate cpu time fraction of a single compute unit
-        cu = e_cpu / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
-        # calculate cpu time fraction for container with given flavor
-        c_ct = cu * fl_cu
-        return c_ct, -1.0, -1.0  # return 3tuple (cpu, memory, disk)
+        # calc and return
+        return self._allocate_cpu(fl), self._allocate_mem(fl), -1.0  # return 3tuple (cpu, memory, disk)
 
     def free(self, name):
         """
@@ -66,7 +53,60 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         if name not in self.allocated_compute_instances:
             return False
         # bookkeeping
-        self.dc_alloc_cu -= self._flavors.get(self.allocated_compute_instances[name]).get("compute")
+        self._free_cpu(self._flavors.get(self.allocated_compute_instances[name]))
+        self._free_mem(self._flavors.get(self.allocated_compute_instances[name]))
         del self.allocated_compute_instances[name]
         # we don't have to calculate anything special here in this simple model
         return True
+
+    def _allocate_cpu(self, flavor):
+        """
+        Allocate CPU time.
+        :param flavor: flavor dict
+        :return: cpu time fraction
+        """
+        fl_cu = flavor.get("compute")
+        # check for over provisioning
+        if self.dc_alloc_cu + fl_cu > self.dc_max_cu:
+            raise Exception("Not enough compute resources left.")
+        self.dc_alloc_cu += fl_cu
+        # get cpu time fraction for entire emulation
+        e_cpu = self.registrar.e_cpu
+        # calculate cpu time fraction of a single compute unit
+        cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        # calculate cpu time fraction for container with given flavor
+        return cu * fl_cu
+
+    def _free_cpu(self, flavor):
+        """
+        Free CPU allocation.
+        :param flavor: flavor dict
+        :return:
+        """
+        self.dc_alloc_cu -= flavor.get("compute")
+
+    def _allocate_mem(self, flavor):
+        """
+        Allocate mem.
+        :param flavor: flavor dict
+        :return: mem limit in MB
+        """
+        fl_mu = flavor.get("memory")
+        # check for over provisioning
+        if self.dc_alloc_mu + fl_mu > self.dc_max_mu:
+            raise Exception("Not enough memory resources left.")
+        self.dc_alloc_mu += fl_mu
+        # get cpu time fraction for entire emulation
+        e_mem = self.registrar.e_mem
+        # calculate cpu time fraction of a single compute unit
+        mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
+        # calculate cpu time fraction for container with given flavor
+        return mu * fl_mu
+
+    def _free_mem(self, flavor):
+        """
+        Free memory allocation
+        :param flavor: flavor dict
+        :return:
+        """
+        self.dc_alloc_mu -= flavor.get("memory")
