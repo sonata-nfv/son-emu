@@ -272,7 +272,13 @@ class Packages(fr.Resource):
         try:
             # get file contents
             print(request.files)
-            son_file = request.files['file']
+            # lets search for the package in the request
+            if "package" in request.files:
+                son_file = request.files["package"]
+            # elif "file" in request.files:
+            #     son_file = request.files["file"]
+            else:
+                return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed. file not found."}, 500
             # generate a uuid to reference this package
             service_uuid = str(uuid.uuid4())
             file_hash = hashlib.sha1(str(son_file)).hexdigest()
@@ -289,7 +295,7 @@ class Packages(fr.Resource):
             return {"service_uuid": service_uuid, "size": size, "sha1": file_hash, "error": None}
         except Exception as ex:
             LOG.exception("Service package upload failed:")
-            return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed"}
+            return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed"}, 500
 
     def get(self):
         """
@@ -338,8 +344,8 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
 api = fr.Api(app)
 # define endpoints
-api.add_resource(Packages, '/api/packages')
-api.add_resource(Instantiations, '/api/instantiations')
+api.add_resource(Packages, '/packages')
+api.add_resource(Instantiations, '/instantiations')
 
 
 def start_rest_api(host, port, datacenters=dict()):
