@@ -1,5 +1,6 @@
 import time
 import requests
+import subprocess
 import os
 from emuvim.test.base import SimpleTestTopology
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
@@ -27,30 +28,33 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
 
         # download example from GitHub
         print "downloading latest son-demo.son from GitHub"
-        download = requests.get("https://github.com/sonata-nfv/son-schema/blob/master/package-descriptor/examples/sonata-demo.son?raw=true")
-        with open("son-demo.son", 'wb') as f:
-            f.write(download.content)
+        subprocess.call(
+            ["wget",
+             "http://github.com/sonata-nfv/son-schema/blob/master/package-descriptor/examples/sonata-demo.son?raw=true",
+             "-O",
+             "son-demo.son"]
+        )
 
         print "starting tests"
         # board package
-        files = {"file": open("son-demo.son", "rb")}
-        r = requests.post("http://127.0.0.1:5000/api/packages", files=files)
+        files = {"package": open("son-demo.son", "rb")}
+        r = requests.post("http://127.0.0.1:5000/packages", files=files)
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json().get("service_uuid") is not None)
         os.remove("son-demo.son")
 
         # instantiate service
         service_uuid = r.json().get("service_uuid")
-        r2 = requests.post("http://127.0.0.1:5000/api/instantiations", json={"service_uuid": service_uuid})
+        r2 = requests.post("http://127.0.0.1:5000/instantiations", json={"service_uuid": service_uuid})
         self.assertEqual(r2.status_code, 200)
 
         # give the emulator some time to instantiate everything
         time.sleep(2)
 
         # check get request APIs
-        r3 = requests.get("http://127.0.0.1:5000/api/packages")
+        r3 = requests.get("http://127.0.0.1:5000/packages")
         self.assertEqual(len(r3.json().get("service_uuid_list")), 1)
-        r4 = requests.get("http://127.0.0.1:5000/api/instantiations")
+        r4 = requests.get("http://127.0.0.1:5000/instantiations")
         self.assertEqual(len(r4.json().get("service_instance_list")), 1)
 
         # check number of running nodes
