@@ -125,7 +125,7 @@ class Service(object):
         # iterate over all deployment units within each VNFDs
         for u in vnfd.get("virtual_deployment_units"):
             # 1. get the name of the docker image to start and the assigned DC
-            docker_name = vnfd.get("vnf_name")
+            docker_name = vnfd.get("name")
             target_dc = vnfd.get("dc")
             # 2. perform some checks to ensure we can start the container
             assert(docker_name is not None)
@@ -164,7 +164,7 @@ class Service(object):
                 self.package_content_path,
                 make_relative_path(self.manifest.get("entry_service_template")))
             self.nsd = load_yaml(nsd_path)
-            LOG.debug("Loaded NSD: %r" % self.nsd.get("ns_name"))
+            LOG.debug("Loaded NSD: %r" % self.nsd.get("name"))
 
     def _load_vnfd(self):
         """
@@ -178,8 +178,8 @@ class Service(object):
                         self.package_content_path,
                         make_relative_path(pc.get("name")))
                     vnfd = load_yaml(vnfd_path)
-                    self.vnfds[vnfd.get("vnf_name")] = vnfd
-                    LOG.debug("Loaded VNFD: %r" % vnfd.get("vnf_name"))
+                    self.vnfds[vnfd.get("name")] = vnfd
+                    LOG.debug("Loaded VNFD: %r" % vnfd.get("name"))
 
     def _load_docker_files(self):
         """
