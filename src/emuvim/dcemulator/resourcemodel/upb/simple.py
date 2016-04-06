@@ -59,6 +59,22 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # we don't have to calculate anything special here in this simple model
         return True
 
+    def get_state_dict(self):
+        """
+        Return the state of the resource model as simple dict.
+        Helper method for logging functionality.
+        :return:
+        """
+        r = dict()
+        r["e_cpu"] = self.registrar.e_cpu
+        r["e_mem"] = self.registrar.e_mem
+        r["dc_max_cu"] = self.dc_max_cu
+        r["dc_max_mu"] = self.dc_max_mu
+        r["dc_alloc_cu"] = self.dc_alloc_cu
+        r["dc_alloc_mu"] = self.dc_alloc_mu
+        r["allocated_compute_instances"] = self.allocated_compute_instances
+        return r
+
     def _allocate_cpu(self, flavor):
         """
         Allocate CPU time.

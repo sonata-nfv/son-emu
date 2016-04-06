@@ -5,6 +5,8 @@ Distributed Cloud Emulator (dcemulator)
 from mininet.node import Docker
 from mininet.link import Link
 import logging
+import time
+import json
 
 LOG = logging.getLogger("dcemulator")
 LOG.setLevel(logging.DEBUG)
@@ -70,7 +72,7 @@ class Datacenter(object):
 
     DC_COUNTER = 1
 
-    def __init__(self, label, metadata={}):
+    def __init__(self, label, metadata={}, resource_log_path=None):
         self.net = None  # DCNetwork to which we belong
         # each node (DC) has a short internal name used by Mininet
         # this is caused by Mininets naming limitations for swtiches etc.
@@ -80,6 +82,8 @@ class Datacenter(object):
         self.label = label  
         # dict to store arbitrary metadata (e.g. latitude and longitude)
         self.metadata = metadata
+        # path to which resource information should be logged (e.g. for experiments). None = no logging
+        self.resource_log_path = resource_log_path
         # first prototype assumes one "bigswitch" per DC
         self.switch = None
         # keep track of running containers
@@ -183,6 +187,22 @@ class Datacenter(object):
             self.net.addLink(d, self.switch, params1=nw, cls=Link)
         # do bookkeeping
         self.containers[name] = d
+
+        # write resource log if a path is given
+        if self.resource_log_path is not None:
+            l = dict()
+            l["t"] = time.time()
+            l["name"] = name
+            l["compute"] = d.getStatus()
+            l["flavor_name"] = flavor_name
+            l["action"] = "allocate"
+            l["cpu_limit"] = cpu_limit
+            l["mem_limit"] = mem_limit
+            l["disk_limit"] = disk_limit
+            l["rm_state"] = None if self._resource_model is None else self._resource_model.get_state_dict()
+            # append to logfile
+            with open(self.resource_log_path, "a") as f:
+                f.write("%s\n" % json.dumps(l))
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
@@ -192,6 +212,7 @@ class Datacenter(object):
         assert name is not None
         if name not in self.containers:
             raise Exception("Container with name %s not found." % name)
+        LOG.debug("Stopping compute instance %r in data center %r" % (name, str(self)))
         self.net.removeLink(
             link=None, node1=self.containers[name], node2=self.switch)
         self.net.removeDocker("%s" % (name))
@@ -199,6 +220,21 @@ class Datacenter(object):
         # call resource model and free resources
         if self._resource_model is not None:
             self._resource_model.free(name)
+
+        # write resource log if a path is given
+        if self.resource_log_path is not None:
+            l = dict()
+            l["t"] = time.time()
+            l["name"] = name
+            l["flavor_name"] = None
+            l["action"] = "free"
+            l["cpu_limit"] = -1
+            l["mem_limit"] = -1
+            l["disk_limit"] = -1
+            l["rm_state"] = None if self._resource_model is None else self._resource_model.get_state_dict()
+            # append to logfile
+            with open(self.resource_log_path, "a") as f:
+                f.write("%s\n" % json.dumps(l))
         return True
 
     def listCompute(self):
