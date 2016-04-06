@@ -87,15 +87,15 @@ class BaseResourceModel(object):
         initialize some default flavours (naming/sizes inspired by OpenStack)
         """
         self.addFlavour(ResourceFlavor(
-            "tiny",  {"compute": 1, "memory": 32, "disk": 1}))
+            "tiny",  {"compute": 0.5, "memory": 32, "disk": 1}))
         self.addFlavour(ResourceFlavor(
-            "small",  {"compute": 4, "memory": 128, "disk": 20}))
+            "small",  {"compute": 1.0, "memory": 128, "disk": 20}))
         self.addFlavour(ResourceFlavor(
-            "medium",  {"compute": 8, "memory": 256, "disk": 40}))
+            "medium",  {"compute": 4.0, "memory": 256, "disk": 40}))
         self.addFlavour(ResourceFlavor(
-            "large",  {"compute": 16, "memory": 512, "disk": 80}))
+            "large",  {"compute": 8.0, "memory": 512, "disk": 80}))
         self.addFlavour(ResourceFlavor(
-            "xlarge",  {"compute": 32, "memory": 1024, "disk": 160}))
+            "xlarge",  {"compute": 16.0, "memory": 1024, "disk": 160}))
 
     def addFlavour(self, fl):
         """
@@ -127,3 +127,11 @@ class BaseResourceModel(object):
         LOG.warning("Free in BaseResourceModel: %r" % name)
         del self.allocated_compute_instances[name]
         return True
+
+    def get_state_dict(self):
+        """
+        Return the state of the resource model as simple dict.
+        Helper method for logging functionality.
+        :return:
+        """
+        return dict()

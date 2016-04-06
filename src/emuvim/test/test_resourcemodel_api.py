@@ -85,27 +85,27 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         reg.register("test_dc", rm)
 
         res = rm.allocate("c1", "tiny")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 1)   # validate compute result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 0.5)   # validate compute result
         self.assertEqual(res[1], float(E_MEM) / MAX_MU * 32)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c2", "small")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 4)   # validate compute result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 1)   # validate compute result
         self.assertEqual(res[1], float(E_MEM) / MAX_MU * 128)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c3", "medium")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 8)   # validate compute result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 4)   # validate compute result
         self.assertEqual(res[1], float(E_MEM) / MAX_MU * 256)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c4", "large")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 16)   # validate compute result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 8)   # validate compute result
         self.assertEqual(res[1], float(E_MEM) / MAX_MU * 512)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
         res = rm.allocate("c5", "xlarge")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 32)   # validate compute result
+        self.assertEqual(res[0], E_CPU / MAX_CU * 16)   # validate compute result
         self.assertEqual(res[1], float(E_MEM) / MAX_MU * 1024)   # validate memory result
         self.assertTrue(res[2] < 0)   # validate disk result
 
@@ -116,7 +116,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         """
         # config
         E_CPU = 1.0
-        MAX_CU = 100
+        MAX_CU = 40
         E_MEM = 512
         MAX_MU = 4096
         # create dummy resource model environment
@@ -175,7 +175,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         rm = UpbSimpleCloudDcRM(max_cu=100, max_mu=100)
         reg.register("test_dc", rm)
         rm.allocate("c1", "tiny")  # calculate allocation
-        self.assertTrue(rm.dc_alloc_cu == 1)
+        self.assertTrue(rm.dc_alloc_cu == 0.5)
         rm.free("c1")
         self.assertTrue(rm.dc_alloc_cu == 0)
 
