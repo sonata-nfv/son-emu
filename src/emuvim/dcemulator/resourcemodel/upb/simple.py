@@ -27,6 +27,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.dc_max_mu = max_mu
         self.dc_alloc_cu = 0
         self.dc_alloc_mu = 0
+        self.cu = 0
+        self.mu = 0
         super(self.__class__, self).__init__()
 
     def allocate(self, name, flavor_name):
@@ -72,6 +74,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         r["dc_max_mu"] = self.dc_max_mu
         r["dc_alloc_cu"] = self.dc_alloc_cu
         r["dc_alloc_mu"] = self.dc_alloc_mu
+        r["cu_cpu_percentage"] = self.cu
+        r["mu_mem_percentage"] = self.mu
         r["allocated_compute_instances"] = self.allocated_compute_instances
         return r
 
@@ -89,9 +93,9 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get cpu time fraction for entire emulation
         e_cpu = self.registrar.e_cpu
         # calculate cpu time fraction of a single compute unit
-        cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        self.cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
         # calculate cpu time fraction for container with given flavor
-        return cu * fl_cu
+        return self.cu * fl_cu
 
     def _free_cpu(self, flavor):
         """
@@ -115,9 +119,9 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get cpu time fraction for entire emulation
         e_mem = self.registrar.e_mem
         # calculate cpu time fraction of a single compute unit
-        mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
+        self.mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
         # calculate cpu time fraction for container with given flavor
-        return mu * fl_mu
+        return self.mu * fl_mu
 
     def _free_mem(self, flavor):
         """
