@@ -63,8 +63,8 @@ class MultiDatacenterApi(object):
         :param compute_name: compute container name
         :param image: image name
         :param command: command to execute
-        :param network:
-        :return: networks list({"ip": "10.0.0.254/8"}, {"ip": "11.0.0.254/24"})
+        :param network: list of all interface of the vnf, with their parameters (id=id1,ip=x.x.x.x/x),...
+        :return: networks list({"id":"input","ip": "10.0.0.254/8"}, {"id":"output","ip": "11.0.0.254/24"})
         """
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
