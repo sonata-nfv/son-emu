@@ -53,7 +53,7 @@ class DCNetwork(Dockernet):
         self.addController('c0', controller=controller)
 
         # graph of the complete DC network
-        self.DCNetwork_graph = nx.DiGraph()
+        self.DCNetwork_graph = nx.MultiDiGraph()
 
         # monitoring agent
         self.monitor_agent = DCNetworkMonitor(self)
@@ -114,11 +114,27 @@ class DCNetwork(Dockernet):
 
         link = Dockernet.addLink(self, node1, node2, **params)
 
+        # try to give container interfaces a default id
+        node1_port_id = node1.ports[link.intf1]
+        if isinstance(node1, Docker):
+            if "id" in params["params1"]:
+                node1_port_id = params["params1"]["id"]
+
+        node2_port_id = node2.ports[link.intf2]
+        if isinstance(node2, Docker):
+            if "id" in params["params2"]:
+                node2_port_id = params["params2"]["id"]
+
         # add edge and assigned port number to graph in both directions between node1 and node2
-        self.DCNetwork_graph.add_edge(node1.name, node2.name, \
-                                      {'src_port': node1.ports[link.intf1], 'dst_port': node2.ports[link.intf2]})
-        self.DCNetwork_graph.add_edge(node2.name, node1.name, \
-                                       {'src_port': node2.ports[link.intf2], 'dst_port': node1.ports[link.intf1]})
+        # port_id: id given in descriptor (if available, otherwise same as port)
+        # port: portnumber assigned by Dockernet
+
+        self.DCNetwork_graph.add_edge(node1.name, node2.name,
+                                      attr_dict={'src_port_id': node1_port_id, 'src_port': node1.ports[link.intf1],
+                                       'dst_port_id': node2_port_id, 'dst_port': node2.ports[link.intf2]})
+        self.DCNetwork_graph.add_edge(node2.name, node1.name,
+                                      attr_dict={'src_port_id': node2_port_id, 'src_port': node2.ports[link.intf2],
+                                        'dst_port_id': node1_port_id, 'dst_port': node1.ports[link.intf1]})
 
         return link
 
