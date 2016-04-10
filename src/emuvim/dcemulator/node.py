@@ -182,6 +182,8 @@ class Datacenter(object):
             memswap_limit="%dm" % int(mem_limit) if mem_limit > 0 else None  # lets set swap to mem limit for now
         )
         # connect all given networks
+        # if no --net option is given, network = [{}], so 1 empty dict in the list
+        # this results in 1 default interface with a default ip address
         for nw in network:
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
             self.net.addLink(d, self.switch, params1=nw, cls=Link)

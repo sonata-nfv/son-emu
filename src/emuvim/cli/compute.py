@@ -29,9 +29,8 @@ class ZeroRpcClient(object):
     def start(self, args):
         nw_list = list()
         if args.get("network") is not None:
-            networks = args.get("network").split(",")
-            for nw in networks:
-                nw_list.append({"ip": nw})
+            nw_list = self._parse_network(args.get("network"))
+
         r = self.c.compute_action_start(
             args.get("datacenter"),
             args.get("name"),
@@ -78,6 +77,21 @@ class ZeroRpcClient(object):
         r = self.c.compute_status(
             args.get("datacenter"), args.get("name"))
         pp.pprint(r)
+
+    def _parse_network(self, network_str):
+        '''
+        parse the options for all network interfaces of the vnf
+        :param network_str: (id=x,ip=x.x.x.x/x), ...
+        :return: list of dicts [{"id":x,"ip":"x.x.x.x/x"}, ...]
+        '''
+        nw_list = list()
+        networks = network_str[1:-1].split('),(')
+        for nw in networks:
+            nw_dict = dict(tuple(e.split('=')) for e in nw.split(','))
+            nw_list.append(nw_dict)
+
+        return nw_list
+
 
 
 parser = argparse.ArgumentParser(description='son-emu compute')
