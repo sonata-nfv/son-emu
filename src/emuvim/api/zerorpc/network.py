@@ -64,37 +64,47 @@ class DCNetworkApi(object):
     def __init__(self, net):
         self.net = net
 
-    def network_action_start(self, vnf_src_name, vnf_dst_name):
+    def network_action_start(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None):
         # call DCNetwork method, not really datacenter specific API for now...
         # provided dc name needs to be part of API endpoint
         # no check if vnfs are really connected to this datacenter...
         logging.debug("RPC CALL: network chain start")
         try:
             c = self.net.setChain(
-                vnf_src_name, vnf_dst_name)
+                vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface)
             return str(c)
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
 
-    def network_action_stop(self, vnf_src_name, vnf_dst_name):
+    def network_action_stop(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None):
         # call DCNetwork method, not really datacenter specific API for now...
         # provided dc name needs to be part of API endpoint
         # no check if vnfs are really connected to this datacenter...
         logging.debug("RPC CALL: network chain stop")
         try:
             c = self.net.setChain(
-                vnf_src_name, vnf_dst_name, cmd='del-flows')
+                vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, cmd='del-flows')
+            return c
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
+    # setup the rate measurement for a vnf interface
+    def monitor_setup_rate_measurement(self, vnf_name, vnf_interface, direction, metric):
+        logging.debug("RPC CALL: get rate")
+        try:
+            c = self.net.monitor_agent.setup_rate_measurement(vnf_name, vnf_interface, direction, metric)
             return c
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
 
     # get egress(default) or ingress rate of a vnf
-    def monitor_get_rate(self, vnf_name, direction):
+    def monitor_get_rate(self, vnf_name, vnf_interface, direction, metric):
         logging.debug("RPC CALL: get rate")
         try:
-            c = self.net.monitor_agent.get_rate(vnf_name, direction)
+            c = self.net.monitor_agent.get_rate(vnf_name, vnf_interface, direction, metric)
             return c
         except Exception as ex:
             logging.exception("RPC error.")

@@ -28,18 +28,42 @@ class ZeroRpcClient(object):
             print "Command not implemented."
 
     def add(self, args):
+        vnf_src_name = self._parse_vnf_name(args.get("source"))
+        vnf_src_interface = self._parse_vnf_interface(args.get("source"))
+        vnf_dst_name = self._parse_vnf_name(args.get("destination"))
+        vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
         r = self.c.network_action_start(
             #args.get("datacenter"),
-            args.get("source"),
-            args.get("destination"))
+            vnf_src_name,
+            vnf_dst_name,
+            vnf_src_interface,
+            vnf_dst_interface)
         pp.pprint(r)
 
     def remove(self, args):
+        vnf_src_name = self._parse_vnf_name(args.get("source"))
+        vnf_src_interface = self._parse_vnf_interface(args.get("source"))
+        vnf_dst_name = self._parse_vnf_name(args.get("destination"))
+        vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
         r = self.c.network_action_stop(
             #args.get("datacenter"),
-            args.get("source"),
-            args.get("destination"))
+            vnf_src_name,
+            vnf_dst_name,
+            vnf_src_interface,
+            vnf_dst_interface)
         pp.pprint(r)
+
+    def _parse_vnf_name(self, vnf_name_str):
+        vnf_name = vnf_name_str.split(':')[0]
+        return vnf_name
+
+    def _parse_vnf_interface(self, vnf_name_str):
+        try:
+            vnf_interface = vnf_name_str.split(':')[1]
+        except:
+            vnf_interface = None
+
+        return vnf_interface
 
 
 parser = argparse.ArgumentParser(description='son-emu network')
