@@ -184,24 +184,21 @@ class DCNetwork(Dockernet):
         CLI(self)
 
     # to remove chain do setChain( src, dst, cmd='del-flows')
-    def setChain(self, vnf_src_name, vnf_dst_name, cmd='add-flow'):
+    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow'):
 
         #check if port is specified (vnf:port)
-        try:
-            vnf_source_interface = vnf_src_name.split(':')[1]
-        except:
+        if vnf_src_interface is None:
             # take first interface by default
             connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
-            vnf_source_interface = link_dict[0]['src_port_id']
+            vnf_src_interface = link_dict[0]['src_port_id']
             #vnf_source_interface = 0
 
-        vnf_src_name = vnf_src_name.split(':')[0]
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
                 #logging.info("{0},{1}".format(link_dict[link],vnf_source_interface))
-                if link_dict[link]['src_port_id'] == vnf_source_interface:
+                if link_dict[link]['src_port_id'] == vnf_src_interface:
                     # found the right link and connected switch
                     #logging.info("{0},{1}".format(link_dict[link]['src_port_id'], vnf_source_interface))
                     src_sw = connected_sw
@@ -209,20 +206,18 @@ class DCNetwork(Dockernet):
                     src_sw_inport = link_dict[link]['dst_port']
                     break
 
-        try:
-            vnf_dest_interface = vnf_dst_name.split(':')[1]
-        except:
+        if vnf_dst_interface is None:
             # take first interface by default
             connected_sw = self.DCNetwork_graph.neighbors(vnf_dst_name)[0]
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
-            vnf_dest_interface = link_dict[0]['dst_port_id']
+            vnf_dst_interface = link_dict[0]['dst_port_id']
             #vnf_dest_interface = 0
 
         vnf_dst_name = vnf_dst_name.split(':')[0]
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             for link in link_dict:
-                if link_dict[link]['dst_port_id'] == vnf_dest_interface:
+                if link_dict[link]['dst_port_id'] == vnf_dst_interface:
                     # found the right link and connected switch
                     dst_sw = connected_sw
                     dst_sw_outport = link_dict[link]['src_port']
@@ -260,6 +255,7 @@ class DCNetwork(Dockernet):
                 logging.info("Next node: {0} is not a switch".format(next_hop))
                 return "Next node: {0} is not a switch".format(next_hop)
             else:
+                # take first link between switches by default
                 index_edge_out = 0
                 switch_outport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port']
 
@@ -292,9 +288,10 @@ class DCNetwork(Dockernet):
                 current_node.dpctl(cmd, ofcmd)
                 logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport,
                                                                                      switch_outport))
-
-            switch_inport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['dst_port']
-            current_hop = next_hop
+            # take first link between switches by default
+            if isinstance( next_node, OVSSwitch ):
+                switch_inport = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port']
+                current_hop = next_hop
 
         return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
         #return "destination node: {0} not reached".format(vnf_dst_name)
@@ -311,9 +308,9 @@ class DCNetwork(Dockernet):
         ryu_of_port = '6653'
         ryu_cmd = 'ryu-manager'
         FNULL = open("/tmp/ryu.log", 'w')
-        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        #self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         # no learning switch
-        #self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
     def stopRyu(self):
