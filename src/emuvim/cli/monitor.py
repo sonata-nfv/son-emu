@@ -7,6 +7,7 @@ import argparse
 import pprint
 from tabulate import tabulate
 import zerorpc
+import time
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -28,10 +29,12 @@ class ZeroRpcClient(object):
             print "Command not implemented."
 
     def get_rate(self, args):
-        r = self.c.monitor_get_rate(
-            args.get("vnf_name"),
-            args.get("direction"))
-        pp.pprint(r)
+        while True:
+            r = self.c.monitor_get_rate(
+                args.get("vnf_name"),
+                args.get("direction"))
+            pp.pprint(r)
+            time.sleep(1)
 
 
 parser = argparse.ArgumentParser(description='son-emu network')
