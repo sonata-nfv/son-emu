@@ -7,6 +7,7 @@ import argparse
 import pprint
 from tabulate import tabulate
 import zerorpc
+import time
 
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -28,11 +29,33 @@ class ZeroRpcClient(object):
             print "Command not implemented."
 
     def get_rate(self, args):
-        r = self.c.monitor_get_rate(
-            args.get("vnf_name"),
-            args.get("direction"))
-        pp.pprint(r)
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        self.c.monitor_setup_rate_measurement(
+            vnf_name,
+            vnf_interface,
+            args.get("direction"),
+            args.get("metric"))
+        while True:
+            r = self.c.monitor_get_rate(
+                vnf_name,
+                vnf_interface,
+                args.get("direction"),
+                args.get("metric"))
+            pp.pprint(r)
+            time.sleep(1)
 
+    def _parse_vnf_name(self, vnf_name_str):
+        vnf_name = vnf_name_str.split(':')[0]
+        return vnf_name
+
+    def _parse_vnf_interface(self, vnf_name_str):
+        try:
+            vnf_interface = vnf_name_str.split(':')[1]
+        except:
+            vnf_interface = None
+
+        return vnf_interface
 
 parser = argparse.ArgumentParser(description='son-emu network')
 parser.add_argument(
@@ -43,7 +66,10 @@ parser.add_argument(
     help="vnf name to be monitored")
 parser.add_argument(
     "--direction", "-d", dest="direction",
-    help="in (ingress rate) or out (egress rate)")
+    help="rx (ingress rate) or tx (egress rate)")
+parser.add_argument(
+    "--metric", "-m", dest="metric",
+    help="bytes (byte rate), packets (packet rate)")
 
 def main(argv):
     print "This is the son-emu monitor CLI."

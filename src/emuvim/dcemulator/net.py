@@ -53,7 +53,7 @@ class DCNetwork(Dockernet):
         self.addController('c0', controller=controller)
 
         # graph of the complete DC network
-        self.DCNetwork_graph = nx.DiGraph()
+        self.DCNetwork_graph = nx.MultiDiGraph()
 
         # monitoring agent
         self.monitor_agent = DCNetworkMonitor(self)
@@ -114,11 +114,27 @@ class DCNetwork(Dockernet):
 
         link = Dockernet.addLink(self, node1, node2, **params)
 
+        # try to give container interfaces a default id
+        node1_port_id = node1.ports[link.intf1]
+        if isinstance(node1, Docker):
+            if "id" in params["params1"]:
+                node1_port_id = params["params1"]["id"]
+
+        node2_port_id = node2.ports[link.intf2]
+        if isinstance(node2, Docker):
+            if "id" in params["params2"]:
+                node2_port_id = params["params2"]["id"]
+
         # add edge and assigned port number to graph in both directions between node1 and node2
-        self.DCNetwork_graph.add_edge(node1.name, node2.name, \
-                                      {'src_port': node1.ports[link.intf1], 'dst_port': node2.ports[link.intf2]})
-        self.DCNetwork_graph.add_edge(node2.name, node1.name, \
-                                       {'src_port': node2.ports[link.intf2], 'dst_port': node1.ports[link.intf1]})
+        # port_id: id given in descriptor (if available, otherwise same as port)
+        # port: portnumber assigned by Dockernet
+
+        self.DCNetwork_graph.add_edge(node1.name, node2.name,
+                                      attr_dict={'src_port_id': node1_port_id, 'src_port': node1.ports[link.intf1],
+                                       'dst_port_id': node2_port_id, 'dst_port': node2.ports[link.intf2]})
+        self.DCNetwork_graph.add_edge(node2.name, node1.name,
+                                      attr_dict={'src_port_id': node2_port_id, 'src_port': node2.ports[link.intf2],
+                                        'dst_port_id': node1_port_id, 'dst_port': node1.ports[link.intf1]})
 
         return link
 
@@ -168,31 +184,96 @@ class DCNetwork(Dockernet):
         CLI(self)
 
     # to remove chain do setChain( src, dst, cmd='del-flows')
-    def setChain(self, vnf_src_name, vnf_dst_name, cmd='add-flow'):
+    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow'):
+
+        #check if port is specified (vnf:port)
+        if vnf_src_interface is None:
+            # take first interface by default
+            connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
+            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
+            vnf_src_interface = link_dict[0]['src_port_id']
+            #vnf_source_interface = 0
+
+        for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
+            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
+            for link in link_dict:
+                #logging.info("{0},{1}".format(link_dict[link],vnf_source_interface))
+                if link_dict[link]['src_port_id'] == vnf_src_interface:
+                    # found the right link and connected switch
+                    #logging.info("{0},{1}".format(link_dict[link]['src_port_id'], vnf_source_interface))
+                    src_sw = connected_sw
+
+                    src_sw_inport = link_dict[link]['dst_port']
+                    break
+
+        if vnf_dst_interface is None:
+            # take first interface by default
+            connected_sw = self.DCNetwork_graph.neighbors(vnf_dst_name)[0]
+            link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
+            vnf_dst_interface = link_dict[0]['dst_port_id']
+            #vnf_dest_interface = 0
+
+        vnf_dst_name = vnf_dst_name.split(':')[0]
+        for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
+            link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
+            for link in link_dict:
+                if link_dict[link]['dst_port_id'] == vnf_dst_interface:
+                    # found the right link and connected switch
+                    dst_sw = connected_sw
+                    dst_sw_outport = link_dict[link]['src_port']
+                    break
+
+
         # get shortest path
-        path = nx.shortest_path(self.DCNetwork_graph, vnf_src_name, vnf_dst_name)
+        #path = nx.shortest_path(self.DCNetwork_graph, vnf_src_name, vnf_dst_name)
+        try:
+            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw)
+        except:
+            logging.info("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
+            return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
+
         logging.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
 
-        current_hop = vnf_src_name
+        #current_hop = vnf_src_name
+        current_hop = src_sw
+        switch_inport = src_sw_inport
+
         for i in range(0,len(path)):
-            next_hop = path[path.index(current_hop)+1]
+            current_node = self.getNodeByName(current_hop)
+            if path.index(current_hop) < len(path)-1:
+                next_hop = path[path.index(current_hop)+1]
+            else:
+                #last switch reached
+                next_hop = vnf_dst_name
+
             next_node = self.getNodeByName(next_hop)
 
             if next_hop == vnf_dst_name:
-                return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
+                switch_outport = dst_sw_outport
+                logging.info("end node reached: {0}".format(vnf_dst_name))
             elif not isinstance( next_node, OVSSwitch ):
                 logging.info("Next node: {0} is not a switch".format(next_hop))
                 return "Next node: {0} is not a switch".format(next_hop)
+            else:
+                # take first link between switches by default
+                index_edge_out = 0
+                switch_outport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port']
+
+            # take into account that multiple edges are possible between 2 nodes
+            index_edge_in = 0
 
 
-            switch_inport = self.DCNetwork_graph[current_hop][next_hop]['dst_port']
-            next2_hop = path[path.index(current_hop)+2]
-            switch_outport = self.DCNetwork_graph[next_hop][next2_hop]['src_port']
+            #switch_inport = self.DCNetwork_graph[current_hop][next_hop][index_edge_in]['dst_port']
 
-            logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(next_node.name, switch_inport, switch_outport))
+            #next2_hop = path[path.index(current_hop)+2]
+            #index_edge_out = 0
+            #switch_outport = self.DCNetwork_graph[next_hop][next2_hop][index_edge_out]['src_port']
+            #switch_outport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port']
+
+            #logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport, switch_outport))
             # set of entry via ovs-ofctl
             # TODO use rest API of ryu to set flow entries to correct witch dpid
-            if isinstance( next_node, OVSSwitch ):
+            if isinstance( current_node, OVSSwitch ):
                 match = 'in_port=%s' % switch_inport
 
                 if cmd=='add-flow':
@@ -204,11 +285,16 @@ class DCNetwork(Dockernet):
                 else:
                     ofcmd=''
 
-                next_node.dpctl(cmd, ofcmd)
+                current_node.dpctl(cmd, ofcmd)
+                logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport,
+                                                                                     switch_outport))
+            # take first link between switches by default
+            if isinstance( next_node, OVSSwitch ):
+                switch_inport = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port']
+                current_hop = next_hop
 
-            current_hop = next_hop
-
-        return "destination node: {0} not reached".format(vnf_dst_name)
+        return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
+        #return "destination node: {0} not reached".format(vnf_dst_name)
 
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
     def startRyu(self):
@@ -223,6 +309,8 @@ class DCNetwork(Dockernet):
         ryu_cmd = 'ryu-manager'
         FNULL = open("/tmp/ryu.log", 'w')
         self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        # no learning switch
+        #self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
     def stopRyu(self):
