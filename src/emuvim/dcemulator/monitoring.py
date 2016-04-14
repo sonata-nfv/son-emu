@@ -7,6 +7,8 @@ import ast
 import time
 from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter
 import threading
+from subprocess import Popen
+from os import getcwd
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,11 +63,15 @@ class DCNetworkMonitor():
         mon_port = None
         }
         '''
-        self.network_metrics=[]
+        self.network_metrics = []
 
         # start monitoring thread
         self.monitor_thread = threading.Thread(target=self.get_network_metrics)
         self.monitor_thread.start()
+
+        # helper tools
+        self.prometheus_process = None
+        self.cAdvisor_process = None
 
 
     # first set some parameters, before measurement can start
@@ -245,3 +251,38 @@ class DCNetworkMonitor():
         req = urllib2.Request(url)
         ret = urllib2.urlopen(req).read()
         return ret
+
+    def start_Prometheus(self, port=9090):
+        cmd = ["docker",
+               "run",
+               "--rm",
+               "-p", "{0}:9090".format(port),
+               "-v", "{0}/prometheus.yml:/etc/prometheus/prometheus.yml".format(getcwd()),
+               "--name", "prometheus",
+               "prom/prometheus"
+               ]
+
+        self.prometheus_process = Popen(cmd)
+
+    def start_cAdvisor(self, port=8090):
+        cmd = ["docker",
+               "run",
+               "--rm",
+               "--volume=/:/rootfs:ro",
+               "--volume=/var/run:/var/run:rw",
+               "--volume=/sys:/sys:ro",
+               "--volume=/var/lib/docker/:/var/lib/docker:ro",
+               "--publish={0}:8080".format(port),
+               "--name=cadvisor",
+               "google/cadvisor:latest"
+               ]
+        self.cAdvisor_process = Popen(cmd)
+
+    def stop(self):
+        if self.prometheus_process is not None:
+            self.prometheus_process.terminate()
+            self.prometheus_process.kill()
+
+        if self.cAdvisor_process is not None:
+            self.cAdvisor_process.terminate()
+            self.cAdvisor_process.kill()

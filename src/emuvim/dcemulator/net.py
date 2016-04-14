@@ -178,6 +178,8 @@ class DCNetwork(Dockernet):
         # stop Ryu controller
         Dockernet.stop(self)
         self.stopRyu()
+        # stop the monitor agent
+        self.monitor_agent.stop()
 
     def CLI(self):
         CLI(self)

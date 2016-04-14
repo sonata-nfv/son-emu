@@ -22,7 +22,8 @@ setup(name='emuvim',
           'Flask',
           'flask_restful',
           'docker-py',
-          'requests'
+          'requests',
+	  'prometheus_client'
       ],
       zip_safe=False,
       entry_points={
