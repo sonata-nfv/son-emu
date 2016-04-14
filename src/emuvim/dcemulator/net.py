@@ -18,7 +18,6 @@ from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
-
 class DCNetwork(Dockernet):
     """
     Wraps the original Mininet/Dockernet class and provides

@@ -91,20 +91,30 @@ class DCNetworkApi(object):
             return ex.message
 
     # setup the rate measurement for a vnf interface
-    def monitor_setup_rate_measurement(self, vnf_name, vnf_interface, direction, metric):
+    def setup_metric(self, vnf_name, vnf_interface, metric):
+        logging.debug("RPC CALL: setup metric")
+        try:
+            c = self.net.monitor_agent.setup_metric(vnf_name, vnf_interface, metric)
+            return c
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
+    # setup the rate measurement for a vnf interface
+    def monitor_setup_rate_measurement(self, vnf_name, vnf_interface, metric):
         logging.debug("RPC CALL: get rate")
         try:
-            c = self.net.monitor_agent.setup_rate_measurement(vnf_name, vnf_interface, direction, metric)
+            c = self.net.monitor_agent.setup_rate_measurement(vnf_name, vnf_interface, metric)
             return c
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
 
     # get egress(default) or ingress rate of a vnf
-    def monitor_get_rate(self, vnf_name, vnf_interface, direction, metric):
+    def monitor_get_rate(self, vnf_name, vnf_interface, metric):
         logging.debug("RPC CALL: get rate")
         try:
-            c = self.net.monitor_agent.get_rate(vnf_name, vnf_interface, direction, metric)
+            c = self.net.monitor_agent.get_rate(vnf_name, vnf_interface, metric)
             return c
         except Exception as ex:
             logging.exception("RPC error.")
