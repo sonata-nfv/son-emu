@@ -36,19 +36,15 @@ class ZeroRpcClient(object):
             vnf_interface,
             args.get("metric"))
         pp.pprint(r)
-        '''
-        self.c.monitor_setup_rate_measurement(
+
+    def remove_metric(self, args):
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        r = self.c.remove_metric(
             vnf_name,
             vnf_interface,
             args.get("metric"))
-        while True:
-            r = self.c.monitor_get_rate(
-                vnf_name,
-                vnf_interface,
-                args.get("metric"))
-            pp.pprint(r)
-            time.sleep(1)
-        '''
+        pp.pprint(r)
 
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
