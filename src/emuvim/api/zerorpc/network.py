@@ -100,6 +100,16 @@ class DCNetworkApi(object):
             logging.exception("RPC error.")
             return ex.message
 
+    # remove the rate measurement for a vnf interface
+    def remove_metric(self, vnf_name, vnf_interface, metric):
+        logging.debug("RPC CALL: setup metric")
+        try:
+            c = self.net.monitor_agent.remove_metric(vnf_name, vnf_interface, metric)
+            return c
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
     # setup the rate measurement for a vnf interface
     def monitor_setup_rate_measurement(self, vnf_name, vnf_interface, metric):
         logging.debug("RPC CALL: get rate")
