@@ -18,7 +18,6 @@ from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
-
 class DCNetwork(Dockernet):
     """
     Wraps the original Mininet/Dockernet class and provides
@@ -27,7 +26,7 @@ class DCNetwork(Dockernet):
     This class is used by topology definition scripts.
     """
 
-    def __init__(self, controller=RemoteController,
+    def __init__(self, controller=RemoteController, monitor=True,
                  dc_emulation_max_cpu=1.0,  # fraction of overall CPU time for emulation
                  dc_emulation_max_mem=512,  # emulation max mem in MB
                  **kwargs):
@@ -56,7 +55,10 @@ class DCNetwork(Dockernet):
         self.DCNetwork_graph = nx.MultiDiGraph()
 
         # monitoring agent
-        self.monitor_agent = DCNetworkMonitor(self)
+        if monitor:
+            self.monitor_agent = DCNetworkMonitor(self)
+        else:
+            self.monitor_agent = None
 
         # initialize resource model registrar
         self.rm_registrar = ResourceModelRegistrar(
@@ -176,9 +178,17 @@ class DCNetwork(Dockernet):
         Dockernet.start(self)
 
     def stop(self):
-        # stop Ryu controller
+
+        # stop the monitor agent
+        if self.monitor_agent is not None:
+            self.monitor_agent.stop()
+
+        # stop emulator net
         Dockernet.stop(self)
+
+        # stop Ryu controller
         self.stopRyu()
+
 
     def CLI(self):
         CLI(self)
