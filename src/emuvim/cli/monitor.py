@@ -37,7 +37,7 @@ class ZeroRpcClient(object):
             args.get("metric"))
         pp.pprint(r)
 
-    def remove_metric(self, args):
+    def stop_metric(self, args):
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
         r = self.c.remove_metric(
@@ -61,10 +61,10 @@ class ZeroRpcClient(object):
 parser = argparse.ArgumentParser(description='son-emu network')
 parser.add_argument(
     "command",
-    help="Action to be executed: get_rate")
+    help="Action to be executed")
 parser.add_argument(
     "--vnf_name", "-vnf", dest="vnf_name",
-    help="vnf name to be monitored")
+    help="vnf name:interface to be monitored")
 parser.add_argument(
     "--metric", "-m", dest="metric",
     help="tx_bytes, rx_bytes, tx_packets, rx_packets")

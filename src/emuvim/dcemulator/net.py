@@ -175,11 +175,15 @@ class DCNetwork(Dockernet):
         Dockernet.start(self)
 
     def stop(self):
-        # stop Ryu controller
-        Dockernet.stop(self)
-        self.stopRyu()
         # stop the monitor agent
         self.monitor_agent.stop()
+
+        # stop emulator net
+        Dockernet.stop(self)
+
+        # stop Ryu controller
+        self.stopRyu()
+
 
     def CLI(self):
         CLI(self)

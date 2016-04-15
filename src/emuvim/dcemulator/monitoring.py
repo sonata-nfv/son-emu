@@ -5,7 +5,7 @@ import logging
 from mininet.node import  OVSSwitch
 import ast
 import time
-from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter
+from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY
 import threading
 from subprocess import Popen, PIPE
 import os
@@ -121,21 +121,28 @@ class DCNetworkMonitor():
             network_metric['switch_dpid'] = int(str(next_node.dpid), 16)
             network_metric['metric_key'] = metric
 
-
             self.network_metrics.append(network_metric)
 
             logging.info('Started monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric))
             return 'Started monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric)
 
         except Exception as ex:
-            logging.exception("get_rate error.")
+            logging.exception("setup_metric error.")
             return ex.message
 
-    def remove_metric(self, vnf_name, vnf_interface, metric):
+    def stop_metric(self, vnf_name, vnf_interface, metric):
         for metric_dict in self.network_metrics:
             if metric_dict['vnf_name'] == vnf_name and metric_dict['vnf_interface'] == vnf_interface \
-                    and metric_dict['metric'] == metric:
+                    and metric_dict['metric_key'] == metric:
+
                 self.network_metrics.remove(metric_dict)
+
+                #this removes the complete metric, all labels...
+                #REGISTRY.unregister(self.prom_metrics[metric_dict['metric_key']])
+
+                # set values to NaN, prometheus api currently does not support removal of metrics
+                self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(float('nan'))
+
                 logging.info('Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric))
                 return 'Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric)
 
@@ -179,7 +186,7 @@ class DCNetworkMonitor():
                 #logging.info('set prom packets:{0} {1}:{2}'.format(this_measurement, vnf_name, vnf_interface))
 
                 # set prometheus metric
-                self.prom_metrics[metric_key].labels(vnf_name, vnf_interface).set(this_measurement)
+                self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(this_measurement)
 
                 if previous_monitor_time <= 0 or previous_monitor_time >= port_uptime:
                     metric_dict['previous_measurement'] = int(port_stat[metric_key])
