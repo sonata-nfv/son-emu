@@ -26,7 +26,7 @@ class DCNetwork(Dockernet):
     This class is used by topology definition scripts.
     """
 
-    def __init__(self, controller=RemoteController, monitor=True,
+    def __init__(self, controller=RemoteController, monitor=False,
                  dc_emulation_max_cpu=1.0,  # fraction of overall CPU time for emulation
                  dc_emulation_max_mem=512,  # emulation max mem in MB
                  **kwargs):
