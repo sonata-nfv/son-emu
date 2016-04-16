@@ -23,9 +23,6 @@ class testResourceModel(SimpleTestTopology):
         r.addFlavour(f)
         self.assertTrue("test" in r._flavors)
         self.assertTrue(r._flavors.get("test").get("testmetric") == 42)
-        # test if allocate and free runs through
-        self.assertTrue(len(r.allocate("testc", "tiny")) == 3)  # expected: 3tuple
-        self.assertTrue(r.free("testc"))
 
     def testAddRmToDc(self):
         """
@@ -51,17 +48,42 @@ class testResourceModel(SimpleTestTopology):
         self.assertTrue(len(self.net.rm_registrar.resource_models) == 1)
 
         # check if alloc was called during startCompute
-        self.assertTrue(len(r.allocated_compute_instances) == 0)
+        self.assertTrue(len(r._allocated_compute_instances) == 0)
         self.dc[0].startCompute("tc1")
         time.sleep(1)
-        self.assertTrue(len(r.allocated_compute_instances) == 1)
+        self.assertTrue(len(r._allocated_compute_instances) == 1)
         # check if free was called during stopCompute
         self.dc[0].stopCompute("tc1")
-        self.assertTrue(len(r.allocated_compute_instances) == 0)
+        self.assertTrue(len(r._allocated_compute_instances) == 0)
         # check connectivity by using ping
         self.assertTrue(self.net.ping([self.h[0], self.h[1]]) <= 0.0)
         # stop Mininet network
         self.stopNet()
+
+
+def createDummyContainerObject(name, flavor):
+
+    class DummyContainer(object):
+
+        def __init__(self):
+            self.cpu_period = -1
+            self.cpu_quota = -1
+            self.mem_limit = -1
+            self.memswap_limit = -1
+
+        def updateCpuLimit(self, cpu_period, cpu_quota):
+            self.cpu_period = cpu_period
+            self.cpu_quota = cpu_quota
+
+        def updateMemoryLimit(self, mem_limit):
+            self.mem_limit = mem_limit
+
+    d = DummyContainer()
+    d.name = name
+    d.flavor_name = flavor
+    return d
+
+
 
 
 class testUpbSimpleCloudDcRM(SimpleTestTopology):
@@ -84,30 +106,34 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
-        res = rm.allocate("c1", "tiny")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 0.5)   # validate compute result
-        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 32)   # validate memory result
-        self.assertTrue(res[2] < 0)   # validate disk result
+        c1 = createDummyContainerObject("c1", flavor="tiny")
+        rm.allocate(c1)  # calculate allocation
+        self.assertEqual(float(c1.cpu_quota) / c1.cpu_period, E_CPU / MAX_CU * 0.5)   # validate compute result
+        self.assertEqual(float(c1.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 32)   # validate memory result
 
-        res = rm.allocate("c2", "small")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 1)   # validate compute result
-        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 128)   # validate memory result
-        self.assertTrue(res[2] < 0)   # validate disk result
+        c2 = createDummyContainerObject("c2", flavor="small")
+        rm.allocate(c2)  # calculate allocation
+        self.assertEqual(float(c2.cpu_quota) / c2.cpu_period, E_CPU / MAX_CU * 1)   # validate compute result
+        self.assertEqual(float(c2.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)   # validate memory result
 
-        res = rm.allocate("c3", "medium")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 4)   # validate compute result
-        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 256)   # validate memory result
-        self.assertTrue(res[2] < 0)   # validate disk result
 
-        res = rm.allocate("c4", "large")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 8)   # validate compute result
-        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 512)   # validate memory result
-        self.assertTrue(res[2] < 0)   # validate disk result
+        c3 = createDummyContainerObject("c3", flavor="medium")
+        res = rm.allocate(c3)  # calculate allocation
+        self.assertEqual(float(c3.cpu_quota) / c3.cpu_period, E_CPU / MAX_CU * 4)   # validate compute result
+        self.assertEqual(float(c3.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 256)   # validate memory result
 
-        res = rm.allocate("c5", "xlarge")  # calculate allocation
-        self.assertEqual(res[0], E_CPU / MAX_CU * 16)   # validate compute result
-        self.assertEqual(res[1], float(E_MEM) / MAX_MU * 1024)   # validate memory result
-        self.assertTrue(res[2] < 0)   # validate disk result
+
+        c4 = createDummyContainerObject("c4", flavor="large")
+        rm.allocate(c4)  # calculate allocation
+        self.assertEqual(float(c4.cpu_quota) / c4.cpu_period, E_CPU / MAX_CU * 8)   # validate compute result
+        self.assertEqual(float(c4.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 512)   # validate memory result
+
+
+        c5 = createDummyContainerObject("c5", flavor="xlarge")
+        rm.allocate(c5)  # calculate allocation
+        self.assertEqual(float(c5.cpu_quota) / c5.cpu_period, E_CPU / MAX_CU * 16)   # validate compute result
+        self.assertEqual(float(c5.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 1024)   # validate memory result
+
 
     def testAllocationCpuLimit(self):
         """
@@ -127,10 +153,14 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         # test over provisioning exeption
         exception = False
         try:
-            rm.allocate("c6", "xlarge")  # calculate allocation
-            rm.allocate("c7", "xlarge")  # calculate allocation
-            rm.allocate("c8", "xlarge")  # calculate allocation
-            rm.allocate("c9", "xlarge")  # calculate allocation
+            c6 = createDummyContainerObject("c6", flavor="xlarge")
+            c7 = createDummyContainerObject("c7", flavor="xlarge")
+            c8 = createDummyContainerObject("c8", flavor="xlarge")
+            c9 = createDummyContainerObject("c9", flavor="xlarge")
+            rm.allocate(c6)  # calculate allocation
+            rm.allocate(c7)  # calculate allocation
+            rm.allocate(c8)  # calculate allocation
+            rm.allocate(c9)  # calculate allocation
         except Exception as e:
             self.assertIn("Not enough compute", e.message)
             exception = True
@@ -154,9 +184,12 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         # test over provisioning exeption
         exception = False
         try:
-            rm.allocate("c6", "xlarge")  # calculate allocation
-            rm.allocate("c7", "xlarge")  # calculate allocation
-            rm.allocate("c8", "xlarge")  # calculate allocation
+            c6 = createDummyContainerObject("c6", flavor="xlarge")
+            c7 = createDummyContainerObject("c7", flavor="xlarge")
+            c8 = createDummyContainerObject("c8", flavor="xlarge")
+            rm.allocate(c6)  # calculate allocation
+            rm.allocate(c7)  # calculate allocation
+            rm.allocate(c8)  # calculate allocation
         except Exception as e:
             self.assertIn("Not enough memory", e.message)
             exception = True
@@ -174,9 +207,10 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         reg = ResourceModelRegistrar(dc_emulation_max_cpu=1.0, dc_emulation_max_mem=512)
         rm = UpbSimpleCloudDcRM(max_cu=100, max_mu=100)
         reg.register("test_dc", rm)
-        rm.allocate("c1", "tiny")  # calculate allocation
+        c1 = createDummyContainerObject("c6", flavor="tiny")
+        rm.allocate(c1)  # calculate allocation
         self.assertTrue(rm.dc_alloc_cu == 0.5)
-        rm.free("c1")
+        rm.free(c1)
         self.assertTrue(rm.dc_alloc_cu == 0)
 
     def testInRealTopo(self):
@@ -203,17 +237,17 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         self.assertTrue(len(self.net.rm_registrar.resource_models) == 1)
 
         # check if alloc was called during startCompute
-        self.assertTrue(len(r.allocated_compute_instances) == 0)
+        self.assertTrue(len(r._allocated_compute_instances) == 0)
         tc1 = self.dc[0].startCompute("tc1", flavor_name="tiny")
         time.sleep(1)
-        self.assertTrue(len(r.allocated_compute_instances) == 1)
+        self.assertTrue(len(r._allocated_compute_instances) == 1)
 
         # check if there is a real limitation set for containers cgroup
-        self.assertEqual(tc1.cpu_period/tc1.cpu_quota, 100)
+        self.assertEqual(float(tc1.cpu_quota)/tc1.cpu_period, 0.005)
 
         # check if free was called during stopCompute
         self.dc[0].stopCompute("tc1")
-        self.assertTrue(len(r.allocated_compute_instances) == 0)
+        self.assertTrue(len(r._allocated_compute_instances) == 0)
         # check connectivity by using ping
         self.assertTrue(self.net.ping([self.h[0], self.h[1]]) <= 0.0)
         # stop Mininet network

@@ -140,6 +140,7 @@ class Datacenter(object):
             if len(network) < 1:
                 network.append({})
 
+        """
         # allocate in resource resource model and compute resource limits for new container
         cpu_limit = mem_limit = disk_limit = -1
         cpu_period = cpu_quota = None
@@ -169,18 +170,20 @@ class Datacenter(object):
                 if mem_limit < 4:
                     mem_limit = 4
                     LOG.warning("Increased MEM limit for %r because it was less than 4.0 MB." % name)
+        """
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
             dimage=image,
             dcmd=command,
             datacenter=self,
-            flavor_name=flavor_name,
-            cpu_period=int(cpu_period) if cpu_limit > 0 else None,  # set cpu limits if needed
-            cpu_quota=int(cpu_quota) if cpu_limit > 0 else None,
-            #mem_limit="%dm" % int(mem_limit) if mem_limit > 0 else None,  # set mem limits if needed
-            #memswap_limit="%dm" % int(mem_limit) if mem_limit > 0 else None  # lets set swap to mem limit for now
+            flavor_name=flavor_name
         )
+
+        # apply resource limits to container if a resource model is defined
+        if self._resource_model is not None:
+            self._resource_model.allocate(d)
+
         # connect all given networks
         # if no --net option is given, network = [{}], so 1 empty dict in the list
         # this results in 1 default interface with a default ip address
@@ -190,6 +193,8 @@ class Datacenter(object):
         # do bookkeeping
         self.containers[name] = d
 
+        # TODO re-enable logging
+        """
         # write resource log if a path is given
         if self.resource_log_path is not None:
             l = dict()
@@ -205,6 +210,7 @@ class Datacenter(object):
             # append to logfile
             with open(self.resource_log_path, "a") as f:
                 f.write("%s\n" % json.dumps(l))
+        """
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
@@ -215,14 +221,21 @@ class Datacenter(object):
         if name not in self.containers:
             raise Exception("Container with name %s not found." % name)
         LOG.debug("Stopping compute instance %r in data center %r" % (name, str(self)))
-        self.net.removeLink(
-            link=None, node1=self.containers[name], node2=self.switch)
-        self.net.removeDocker("%s" % (name))
-        del self.containers[name]
+
         # call resource model and free resources
         if self._resource_model is not None:
-            self._resource_model.free(name)
+            self._resource_model.free(self.containers[name])
 
+        # remove links
+        self.net.removeLink(
+            link=None, node1=self.containers[name], node2=self.switch)
+
+        # remove container
+        self.net.removeDocker("%s" % (name))
+        del self.containers[name]
+
+        # TODO re-enable logging
+        """
         # write resource log if a path is given
         if self.resource_log_path is not None:
             l = dict()
@@ -237,6 +250,7 @@ class Datacenter(object):
             # append to logfile
             with open(self.resource_log_path, "a") as f:
                 f.write("%s\n" % json.dumps(l))
+        """
         return True
 
     def listCompute(self):
