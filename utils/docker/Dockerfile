@@ -1,5 +1,10 @@
 FROM cgeoffroy/dockernet
 
+# ensure that we have the latest dockernet code base!
+WORKDIR /dockernet
+RUN git pull \
+    && python setup.py install
+
 WORKDIR /son-emu
 
 COPY . /son-emu/
