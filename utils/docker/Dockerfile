@@ -8,7 +8,6 @@ WORKDIR /dockernet
 RUN python setup.py develop
 
 WORKDIR /son-emu
-
 COPY . /son-emu/
 
 RUN cd /son-emu/ansible \
