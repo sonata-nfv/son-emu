@@ -140,37 +140,6 @@ class Datacenter(object):
             if len(network) < 1:
                 network.append({})
 
-        """
-        # allocate in resource resource model and compute resource limits for new container
-        cpu_limit = mem_limit = disk_limit = -1
-        cpu_period = cpu_quota = None
-        if self._resource_model is not None:
-            # call allocate in resource model to calculate resource limit for this container
-            (cpu_limit, mem_limit, disk_limit) = alloc = self._resource_model.allocate(name, flavor_name)
-            LOG.debug("Allocation result: %r" % str(alloc))
-            # check if we have a cpu_limit given by the used resource model
-            if cpu_limit > 0:
-                # calculate cpu period and quota for CFS
-                # (see: https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
-                # TODO consider multi core machines etc! non trivial!
-                # Attention minimum cpu_quota is 1ms (micro)
-                cpu_period = 100000  # lets consider a fixed period of 100000 microseconds for now
-                cpu_quota = cpu_period * cpu_limit  # calculate the fraction of cpu time for this container
-                LOG.debug(
-                    "CPU limit: cpu_quota = cpu_period * cpu_limit = %f * %f = %f" % (cpu_period, cpu_limit, cpu_quota))
-                # ATTENTION >= 1000 to avoid a invalid argument system error ... no idea why
-                if cpu_quota < 1000:
-                    cpu_quota = 1000
-                    LOG.warning("Increased CPU quota for %r to avoid system error." % name)
-            # check if we have a mem_limit given by the used resource model
-            if mem_limit > 0:
-                LOG.debug(
-                    "MEM limit: mem_limit = %f MB" % mem_limit)
-                # ATTENTION minimum mem_limit per container is 4MB
-                if mem_limit < 4:
-                    mem_limit = 4
-                    LOG.warning("Increased MEM limit for %r because it was less than 4.0 MB." % name)
-        """
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
