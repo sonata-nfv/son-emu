@@ -178,8 +178,8 @@ class Datacenter(object):
             flavor_name=flavor_name,
             cpu_period=int(cpu_period) if cpu_limit > 0 else None,  # set cpu limits if needed
             cpu_quota=int(cpu_quota) if cpu_limit > 0 else None,
-            mem_limit="%dm" % int(mem_limit) if mem_limit > 0 else None,  # set mem limits if needed
-            memswap_limit="%dm" % int(mem_limit) if mem_limit > 0 else None  # lets set swap to mem limit for now
+            #mem_limit="%dm" % int(mem_limit) if mem_limit > 0 else None,  # set mem limits if needed
+            #memswap_limit="%dm" % int(mem_limit) if mem_limit > 0 else None  # lets set swap to mem limit for now
         )
         # connect all given networks
         # if no --net option is given, network = [{}], so 1 empty dict in the list
