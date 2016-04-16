@@ -76,7 +76,7 @@ class BaseResourceModel(object):
         self._initDefaultFlavors()
         self.registrar = None  # pointer to registrar
         self.dcs = list()
-        self.allocated_compute_instances = dict()
+        self._allocated_compute_instances = dict()
         LOG.info("Resource model %r initialized" % self)
 
     def __repr__(self):
@@ -107,26 +107,21 @@ class BaseResourceModel(object):
             raise Exception("Flavor with name %r already exists!" % fl.name)
         self._flavors[fl.name] = fl
 
-    def allocate(self, name, flavor_name):
+    def allocate(self, d):
         """
         This method has to be overwritten by a real resource model.
-        :param name: Name of the started compute instance.
-        :param flavor_name:  Name of the flavor to be allocated.
-        :return: 3-tuple: (CPU-fraction, Mem-limit, Disk-limit)
+        :param d: Container object
         """
-        LOG.warning("Allocating in BaseResourceModel: %r with flavor: %r" % (name, flavor_name))
-        self.allocated_compute_instances[name] = flavor_name
-        return -1.0, -1.0, -1.0  # return invalid values to indicate that this RM is a dummy
+        LOG.warning("Allocating in BaseResourceModel: %r with flavor: %r" % (d.name, d.flavor_name))
+        self._allocated_compute_instances[d.name] = d.flavor_name
 
-    def free(self, name):
+    def free(self, d):
         """
         This method has to be overwritten by a real resource model.
-        :param name: Name of the compute instance that is stopped.
-        :return: True/False
+        :param d: Container object
         """
-        LOG.warning("Free in BaseResourceModel: %r" % name)
-        del self.allocated_compute_instances[name]
-        return True
+        LOG.warning("Free in BaseResourceModel: %r" % d.name)
+        del self._allocated_compute_instances[d.name]
 
     def get_state_dict(self):
         """

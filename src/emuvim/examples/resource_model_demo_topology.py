@@ -43,13 +43,6 @@ def create_topology1():
     # run API endpoint server (in another thread, don't block)
     zapi1.start()
 
-    # add the SONATA dummy gatekeeper to each DC
-    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 8000)
-    sdkg1.connectDatacenter(dc1)
-    sdkg1.connectDatacenter(dc2)
-    # run the dummy gatekeeper (in another thread, don't block)
-    sdkg1.start()
-
     # start the emulation platform
     net.start()
     print "Wait a moment and allocate some compute start some compute resources..."
