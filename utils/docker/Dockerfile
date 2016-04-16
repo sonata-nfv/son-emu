@@ -1,5 +1,7 @@
 FROM cgeoffroy/dockernet
 
+ENV SON_EMU_IN_DOCKER 1
+
 # ensure that we have the latest dockernet code base!
 WORKDIR /
 RUN rm -rf dockernet
