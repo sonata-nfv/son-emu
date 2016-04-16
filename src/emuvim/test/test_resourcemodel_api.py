@@ -1,4 +1,5 @@
 import time
+import os
 from emuvim.test.base import SimpleTestTopology
 from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor
 from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM
@@ -218,6 +219,10 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         Start a real container and check if limitations are really passed down to Dockernet.
         :return:
         """
+        # ATTENTION: This test should only be executed if emu runs not inside a Docker container,
+        # because it manipulates cgroups.
+        if os.environ.get("SON_EMU_IN_DOCKER") is not None:
+            return
         # create network
         self.createNet(nswitches=0, ndatacenter=1, nhosts=2, ndockers=0)
         # setup links
@@ -244,7 +249,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
 
         # check if there is a real limitation set for containers cgroup
         # deactivated for now, seems not to work in docker-in-docker setup used in CI
-        #self.assertEqual(float(tc1.cpu_quota)/tc1.cpu_period, 0.005)
+        self.assertEqual(float(tc1.cpu_quota)/tc1.cpu_period, 0.005)
 
         # check if free was called during stopCompute
         self.dc[0].stopCompute("tc1")
