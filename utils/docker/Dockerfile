@@ -1,9 +1,11 @@
 FROM cgeoffroy/dockernet
 
 # ensure that we have the latest dockernet code base!
+WORKDIR /
+RUN rm -rf dockernet
+RUN git clone -b dockernet-sonata https://github.com/mpeuster/dockernet.git
 WORKDIR /dockernet
-RUN git pull \
-    && python setup.py develop
+RUN python setup.py develop
 
 WORKDIR /son-emu
 
