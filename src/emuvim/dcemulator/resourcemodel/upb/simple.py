@@ -33,6 +33,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.dc_alloc_mu = 0
         self.deactivate_cpu_limit = deactivate_cpu_limit
         self.deactivate_mem_limit = deactivate_mem_limit
+        self.single_cu = 0  # current value for a single cu
+        self.single_mu = 0  # current value for a single mu
         super(self.__class__, self).__init__()
 
     def allocate(self, d):
@@ -125,9 +127,9 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get cpu time fraction for entire emulation
         e_cpu = self.registrar.e_cpu
         # calculate cpu time fraction of a single compute unit
-        single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        self.single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
         # calculate cpu time fraction for container with given flavor
-        cpu_time_percentage = single_cu * number_cu
+        cpu_time_percentage = self.single_cu * number_cu
         # calculate cpu period and quota for CFS
         # (see: https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
         # Attention minimum cpu_quota is 1ms (micro)
@@ -153,9 +155,9 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get memory amount for entire emulation
         e_mem = self.registrar.e_mem
         # calculate amount of memory for a single mu
-        single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
+        self.single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
         # calculate mem for given flavor
-        mem_limit = single_mu * number_mu
+        mem_limit = self.single_mu * number_mu
         # ATTENTION minimum mem_limit per container is 4MB
         if mem_limit < 4:
             mem_limit = 4
@@ -191,6 +193,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         r["dc_max_mu"] = self.dc_max_mu
         r["dc_alloc_cu"] = self.dc_alloc_cu
         r["dc_alloc_mu"] = self.dc_alloc_mu
+        r["single_cu_percentage"] = self.single_cu
+        r["single_mu_percentage"] = self.single_mu
         r["allocation_state"] = allocation_state
         return r
 
