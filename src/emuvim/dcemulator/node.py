@@ -49,6 +49,7 @@ class EmulatorCompute(Docker):
         status["name"] = self.name
         status["network"] = self.getNetworkStatus()
         status["image"] = self.dimage
+        status["flavor_name"] = self.flavor_name
         status["cpu_quota"] = self.cpu_quota
         status["cpu_period"] = self.cpu_period
         status["cpu_shares"] = self.cpu_shares
@@ -152,6 +153,7 @@ class Datacenter(object):
         # apply resource limits to container if a resource model is defined
         if self._resource_model is not None:
             self._resource_model.allocate(d)
+            self._resource_model.write_allocation_log(d, self.resource_log_path)
 
         # connect all given networks
         # if no --net option is given, network = [{}], so 1 empty dict in the list
@@ -161,25 +163,6 @@ class Datacenter(object):
             self.net.addLink(d, self.switch, params1=nw, cls=Link)
         # do bookkeeping
         self.containers[name] = d
-
-        # TODO re-enable logging
-        """
-        # write resource log if a path is given
-        if self.resource_log_path is not None:
-            l = dict()
-            l["t"] = time.time()
-            l["name"] = name
-            l["compute"] = d.getStatus()
-            l["flavor_name"] = flavor_name
-            l["action"] = "allocate"
-            l["cpu_limit"] = cpu_limit
-            l["mem_limit"] = mem_limit
-            l["disk_limit"] = disk_limit
-            l["rm_state"] = None if self._resource_model is None else self._resource_model.get_state_dict()
-            # append to logfile
-            with open(self.resource_log_path, "a") as f:
-                f.write("%s\n" % json.dumps(l))
-        """
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
@@ -194,6 +177,7 @@ class Datacenter(object):
         # call resource model and free resources
         if self._resource_model is not None:
             self._resource_model.free(self.containers[name])
+            self._resource_model.write_free_log(self.containers[name], self.resource_log_path)
 
         # remove links
         self.net.removeLink(
@@ -203,23 +187,6 @@ class Datacenter(object):
         self.net.removeDocker("%s" % (name))
         del self.containers[name]
 
-        # TODO re-enable logging
-        """
-        # write resource log if a path is given
-        if self.resource_log_path is not None:
-            l = dict()
-            l["t"] = time.time()
-            l["name"] = name
-            l["flavor_name"] = None
-            l["action"] = "free"
-            l["cpu_limit"] = -1
-            l["mem_limit"] = -1
-            l["disk_limit"] = -1
-            l["rm_state"] = None if self._resource_model is None else self._resource_model.get_state_dict()
-            # append to logfile
-            with open(self.resource_log_path, "a") as f:
-                f.write("%s\n" % json.dumps(l))
-        """
         return True
 
     def listCompute(self):

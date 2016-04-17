@@ -130,3 +130,31 @@ class BaseResourceModel(object):
         :return:
         """
         return dict()
+
+    def write_allocation_log(self, d, path):
+        """
+        Helper to log RM info for experiments.
+        :param d: container
+        :param path: log path
+        :return:
+        """
+        self._write_log(d, path, "allocate")
+
+    def write_free_log(self, d, path):
+        """
+        Helper to log RM info for experiments.
+        :param d: container
+        :param path: log path
+        :return:
+        """
+        self._write_log(d, path, "free")
+
+    def _write_log(self, d, path, action):
+        """
+        Helper to log RM info for experiments.
+        :param d: container
+        :param path: log path
+        :param action: allocate or free
+        :return:
+        """
+        pass
