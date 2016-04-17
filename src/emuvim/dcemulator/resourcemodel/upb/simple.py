@@ -1,6 +1,8 @@
 """
 Playground for resource models created by University of Paderborn.
 """
+import time
+import json
 import logging
 from emuvim.dcemulator.resourcemodel import BaseResourceModel
 
@@ -157,7 +159,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # ATTENTION minimum mem_limit per container is 4MB
         if mem_limit < 4:
             mem_limit = 4
-            LOG.warning("Increased MEM limit for %r because it was less than 4.0 MB." % name)
+            LOG.warning("Increased MEM limit for %r because it was less than 4.0 MB." % d.name)
         # to byte!
         mem_limit = int(mem_limit*1024*1024)
         # apply to container if changed
@@ -171,7 +173,17 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         Helper method for logging functionality.
         :return:
         """
-        # TODO update
+        # collect info about all allocated instances
+        allocation_state = dict()
+        for k, d in self._allocated_compute_instances.iteritems():
+            s = dict()
+            s["cpu_period"] = d.cpu_period
+            s["cpu_quota"] = d.cpu_quota
+            s["cpu_shares"] = d.cpu_shares
+            s["mem_limit"] = d.mem_limit
+            s["memswap_limit"] = d.memswap_limit
+            allocation_state[k] = s
+        # final result
         r = dict()
         r["e_cpu"] = self.registrar.e_cpu
         r["e_mem"] = self.registrar.e_mem
@@ -179,9 +191,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         r["dc_max_mu"] = self.dc_max_mu
         r["dc_alloc_cu"] = self.dc_alloc_cu
         r["dc_alloc_mu"] = self.dc_alloc_mu
-        r["cu_cpu_percentage"] = -1
-        r["mu_mem_percentage"] = -1
-        r["allocated_compute_instances"] = None #self._allocated_compute_instances
+        r["allocation_state"] = allocation_state
         return r
 
     def _get_flavor(self, d):
@@ -194,3 +204,23 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         if d.flavor_name not in self._flavors:
             raise Exception("Flavor %r does not exist" % d.flavor_name)
         return self._flavors.get(d.flavor_name)
+
+    def _write_log(self, d, path, action):
+        """
+        Helper to log RM info for experiments.
+        :param d: container
+        :param path: log path
+        :param action: allocate or free
+        :return:
+        """
+        if path is None:
+            return
+        # we have a path: write out RM info
+        l = dict()
+        l["t"] = time.time()
+        l["container_state"] = d.getStatus()
+        l["action"] = action
+        l["rm_state"] = self.get_state_dict()
+        # append to logfile
+        with open(path, "a") as f:
+            f.write("%s\n" % json.dumps(l))
