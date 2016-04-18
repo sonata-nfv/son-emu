@@ -33,6 +33,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.dc_alloc_mu = 0
         self.deactivate_cpu_limit = deactivate_cpu_limit
         self.deactivate_mem_limit = deactivate_mem_limit
+        self.single_cu = 0
+        self.single_mu = 0
         super(self.__class__, self).__init__()
 
     def allocate(self, d):
@@ -125,7 +127,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get cpu time fraction for entire emulation
         e_cpu = self.registrar.e_cpu
         # calculate cpu time fraction of a single compute unit
-        single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        self.single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
         # calculate cpu time fraction for container with given flavor
         cpu_time_percentage = single_cu * number_cu
         # calculate cpu period and quota for CFS
@@ -153,7 +155,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get memory amount for entire emulation
         e_mem = self.registrar.e_mem
         # calculate amount of memory for a single mu
-        single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
+        self.single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
         # calculate mem for given flavor
         mem_limit = single_mu * number_mu
         # ATTENTION minimum mem_limit per container is 4MB
