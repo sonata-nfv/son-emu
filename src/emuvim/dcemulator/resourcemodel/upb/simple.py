@@ -35,8 +35,6 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.dc_alloc_mu = 0
         self.deactivate_cpu_limit = deactivate_cpu_limit
         self.deactivate_mem_limit = deactivate_mem_limit
-        self.single_cu = 0  # current value for a single cu
-        self.single_mu = 0  # current value for a single mu
         super(self.__class__, self).__init__()
 
     def allocate(self, d):
@@ -129,7 +127,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get cpu time fraction for entire emulation
         e_cpu = self.registrar.e_cpu
         # calculate cpu time fraction of a single compute unit
-        self.single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
         # calculate cpu time fraction for container with given flavor
         cpu_time_percentage = self.single_cu * number_cu
         # calculate input values for CFS scheduler bandwidth limitation
@@ -153,7 +151,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # ATTENTION >= 1000 to avoid a invalid argument system error ... no idea why
         if cpu_quota < 1000:
             cpu_quota = 1000
-            LOG.warning("Increased CPU quota for %r to avoid system error." % d.name)
+            LOG.warning("Increased CPU quota to avoid system error.")
         return cpu_period, cpu_quota
 
     def _apply_mem_limits(self, d):
@@ -166,7 +164,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # get memory amount for entire emulation
         e_mem = self.registrar.e_mem
         # calculate amount of memory for a single mu
-        self.single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
+        single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
         # calculate mem for given flavor
         mem_limit = self.single_mu * number_mu
         mem_limit = self._calculate_mem_limit_value(mem_limit)
@@ -184,7 +182,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # ATTENTION minimum mem_limit per container is 4MB
         if mem_limit < 4:
             mem_limit = 4
-            LOG.warning("Increased MEM limit for %r because it was less than 4.0 MB." % d.name)
+            LOG.warning("Increased MEM limit because it was less than 4.0 MB.")
         # to byte!
         return int(mem_limit*1024*1024)
 
@@ -212,8 +210,6 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         r["dc_max_mu"] = self.dc_max_mu
         r["dc_alloc_cu"] = self.dc_alloc_cu
         r["dc_alloc_mu"] = self.dc_alloc_mu
-        r["single_cu_percentage"] = self.single_cu
-        r["single_mu_percentage"] = self.single_mu
         r["allocation_state"] = allocation_state
         return r
 
