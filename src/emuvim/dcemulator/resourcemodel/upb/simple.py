@@ -212,6 +212,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         r["dc_max_mu"] = self.dc_max_mu
         r["dc_alloc_cu"] = self.dc_alloc_cu
         r["dc_alloc_mu"] = self.dc_alloc_mu
+        r["single_cu_percentage"] = self.single_cu
+        r["single_mu_percentage"] = self.single_mu
         r["allocation_state"] = allocation_state
         return r
 
