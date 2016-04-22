@@ -1,5 +1,5 @@
 """
-son-emu network CLI
+son-emu monitor CLI
 (c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
 """
 

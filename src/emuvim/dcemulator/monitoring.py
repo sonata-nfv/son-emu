@@ -61,6 +61,7 @@ class DCNetworkMonitor():
         self.monitor_thread.start()
 
         # helper tools
+        self.pushgateway_process = self.start_PushGateway()
         self.prometheus_process = self.start_Prometheus()
         self.cadvisor_process = self.start_cadvisor()
 
@@ -228,6 +229,18 @@ class DCNetworkMonitor():
         logging.info('Start Prometheus container {0}'.format(cmd))
         return Popen(cmd)
 
+    def start_PushGateway(self, port=9091):
+        cmd = ["docker",
+               "run",
+               "-d",
+               "-p", "{0}:9091".format(port),
+               "--name", "pushgateway",
+               "prom/pushgateway"
+               ]
+
+        logging.info('Start Prometheus Push Gateway container {0}'.format(cmd))
+        return Popen(cmd)
+
     def start_cadvisor(self, port=8090):
         cmd = ["docker",
                "run",
@@ -253,6 +266,12 @@ class DCNetworkMonitor():
             self.prometheus_process.terminate()
             self.prometheus_process.kill()
             self._stop_container('prometheus')
+
+        if self.pushgateway_process is not None:
+            logging.info('stopping pushgateway container')
+            self.pushgateway_process.terminate()
+            self.pushgateway_process.kill()
+            self._stop_container('pushgateway')
 
         if self.cadvisor_process is not None:
             logging.info('stopping cadvisor container')
