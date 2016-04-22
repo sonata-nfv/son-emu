@@ -5,7 +5,8 @@ import logging
 from mininet.node import  OVSSwitch
 import ast
 import time
-from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY
+from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY, CollectorRegistry, \
+    pushadd_to_gateway, push_to_gateway, delete_from_gateway
 import threading
 from subprocess import Popen, PIPE
 import os
@@ -25,17 +26,19 @@ class DCNetworkMonitor():
         self.REST_api = 'http://{0}:{1}'.format(self.ip,self.port)
 
         # helper variables to calculate the metrics
+        self.pushgateway = 'localhost:9091'
         # Start up the server to expose the metrics to Prometheus.
-        start_http_server(8000)
+        #start_http_server(8000)
         # supported Prometheus metrics
+        self.registry = CollectorRegistry()
         self.prom_tx_packet_count = Gauge('sonemu_tx_count_packets', 'Total number of packets sent',
-                                          ['vnf_name', 'vnf_interface'])
+                                          ['vnf_name', 'vnf_interface'], registry=self.registry)
         self.prom_rx_packet_count = Gauge('sonemu_rx_count_packets', 'Total number of packets received',
-                                          ['vnf_name', 'vnf_interface'])
+                                          ['vnf_name', 'vnf_interface'], registry=self.registry)
         self.prom_tx_byte_count = Gauge('sonemu_tx_count_bytes', 'Total number of bytes sent',
-                                        ['vnf_name', 'vnf_interface'])
+                                        ['vnf_name', 'vnf_interface'], registry=self.registry)
         self.prom_rx_byte_count = Gauge('sonemu_rx_count_bytes', 'Total number of bytes received',
-                                        ['vnf_name', 'vnf_interface'])
+                                        ['vnf_name', 'vnf_interface'], registry=self.registry)
 
         self.prom_metrics={'tx_packets':self.prom_tx_packet_count, 'rx_packets':self.prom_rx_packet_count,
                            'tx_bytes':self.prom_tx_byte_count,'rx_bytes':self.prom_rx_byte_count}
@@ -53,6 +56,7 @@ class DCNetworkMonitor():
         mon_port = None
         }
         '''
+        self.monitor_lock = threading.Lock()
         self.network_metrics = []
 
         # start monitoring thread
@@ -122,7 +126,11 @@ class DCNetworkMonitor():
             network_metric['switch_dpid'] = int(str(next_node.dpid), 16)
             network_metric['metric_key'] = metric
 
+            self.monitor_lock.acquire()
+
             self.network_metrics.append(network_metric)
+            self.monitor_lock.release()
+
 
             logging.info('Started monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric))
             return 'Started monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric)
@@ -132,17 +140,48 @@ class DCNetworkMonitor():
             return ex.message
 
     def stop_metric(self, vnf_name, vnf_interface, metric):
+
         for metric_dict in self.network_metrics:
             if metric_dict['vnf_name'] == vnf_name and metric_dict['vnf_interface'] == vnf_interface \
                     and metric_dict['metric_key'] == metric:
+
+                self.monitor_lock.acquire()
 
                 self.network_metrics.remove(metric_dict)
 
                 #this removes the complete metric, all labels...
                 #REGISTRY.unregister(self.prom_metrics[metric_dict['metric_key']])
+                #self.registry.unregister(self.prom_metrics[metric_dict['metric_key']])
+
+                for collector in self.registry._collectors :
+                    logging.info('name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames, collector._metrics))
+                    """
+                    INFO:root:name:sonemu_rx_count_packets
+                    labels:('vnf_name', 'vnf_interface')
+                    metrics:{(u'tsrc', u'output'): < prometheus_client.core.Gauge
+                    object
+                    at
+                    0x7f353447fd10 >}
+                    """
+                    logging.info('{0}'.format(collector._metrics.values()))
+                    #if self.prom_metrics[metric_dict['metric_key']]
+                    if (vnf_name, vnf_interface) in collector._metrics:
+                        logging.info('2 name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames,
+                                                                              collector._metrics))
+                        #collector._metrics = {}
+                        collector.remove(vnf_name, vnf_interface)
 
                 # set values to NaN, prometheus api currently does not support removal of metrics
-                self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(float('nan'))
+                #self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(float('nan'))
+
+                # this removes the complete metric, all labels...
+                # 1 single monitor job for all metrics of the SDN controller
+                # we can only  remove from the pushgateway grouping keys(labels) which we have defined for the add_to_pushgateway
+                # we can not specify labels from the metrics to be removed
+                # if we need to remove the metrics seperatelty, we need to give them a separate grouping key, and probably a diffferent registry also
+                delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
+
+                self.monitor_lock.release()
 
                 logging.info('Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric))
                 return 'Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric)
@@ -151,6 +190,9 @@ class DCNetworkMonitor():
     # get all metrics defined in the list and export it to Prometheus
     def get_network_metrics(self):
         while self.start_monitoring:
+
+            self.monitor_lock.acquire()
+
             # group metrics by dpid to optimize the rest api calls
             dpid_list = [metric_dict['switch_dpid'] for metric_dict in self.network_metrics]
             dpid_set = set(dpid_list)
@@ -167,6 +209,7 @@ class DCNetworkMonitor():
                 for metric_dict in metric_list:
                     self.set_network_metric(metric_dict, port_stat_dict)
 
+            self.monitor_lock.release()
             time.sleep(1)
 
     # add metric to the list to export to Prometheus, parse the Ryu port-stats reply
@@ -187,7 +230,14 @@ class DCNetworkMonitor():
                 #logging.info('set prom packets:{0} {1}:{2}'.format(this_measurement, vnf_name, vnf_interface))
 
                 # set prometheus metric
-                self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(this_measurement)
+                self.prom_metrics[metric_dict['metric_key']].\
+                    labels({'vnf_name':vnf_name, 'vnf_interface':vnf_interface}).\
+                    set(this_measurement)
+                #push_to_gateway(self.pushgateway, job='SDNcontroller',
+                #                grouping_key={'metric':metric_dict['metric_key']}, registry=self.registry)
+
+                # 1 single monitor job for all metrics of the SDN controller
+                pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
 
                 if previous_monitor_time <= 0 or previous_monitor_time >= port_uptime:
                     metric_dict['previous_measurement'] = int(port_stat[metric_key])
@@ -195,16 +245,17 @@ class DCNetworkMonitor():
                     # do first measurement
                     #logging.info('first measurement')
                     time.sleep(1)
-                    byte_rate = self.get_network_metrics()
-                    return byte_rate
+                    self.monitor_lock.release()
+                    metric_rate = self.get_network_metrics()
+                    return metric_rate
                 else:
                     time_delta = (port_uptime - metric_dict['previous_monitor_time'])
-                    byte_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
+                    metric_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
                     # logging.info('uptime:{2} delta:{0} rate:{1}'.format(time_delta,byte_rate,port_uptime))
 
                 metric_dict['previous_measurement'] = this_measurement
                 metric_dict['previous_monitor_time'] = port_uptime
-                return byte_rate
+                return metric_rate
 
         logging.exception('metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface))
         return 'metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface)
