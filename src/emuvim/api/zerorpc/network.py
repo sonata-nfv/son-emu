@@ -102,9 +102,9 @@ class DCNetworkApi(object):
 
     # remove the rate measurement for a vnf interface
     def stop_metric(self, vnf_name, vnf_interface, metric):
-        logging.debug("RPC CALL: setup metric")
+        logging.debug("RPC CALL: stop metric")
         try:
-            c = self.net.monitor_agent.remove_metric(vnf_name, vnf_interface, metric)
+            c = self.net.monitor_agent.stop_metric(vnf_name, vnf_interface, metric)
             return c
         except Exception as ex:
             logging.exception("RPC error.")
