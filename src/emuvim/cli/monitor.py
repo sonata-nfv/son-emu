@@ -1,5 +1,5 @@
 """
-son-emu network CLI
+son-emu monitor CLI
 (c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
 """
 
@@ -40,7 +40,7 @@ class ZeroRpcClient(object):
     def stop_metric(self, args):
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
-        r = self.c.remove_metric(
+        r = self.c.stop_metric(
             vnf_name,
             vnf_interface,
             args.get("metric"))

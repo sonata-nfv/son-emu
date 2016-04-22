@@ -34,3 +34,12 @@ scrape_configs:
     target_groups:
       - targets: ['172.17.0.1:8090']
 
+  - job_name: 'PushGateway'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+
+    target_groups:
+      - targets: ['172.17.0.1:9091']
+
+
