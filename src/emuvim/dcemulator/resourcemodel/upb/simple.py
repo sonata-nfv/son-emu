@@ -168,6 +168,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # calculate amount of memory for a single mu
         self.single_mu = float(e_mem) / sum([rm.dc_max_mu for rm in list(self.registrar.resource_models)])
         # calculate mem for given flavor
+        mem_limit = self.single_mu * number_mu
         mem_limit = self._calculate_mem_limit_value(mem_limit)
         # apply to container if changed
         if d.mem_limit != mem_limit:
