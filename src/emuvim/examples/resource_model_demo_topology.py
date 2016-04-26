@@ -10,7 +10,7 @@ from mininet.node import Controller
 from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
-from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM
+from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,7 +32,7 @@ def create_topology1():
 
     # create and assign resource models for each DC
     rm1 = UpbSimpleCloudDcRM(max_cu=4, max_mu=1024)
-    rm2 = UpbSimpleCloudDcRM(max_cu=6)
+    rm2 = UpbOverprovisioningCloudDcRM(max_cu=4)
     dc1.assignResourceModel(rm1)
     dc2.assignResourceModel(rm2)
 
@@ -51,6 +51,8 @@ def create_topology1():
     dc1.startCompute("vnf2", flavor_name="tiny")
     dc1.startCompute("vnf3", flavor_name="small")
     dc2.startCompute("vnf4", flavor_name="medium")
+    dc2.startCompute("vnf5", flavor_name="medium")
+    dc2.startCompute("vnf6", flavor_name="medium")
     print "... done."
     time.sleep(5)
     print "Removing instances ..."

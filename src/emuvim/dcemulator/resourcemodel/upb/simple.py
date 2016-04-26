@@ -37,7 +37,9 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.deactivate_mem_limit = deactivate_mem_limit
         self.single_cu = 0
         self.single_mu = 0
-        super(self.__class__, self).__init__()
+        self.raise_no_cpu_resources_left = True
+        self.raise_no_mem_resources_left = True
+        super(UpbSimpleCloudDcRM, self).__init__()
 
     def allocate(self, d):
         """
@@ -61,7 +63,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         """
         fl_cu = self._get_flavor(d).get("compute")
         # check for over provisioning
-        if self.dc_alloc_cu + fl_cu > self.dc_max_cu:
+        if self.dc_alloc_cu + fl_cu > self.dc_max_cu and self.raise_no_cpu_resources_left:
             raise Exception("Not enough compute resources left.")
         self.dc_alloc_cu += fl_cu
 
@@ -73,7 +75,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         """
         fl_mu = self._get_flavor(d).get("memory")
         # check for over provisioning
-        if self.dc_alloc_mu + fl_mu > self.dc_max_mu:
+        if self.dc_alloc_mu + fl_mu > self.dc_max_mu and self.raise_no_mem_resources_left:
             raise Exception("Not enough memory resources left.")
         self.dc_alloc_mu += fl_mu
 
@@ -110,7 +112,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         """
         Recalculate real resource limits for all allocated containers and apply them
         to their cgroups.
-        We have to recalculate for all to allow e.g. overprovisioning models.
+        We have to recalculate for all containers to allow e.g. over provisioning models.
         :return:
         """
         for d in self._allocated_compute_instances.itervalues():
@@ -255,3 +257,31 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # append to logfile
         with open(path, "a") as f:
             f.write("%s\n" % json.dumps(l))
+
+
+class UpbOverprovisioningCloudDcRM(UpbSimpleCloudDcRM):
+    """
+    This will be an example resource model that limits the overall
+    resources that can be deployed per data center.
+    Allows over provisioning. Might result in reducing resources of single
+    containers whenever a data-center is over provisioned.
+    """
+    def __init__(self, *args, **kvargs):
+        super(UpbOverprovisioningCloudDcRM, self).__init__(*args, **kvargs)
+        self.raise_no_cpu_resources_left = False
+
+    def _compute_single_cu(self):
+        """
+        Calculate percentage of CPU time of a singe CU unit.
+        Take scale-down facte for over provisioning into account.
+        :return:
+        """
+        # get cpu time fraction for entire emulation
+        e_cpu = self.registrar.e_cpu
+        # calculate over provisioning scale factor
+        self.op_factor = float(self.dc_max_cu) / (max(self.dc_max_cu, self.dc_alloc_cu))
+        LOG.info("========== op_factor=%r ===========" % self.op_factor)
+        # calculate
+        return float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)]) * self.op_factor
+
+    # TODO log op_factor
