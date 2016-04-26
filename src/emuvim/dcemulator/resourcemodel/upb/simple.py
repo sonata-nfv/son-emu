@@ -126,10 +126,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         :return:
         """
         number_cu = self._get_flavor(d).get("compute")
-        # get cpu time fraction for entire emulation
-        e_cpu = self.registrar.e_cpu
         # calculate cpu time fraction of a single compute unit
-        self.single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        self.single_cu = self._compute_single_cu()
         # calculate cpu time fraction for container with given flavor
         cpu_time_percentage = self.single_cu * number_cu
         # calculate input values for CFS scheduler bandwidth limitation
@@ -139,6 +137,16 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
             LOG.debug("Setting CPU limit for %r: cpu_quota = cpu_period * limit = %f * %f = %f" % (
                       d.name, cpu_period, cpu_time_percentage, cpu_quota))
             d.updateCpuLimit(cpu_period=int(cpu_period), cpu_quota=int(cpu_quota))
+
+    def _compute_single_cu(self):
+        """
+        Calculate percentage of CPU time of a singe CU unit.
+        :return:
+        """
+        # get cpu time fraction for entire emulation
+        e_cpu = self.registrar.e_cpu
+        # calculate
+        return float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
 
     def _calculate_cpu_cfs_values(self, cpu_time_percentage):
         """
