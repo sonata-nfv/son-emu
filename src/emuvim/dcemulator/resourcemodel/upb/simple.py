@@ -271,6 +271,7 @@ class UpbOverprovisioningCloudDcRM(UpbSimpleCloudDcRM):
     Allows over provisioning. Might result in reducing resources of single
     containers whenever a data-center is over provisioned.
     """
+    # TODO add parts for memory
     def __init__(self, *args, **kvargs):
         super(UpbOverprovisioningCloudDcRM, self).__init__(*args, **kvargs)
         self.raise_no_cpu_resources_left = False
