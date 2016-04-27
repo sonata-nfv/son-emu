@@ -9,7 +9,6 @@ The following lead developers are responsible for this repository and have admin
 * Manuel Peuster (mpeuster)
 * Steven Van Rossem (stevenvanrossem)
 
-
 ### Dependencies
 * needs the latest [Dockernet](https://github.com/mpeuster/dockernet) to be installed on the system
 * pyaml
