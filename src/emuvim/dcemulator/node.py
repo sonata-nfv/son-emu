@@ -4,6 +4,7 @@ Distributed Cloud Emulator (dcemulator)
 """
 from mininet.node import Docker
 from mininet.link import Link
+from emuvim.dcemulator.resourcemodel import NotEnoughResourcesAvailable
 import logging
 import time
 import json
@@ -152,8 +153,15 @@ class Datacenter(object):
 
         # apply resource limits to container if a resource model is defined
         if self._resource_model is not None:
-            self._resource_model.allocate(d)
-            self._resource_model.write_allocation_log(d, self.resource_log_path)
+            try:
+                self._resource_model.allocate(d)
+                self._resource_model.write_allocation_log(d, self.resource_log_path)
+            except NotEnoughResourcesAvailable as ex:
+                LOG.warning("Allocation of container %r was blocked by resource model." % name)
+                LOG.info(ex.message)
+                # ensure that we remove the container
+                self.net.removeDocker(name)
+                return None
 
         # connect all given networks
         # if no --net option is given, network = [{}], so 1 empty dict in the list
