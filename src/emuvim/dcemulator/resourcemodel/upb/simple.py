@@ -4,7 +4,7 @@ Playground for resource models created by University of Paderborn.
 import time
 import json
 import logging
-from emuvim.dcemulator.resourcemodel import BaseResourceModel
+from emuvim.dcemulator.resourcemodel import BaseResourceModel, NotEnoughResourcesAvailable
 
 LOG = logging.getLogger("rm.upb.simple")
 LOG.setLevel(logging.DEBUG)
@@ -66,7 +66,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         fl_cu = self._get_flavor(d).get("compute")
         # check for over provisioning
         if self.dc_alloc_cu + fl_cu > self.dc_max_cu and self.raise_no_cpu_resources_left:
-            raise Exception("Not enough compute resources left.")
+            raise NotEnoughResourcesAvailable("Not enough compute resources left.")
         self.dc_alloc_cu += fl_cu
 
     def _allocate_mem(self, d):
@@ -78,7 +78,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         fl_mu = self._get_flavor(d).get("memory")
         # check for over provisioning
         if self.dc_alloc_mu + fl_mu > self.dc_max_mu and self.raise_no_mem_resources_left:
-            raise Exception("Not enough memory resources left.")
+            raise NotEnoughResourcesAvailable("Not enough memory resources left.")
         self.dc_alloc_mu += fl_mu
 
     def free(self, d):

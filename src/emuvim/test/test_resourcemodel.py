@@ -1,9 +1,9 @@
 import time
 import os
 from emuvim.test.base import SimpleTestTopology
-from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor
+from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor, NotEnoughResourcesAvailable, ResourceModelRegistrar
 from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM
-from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
+
 
 
 class testResourceModel(SimpleTestTopology):
@@ -159,7 +159,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
             rm.allocate(c7)  # calculate allocation
             rm.allocate(c8)  # calculate allocation
             rm.allocate(c9)  # calculate allocation
-        except Exception as e:
+        except NotEnoughResourcesAvailable as e:
             self.assertIn("Not enough compute", e.message)
             exception = True
         self.assertTrue(exception)
@@ -188,7 +188,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
             rm.allocate(c6)  # calculate allocation
             rm.allocate(c7)  # calculate allocation
             rm.allocate(c8)  # calculate allocation
-        except Exception as e:
+        except NotEnoughResourcesAvailable as e:
             self.assertIn("Not enough memory", e.message)
             exception = True
         self.assertTrue(exception)

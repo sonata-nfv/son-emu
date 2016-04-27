@@ -158,3 +158,7 @@ class BaseResourceModel(object):
         :return:
         """
         pass
+
+
+class NotEnoughResourcesAvailable(BaseException):
+    pass
