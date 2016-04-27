@@ -12,9 +12,6 @@ RUN python setup.py develop
 WORKDIR /son-emu
 COPY . /son-emu/
 
-# ensure that we have the right docker image for tests available
-RUN docker run --rm ubuntu:trusty
-
 RUN cd /son-emu/ansible \
     && ansible-playbook install.yml \
     && cd /son-emu \
