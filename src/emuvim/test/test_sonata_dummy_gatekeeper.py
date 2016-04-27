@@ -2,6 +2,7 @@ import time
 import requests
 import subprocess
 import os
+import unittest
 from emuvim.test.base import SimpleTestTopology
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
@@ -9,11 +10,8 @@ from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
 class testSonataDummyGatekeeper(SimpleTestTopology):
 
+    @unittest.skip("disabled test since ubuntu:trusty not used in current example package")
     def testAPI(self):
-        # ATTENTION: DEACTIVATED this test in CI env. due to Docker build errors that will disappear as soon as the new
-        # demo package with pre-build containers becomes available
-        if os.environ.get("SON_EMU_IN_DOCKER") is not None:
-            return
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)
         # setup links

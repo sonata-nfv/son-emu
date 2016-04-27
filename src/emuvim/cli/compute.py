@@ -107,7 +107,7 @@ parser.add_argument(
     help="Name of compute instance e.g. 'vnf1'")
 parser.add_argument(
     "--image","-i", dest="image",
-    help="Name of container image to be used e.g. 'ubuntu'")
+    help="Name of container image to be used e.g. 'ubuntu:trusty'")
 parser.add_argument(
     "--dcmd", "-c", dest="docker_command",
     help="Startup command of the container e.g. './start.sh'")
