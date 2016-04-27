@@ -37,7 +37,11 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         self.deactivate_mem_limit = deactivate_mem_limit
         self.single_cu = 0
         self.single_mu = 0
-        super(self.__class__, self).__init__()
+        self.cpu_op_factor = 1.0  # over provisioning factor
+        self.mem_op_factor = 1.0
+        self.raise_no_cpu_resources_left = True
+        self.raise_no_mem_resources_left = True
+        super(UpbSimpleCloudDcRM, self).__init__()
 
     def allocate(self, d):
         """
@@ -61,7 +65,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         """
         fl_cu = self._get_flavor(d).get("compute")
         # check for over provisioning
-        if self.dc_alloc_cu + fl_cu > self.dc_max_cu:
+        if self.dc_alloc_cu + fl_cu > self.dc_max_cu and self.raise_no_cpu_resources_left:
             raise Exception("Not enough compute resources left.")
         self.dc_alloc_cu += fl_cu
 
@@ -73,7 +77,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         """
         fl_mu = self._get_flavor(d).get("memory")
         # check for over provisioning
-        if self.dc_alloc_mu + fl_mu > self.dc_max_mu:
+        if self.dc_alloc_mu + fl_mu > self.dc_max_mu and self.raise_no_mem_resources_left:
             raise Exception("Not enough memory resources left.")
         self.dc_alloc_mu += fl_mu
 
@@ -110,7 +114,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         """
         Recalculate real resource limits for all allocated containers and apply them
         to their cgroups.
-        We have to recalculate for all to allow e.g. overprovisioning models.
+        We have to recalculate for all containers to allow e.g. over provisioning models.
         :return:
         """
         for d in self._allocated_compute_instances.itervalues():
@@ -126,19 +130,27 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         :return:
         """
         number_cu = self._get_flavor(d).get("compute")
-        # get cpu time fraction for entire emulation
-        e_cpu = self.registrar.e_cpu
         # calculate cpu time fraction of a single compute unit
-        self.single_cu = float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
+        self.single_cu = self._compute_single_cu()
         # calculate cpu time fraction for container with given flavor
         cpu_time_percentage = self.single_cu * number_cu
         # calculate input values for CFS scheduler bandwidth limitation
         cpu_period, cpu_quota = self._calculate_cpu_cfs_values(cpu_time_percentage)
         # apply limits to container if changed
         if d.cpu_period != cpu_period or d.cpu_quota != cpu_quota:
-            LOG.debug("Setting CPU limit for %r: cpu_quota = cpu_period * limit = %f * %f = %f" % (
-                      d.name, cpu_period, cpu_time_percentage, cpu_quota))
+            LOG.debug("Setting CPU limit for %r: cpu_quota = cpu_period * limit = %f * %f = %f (op_factor=%f)" % (
+                      d.name, cpu_period, cpu_time_percentage, cpu_quota, self.cpu_op_factor))
             d.updateCpuLimit(cpu_period=int(cpu_period), cpu_quota=int(cpu_quota))
+
+    def _compute_single_cu(self):
+        """
+        Calculate percentage of CPU time of a singe CU unit.
+        :return:
+        """
+        # get cpu time fraction for entire emulation
+        e_cpu = self.registrar.e_cpu
+        # calculate
+        return float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)])
 
     def _calculate_cpu_cfs_values(self, cpu_time_percentage):
         """
@@ -172,7 +184,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         mem_limit = self._calculate_mem_limit_value(mem_limit)
         # apply to container if changed
         if d.mem_limit != mem_limit:
-            LOG.debug("Setting MEM limit for %r: mem_limit = %f MB" % (d.name, mem_limit/1024/1024))
+            LOG.debug("Setting MEM limit for %r: mem_limit = %f MB (op_factor=%f)" %
+                      (d.name, mem_limit/1024/1024, self.mem_op_factor))
             d.updateMemoryLimit(mem_limit=mem_limit)
 
     def _calculate_mem_limit_value(self, mem_limit):
@@ -214,6 +227,8 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         r["dc_alloc_mu"] = self.dc_alloc_mu
         r["single_cu_percentage"] = self.single_cu
         r["single_mu_percentage"] = self.single_mu
+        r["cpu_op_factor"] = self.cpu_op_factor
+        r["mem_op_factor"] = self.mem_op_factor
         r["allocation_state"] = allocation_state
         return r
 
@@ -247,3 +262,30 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # append to logfile
         with open(path, "a") as f:
             f.write("%s\n" % json.dumps(l))
+
+
+class UpbOverprovisioningCloudDcRM(UpbSimpleCloudDcRM):
+    """
+    This will be an example resource model that limits the overall
+    resources that can be deployed per data center.
+    Allows over provisioning. Might result in reducing resources of single
+    containers whenever a data-center is over provisioned.
+    """
+    # TODO add parts for memory
+    def __init__(self, *args, **kvargs):
+        super(UpbOverprovisioningCloudDcRM, self).__init__(*args, **kvargs)
+        self.raise_no_cpu_resources_left = False
+
+    def _compute_single_cu(self):
+        """
+        Calculate percentage of CPU time of a singe CU unit.
+        Take scale-down facte for over provisioning into account.
+        :return:
+        """
+        # get cpu time fraction for entire emulation
+        e_cpu = self.registrar.e_cpu
+        # calculate over provisioning scale factor
+        self.cpu_op_factor = float(self.dc_max_cu) / (max(self.dc_max_cu, self.dc_alloc_cu))
+        # calculate
+        return float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)]) * self.cpu_op_factor
+
