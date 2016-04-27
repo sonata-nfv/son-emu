@@ -2,7 +2,7 @@ import time
 import os
 from emuvim.test.base import SimpleTestTopology
 from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor
-from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM
+from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
 
@@ -92,7 +92,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
     Test the UpbSimpleCloudDc resource model.
     """
 
-    def testAllocation(self):
+    def testAllocationComputations(self):
         """
         Test the allocation procedures and correct calculations.
         :return:
@@ -117,18 +117,15 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         self.assertEqual(float(c2.cpu_quota) / c2.cpu_period, E_CPU / MAX_CU * 1)   # validate compute result
         self.assertEqual(float(c2.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)   # validate memory result
 
-
         c3 = createDummyContainerObject("c3", flavor="medium")
-        res = rm.allocate(c3)  # calculate allocation
+        rm.allocate(c3)  # calculate allocation
         self.assertEqual(float(c3.cpu_quota) / c3.cpu_period, E_CPU / MAX_CU * 4)   # validate compute result
         self.assertEqual(float(c3.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 256)   # validate memory result
-
 
         c4 = createDummyContainerObject("c4", flavor="large")
         rm.allocate(c4)  # calculate allocation
         self.assertEqual(float(c4.cpu_quota) / c4.cpu_period, E_CPU / MAX_CU * 8)   # validate compute result
         self.assertEqual(float(c4.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 512)   # validate memory result
-
 
         c5 = createDummyContainerObject("c5", flavor="xlarge")
         rm.allocate(c5)  # calculate allocation
@@ -258,6 +255,58 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         self.assertTrue(self.net.ping([self.h[0], self.h[1]]) <= 0.0)
         # stop Mininet network
         self.stopNet()
+
+
+class testUpbOverprovisioningCloudDcRM(SimpleTestTopology):
+    """
+    Test the UpbOverprovisioningCloudDc resource model.
+    """
+
+    def testAllocationComputations(self):
+        """
+        Test the allocation procedures and correct calculations.
+        :return:
+        """
+        # config
+        E_CPU = 1.0
+        MAX_CU = 3
+        E_MEM = 512
+        MAX_MU = 2048
+        # create dummy resource model environment
+        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        rm = UpbOverprovisioningCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
+        reg.register("test_dc", rm)
+
+        c1 = createDummyContainerObject("c1", flavor="small")
+        rm.allocate(c1)  # calculate allocation
+        self.assertAlmostEqual(float(c1.cpu_quota) / c1.cpu_period, E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(float(c1.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
+
+        c2 = createDummyContainerObject("c2", flavor="small")
+        rm.allocate(c2)  # calculate allocation
+        self.assertAlmostEqual(float(c2.cpu_quota) / c2.cpu_period, E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(float(c2.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
+
+        c3 = createDummyContainerObject("c3", flavor="small")
+        rm.allocate(c3)  # calculate allocation
+        self.assertAlmostEqual(float(c3.cpu_quota) / c3.cpu_period, E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(float(c3.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
+
+        # from this container onwards, we should go to over provisioning mode:
+        c4 = createDummyContainerObject("c4", flavor="small")
+        rm.allocate(c4)  # calculate allocation
+        self.assertAlmostEqual(float(c4.cpu_quota) / c4.cpu_period, E_CPU / MAX_CU * (float(3) / 4), places=5)
+        self.assertAlmostEqual(float(c4.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128, places=5)
+        self.assertAlmostEqual(rm.cpu_op_factor, 0.75)
+
+        c5 = createDummyContainerObject("c5", flavor="small")
+        rm.allocate(c5)  # calculate allocation
+        self.assertAlmostEqual(float(c5.cpu_quota) / c5.cpu_period, E_CPU / MAX_CU * (float(3) / 5), places=5)
+        self.assertAlmostEqual(float(c5.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(rm.cpu_op_factor, 0.6)
 
 
 

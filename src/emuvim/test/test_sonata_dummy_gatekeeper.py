@@ -2,6 +2,7 @@ import time
 import requests
 import subprocess
 import os
+import unittest
 from emuvim.test.base import SimpleTestTopology
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
@@ -9,6 +10,7 @@ from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
 class testSonataDummyGatekeeper(SimpleTestTopology):
 
+    @unittest.skip("disabled test since ubuntu:trusty not used in current example package")
     def testAPI(self):
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)

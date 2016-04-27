@@ -132,7 +132,7 @@ class Datacenter(object):
             raise Exception("Container with name %s already exists." % name)
         # set default parameter
         if image is None:
-            image = "ubuntu"
+            image = "ubuntu:trusty"
         if network is None:
             network = {}  # {"ip": "10.0.0.254/8"}
         if isinstance(network, dict):
