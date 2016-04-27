@@ -57,7 +57,7 @@ class SimpleTestTopology(unittest.TestCase):
             self.h.append(self.net.addHost('h%d' % i))
         # add some dockers
         for i in range(0, ndockers):
-            self.d.append(self.net.addDocker('d%d' % i, dimage="ubuntu"))
+            self.d.append(self.net.addDocker('d%d' % i, dimage="ubuntu:trusty"))
 
     def startNet(self):
         self.net.start()
