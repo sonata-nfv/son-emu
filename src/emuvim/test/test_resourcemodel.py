@@ -2,7 +2,7 @@ import time
 import os
 from emuvim.test.base import SimpleTestTopology
 from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor, NotEnoughResourcesAvailable, ResourceModelRegistrar
-from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM
+from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM, UpbDummyRM
 
 
 
@@ -309,4 +309,31 @@ class testUpbOverprovisioningCloudDcRM(SimpleTestTopology):
         self.assertAlmostEqual(rm.cpu_op_factor, 0.6)
 
 
+class testUpbDummyRM(SimpleTestTopology):
+    """
+    Test the UpbDummyRM resource model.
+    """
+
+    def testAllocationComputations(self):
+        """
+        Test the allocation procedures and correct calculations.
+        :return:
+        """
+        # config
+        E_CPU = 1.0
+        MAX_CU = 3
+        E_MEM = 512
+        MAX_MU = 2048
+        # create dummy resource model environment
+        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        rm = UpbDummyRM(max_cu=MAX_CU, max_mu=MAX_MU)
+        reg.register("test_dc", rm)
+
+        c1 = createDummyContainerObject("c1", flavor="small")
+        rm.allocate(c1)  # calculate allocation
+        self.assertEqual(len(rm._allocated_compute_instances), 1)
+
+        c2 = createDummyContainerObject("c2", flavor="small")
+        rm.allocate(c2)  # calculate allocation
+        self.assertEqual(len(rm._allocated_compute_instances), 2)
 
