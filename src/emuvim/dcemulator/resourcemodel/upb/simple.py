@@ -289,3 +289,16 @@ class UpbOverprovisioningCloudDcRM(UpbSimpleCloudDcRM):
         # calculate
         return float(e_cpu) / sum([rm.dc_max_cu for rm in list(self.registrar.resource_models)]) * self.cpu_op_factor
 
+
+class UpbDummyRM(UpbSimpleCloudDcRM):
+    """
+    No limits. But log allocations.
+    """
+    def __init__(self, *args, **kvargs):
+        super(UpbDummyRM, self).__init__(*args, **kvargs)
+        self.raise_no_cpu_resources_left = False
+
+    def _apply_limits(self):
+        # do nothing here
+        pass
+
