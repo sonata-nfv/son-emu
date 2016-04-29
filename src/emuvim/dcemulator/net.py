@@ -282,7 +282,9 @@ class DCNetwork(Dockernet):
 
             #logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport, switch_outport))
             # set of entry via ovs-ofctl
-            # TODO use rest API of ryu to set flow entries to correct witch dpid
+            # TODO use rest API of ryu to set flow entries to correct dpid
+            # TODO this only sets port in to out, no match, so this will give trouble when multiple services are deployed...
+            # TODO need multiple matches to do this (VLAN tags)
             if isinstance( current_node, OVSSwitch ):
                 match = 'in_port=%s' % switch_inport
 
