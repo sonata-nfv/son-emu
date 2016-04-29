@@ -1,10 +1,15 @@
 global:
   scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 5s
 
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
     monitor: 'codelab-monitor'
+
+# Rule files specifies a list of files from which rules are read.
+rule_files:
+  - 'profile.rules'
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
