@@ -246,12 +246,14 @@ class DCNetworkMonitor():
                     #logging.info('first measurement')
                     time.sleep(1)
                     self.monitor_lock.release()
+
                     metric_rate = self.get_network_metrics()
                     return metric_rate
+
                 else:
                     time_delta = (port_uptime - metric_dict['previous_monitor_time'])
                     metric_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
-                    # logging.info('uptime:{2} delta:{0} rate:{1}'.format(time_delta,byte_rate,port_uptime))
+                    logging.info('metric: {0} rate:{1}'.format(metric_dict['metric_key'], metric_rate))
 
                 metric_dict['previous_measurement'] = this_measurement
                 metric_dict['previous_monitor_time'] = port_uptime
@@ -274,6 +276,7 @@ class DCNetworkMonitor():
                "--rm",
                "-p", "{0}:9090".format(port),
                "-v", "{0}/prometheus.yml:/etc/prometheus/prometheus.yml".format(os.path.dirname(os.path.abspath(__file__))),
+               "-v", "{0}/profile.rules:/etc/prometheus/profile.rules".format(os.path.dirname(os.path.abspath(__file__))),
                "--name", "prometheus",
                "prom/prometheus"
                ]
