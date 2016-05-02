@@ -56,7 +56,7 @@ class MultiDatacenterApi(object):
     def __init__(self, dcs):
         self.dcs = dcs
 
-    def compute_action_start(self, dc_label, compute_name, image, command, network):
+    def compute_action_start(self, dc_label, compute_name, image, network=None, command=None):
         """
         Start a new compute instance: A docker container
         :param dc_label: name of the DC

@@ -60,10 +60,12 @@ def create_topology1():
        to define you topology.
        These links can use Mininet's features to limit bw, add delay or jitter.
     """
+    net.addLink(dc1, dc2, delay="10ms")
     net.addLink(dc1, dc2)
-    net.addLink("datacenter1", s1)
+    net.addLink("datacenter1", s1, delay="20ms")
     net.addLink(s1, dc3)
     net.addLink(s1, "datacenter4")
+
 
     """
     5. We want to access and control our data centers from the outside,
