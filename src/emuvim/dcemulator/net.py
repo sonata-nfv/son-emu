@@ -224,15 +224,15 @@ class DCNetwork(Dockernet):
             connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             vnf_src_interface = link_dict[0]['src_port_id']
-            #vnf_source_interface = 0
+            #logging.info('vnf_src_if: {0}'.format(vnf_src_interface))
 
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
-                #logging.info("{0},{1}".format(link_dict[link],vnf_source_interface))
+                #logging.info("here1: {0},{1}".format(link_dict[link],vnf_src_interface))
                 if link_dict[link]['src_port_id'] == vnf_src_interface:
                     # found the right link and connected switch
-                    #logging.info("{0},{1}".format(link_dict[link]['src_port_id'], vnf_source_interface))
+                    #logging.info("conn_sw: {2},{0},{1}".format(link_dict[link]['src_port_id'], vnf_src_interface, connected_sw))
                     src_sw = connected_sw
 
                     src_sw_inport = link_dict[link]['dst_port']
@@ -243,7 +243,6 @@ class DCNetwork(Dockernet):
             connected_sw = self.DCNetwork_graph.neighbors(vnf_dst_name)[0]
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             vnf_dst_interface = link_dict[0]['dst_port_id']
-            #vnf_dest_interface = 0
 
         vnf_dst_name = vnf_dst_name.split(':')[0]
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
@@ -259,6 +258,8 @@ class DCNetwork(Dockernet):
         # get shortest path
         #path = nx.shortest_path(self.DCNetwork_graph, vnf_src_name, vnf_dst_name)
         try:
+            # returns the first found shortest path
+            # if all shortest paths are wanted, use: all_shortest_paths
             path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=weight)
         except:
             logging.info("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
@@ -291,16 +292,6 @@ class DCNetwork(Dockernet):
                 index_edge_out = 0
                 switch_outport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port']
 
-            # take into account that multiple edges are possible between 2 nodes
-            index_edge_in = 0
-
-
-            #switch_inport = self.DCNetwork_graph[current_hop][next_hop][index_edge_in]['dst_port']
-
-            #next2_hop = path[path.index(current_hop)+2]
-            #index_edge_out = 0
-            #switch_outport = self.DCNetwork_graph[next_hop][next2_hop][index_edge_out]['src_port']
-            #switch_outport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port']
 
             #logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport, switch_outport))
             # set of entry via ovs-ofctl
@@ -342,9 +333,9 @@ class DCNetwork(Dockernet):
         ryu_of_port = '6653'
         ryu_cmd = 'ryu-manager'
         FNULL = open("/tmp/ryu.log", 'w')
-        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        #self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         # no learning switch
-        #self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
     def stopRyu(self):
