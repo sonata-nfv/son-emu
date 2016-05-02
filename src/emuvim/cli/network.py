@@ -32,12 +32,14 @@ class ZeroRpcClient(object):
         vnf_src_interface = self._parse_vnf_interface(args.get("source"))
         vnf_dst_name = self._parse_vnf_name(args.get("destination"))
         vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
+        weight = args.get("weight")
         r = self.c.network_action_start(
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
             vnf_src_interface,
-            vnf_dst_interface)
+            vnf_dst_interface,
+            weight=weight)
         pp.pprint(r)
 
     def remove(self, args):
@@ -45,12 +47,14 @@ class ZeroRpcClient(object):
         vnf_src_interface = self._parse_vnf_interface(args.get("source"))
         vnf_dst_name = self._parse_vnf_name(args.get("destination"))
         vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
+        weight = args.get("weight")
         r = self.c.network_action_stop(
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
             vnf_src_interface,
-            vnf_dst_interface)
+            vnf_dst_interface,
+            weight=weight)
         pp.pprint(r)
 
     def _parse_vnf_name(self, vnf_name_str):
@@ -79,6 +83,9 @@ parser.add_argument(
 parser.add_argument(
     "--destination", "-dst", dest="destination",
     help="vnf name of the destination of the chain")
+parser.add_argument(
+    "--weight", "-w", dest="weight",
+    help="weight metric to calculate the path")
 
 def main(argv):
     args = vars(parser.parse_args(argv))
