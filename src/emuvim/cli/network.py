@@ -37,8 +37,8 @@ class ZeroRpcClient(object):
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
-            vnf_src_interface,
-            vnf_dst_interface,
+            vnf_src_interface=vnf_src_interface,
+            vnf_dst_interface=vnf_dst_interface,
             weight=weight)
         pp.pprint(r)
 
@@ -52,8 +52,8 @@ class ZeroRpcClient(object):
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
-            vnf_src_interface,
-            vnf_dst_interface,
+            vnf_src_interface=vnf_src_interface,
+            vnf_dst_interface=vnf_dst_interface,
             weight=weight)
         pp.pprint(r)
 

@@ -71,7 +71,10 @@ class DCNetworkApi(object):
         logging.debug("RPC CALL: network chain start")
         try:
             c = self.net.setChain(
-                vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, weight=weight)
+                vnf_src_name, vnf_dst_name,
+                vnf_src_interface=vnf_src_interface,
+                vnf_dst_interface=vnf_dst_interface,
+                weight=weight)
             return str(c)
         except Exception as ex:
             logging.exception("RPC error.")
@@ -84,7 +87,11 @@ class DCNetworkApi(object):
         logging.debug("RPC CALL: network chain stop")
         try:
             c = self.net.setChain(
-                vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, cmd='del-flows', weight=weight)
+                vnf_src_name, vnf_dst_name,
+                vnf_src_interface=vnf_src_interface,
+                vnf_dst_interface=vnf_dst_interface,
+                cmd='del-flows',
+                weight=weight)
             return c
         except Exception as ex:
             logging.exception("RPC error.")
