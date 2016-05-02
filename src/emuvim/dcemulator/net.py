@@ -8,6 +8,9 @@ import site
 import time
 from subprocess import Popen
 import os
+import re
+
+
 
 from mininet.net import Dockernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
@@ -127,16 +130,35 @@ class DCNetwork(Dockernet):
             if "id" in params["params2"]:
                 node2_port_id = params["params2"]["id"]
 
+
+
         # add edge and assigned port number to graph in both directions between node1 and node2
         # port_id: id given in descriptor (if available, otherwise same as port)
         # port: portnumber assigned by Dockernet
 
-        self.DCNetwork_graph.add_edge(node1.name, node2.name,
-                                      attr_dict={'src_port_id': node1_port_id, 'src_port': node1.ports[link.intf1],
-                                       'dst_port_id': node2_port_id, 'dst_port': node2.ports[link.intf2]})
-        self.DCNetwork_graph.add_edge(node2.name, node1.name,
-                                      attr_dict={'src_port_id': node2_port_id, 'src_port': node2.ports[link.intf2],
-                                        'dst_port_id': node1_port_id, 'dst_port': node1.ports[link.intf1]})
+        attr_dict = {}
+        # possible weight metrics allowed by TClink class:
+        weight_metrics = ['bw', 'delay', 'jitter', 'loss']
+        edge_attributes = [p for p in params if p in weight_metrics]
+        for attr in edge_attributes:
+            # if delay: strip ms (need number as weight in graph)
+            match = re.search('([0-9]*\.?[0-9]+)', params[attr])
+            if match:
+                attr_number = match.group(1)
+            else:
+                attr_number = None
+            attr_dict[attr] = attr_number
+
+
+        attr_dict2 = {'src_port_id': node1_port_id, 'src_port': node1.ports[link.intf1],
+                     'dst_port_id': node2_port_id, 'dst_port': node2.ports[link.intf2]}
+        attr_dict2.update(attr_dict)
+        self.DCNetwork_graph.add_edge(node1.name, node2.name, attr_dict=attr_dict2)
+
+        attr_dict2 = {'src_port_id': node2_port_id, 'src_port': node2.ports[link.intf2],
+                     'dst_port_id': node1_port_id, 'dst_port': node1.ports[link.intf1]}
+        attr_dict2.update(attr_dict)
+        self.DCNetwork_graph.add_edge(node2.name, node1.name, attr_dict=attr_dict2)
 
         return link
 
@@ -194,7 +216,7 @@ class DCNetwork(Dockernet):
         CLI(self)
 
     # to remove chain do setChain( src, dst, cmd='del-flows')
-    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow'):
+    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow', weight=None):
 
         #check if port is specified (vnf:port)
         if vnf_src_interface is None:
@@ -237,7 +259,7 @@ class DCNetwork(Dockernet):
         # get shortest path
         #path = nx.shortest_path(self.DCNetwork_graph, vnf_src_name, vnf_dst_name)
         try:
-            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw)
+            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=weight)
         except:
             logging.info("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
             return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)

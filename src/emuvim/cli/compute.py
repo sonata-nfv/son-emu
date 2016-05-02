@@ -35,8 +35,9 @@ class ZeroRpcClient(object):
             args.get("datacenter"),
             args.get("name"),
             args.get("image"),
-            args.get("docker_command"),
-            nw_list)
+            network=nw_list,
+            command=args.get("docker_command")
+            )
         pp.pprint(r)
 
     def stop(self, args):
