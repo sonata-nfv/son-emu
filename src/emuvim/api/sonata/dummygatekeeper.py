@@ -212,8 +212,11 @@ class Service(object):
         for k, v in self.vnfds.iteritems():
             for vu in v.get("virtual_deployment_units"):
                 if vu.get("vm_image_format") == "docker":
-                    self.remote_docker_image_urls[k] = vu.get("vm_image")
-                    LOG.debug("Found Docker image URL: %r" %  self.remote_docker_image_urls[k])
+                    url = vu.get("vm_image")
+                    if url is not None:
+                        url = url.replace("http://", "")
+                        self.remote_docker_image_urls[k] = url
+                        LOG.debug("Found Docker image URL: %r" % self.remote_docker_image_urls[k])
 
     def _build_images_from_dockerfiles(self):
         """
@@ -233,7 +236,11 @@ class Service(object):
         If the package contains URLs to pre-build Docker images, we download them with this method.
         """
         # TODO implement this
-        pass
+        dc = DockerClient()
+        for url in self.remote_docker_image_urls.itervalues():
+            LOG.info("Pulling image: %r" % url)
+            dc.pull(url,
+                    insecure_registry=True)
 
     def _check_docker_image_exists(self, image_name):
         """
