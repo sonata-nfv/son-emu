@@ -49,6 +49,7 @@ class EmulatorCompute(Docker):
         status = {}
         status["name"] = self.name
         status["network"] = self.getNetworkStatus()
+        status["docker_network"] = self.dcinfo['NetworkSettings']['IPAddress']
         status["image"] = self.dimage
         status["flavor_name"] = self.flavor_name
         status["cpu_quota"] = self.cpu_quota

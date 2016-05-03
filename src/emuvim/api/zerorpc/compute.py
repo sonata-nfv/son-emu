@@ -71,7 +71,9 @@ class MultiDatacenterApi(object):
         try:
             c = self.dcs.get(dc_label).startCompute(
                 compute_name, image=image, command=command, network=network)
-            return str(c.name)
+            #return str(c.name)
+            # return docker inspect dict
+            return c.getStatus()
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
