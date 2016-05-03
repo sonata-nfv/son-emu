@@ -20,9 +20,9 @@ The example starts a small network with two data centers.
 
 ## Upload a package (*.son) file:
 
-To upload the file `sonata-demo.son` (from son-schema repo) do:
+To upload the file `sonata-demo-docker.son` (can be found in `son-emu/misc/`) do:
 
-* `curl -i -X POST -F package=@sonata-demo.son http://127.0.0.1:5000/packages`
+* `curl -i -X POST -F package=@sonata-demo-docker.son http://127.0.0.1:5000/packages`
 
 To list all uploaded packages do:
 
