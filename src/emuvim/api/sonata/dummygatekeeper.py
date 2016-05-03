@@ -30,6 +30,9 @@ BUILD_DOCKERFILE = False
 # flag to indicate that we run without the emulator (only the bare API for integration testing)
 GK_STANDALONE_MODE = False
 
+# should a new version of an image be pulled even if its available
+FORCE_PULL = True
+
 
 class Gatekeeper(object):
 
@@ -131,7 +134,10 @@ class Service(object):
         # iterate over all deployment units within each VNFDs
         for u in vnfd.get("virtual_deployment_units"):
             # 1. get the name of the docker image to start and the assigned DC
-            docker_name = vnfd.get("name")
+            vnf_name = vnfd.get("name")
+            if vnf_name not in self.remote_docker_image_urls:
+                raise Exception("No image name for %r found. Abort." % vnf_name)
+            docker_name = self.remote_docker_image_urls.get(vnf_name)
             target_dc = vnfd.get("dc")
             # 2. perform some checks to ensure we can start the container
             assert(docker_name is not None)
@@ -202,7 +208,7 @@ class Service(object):
                         self.package_content_path,
                         make_relative_path(vm_image))
                     self.local_docker_files[k] = docker_path
-                    LOG.debug("Found Dockerfile: %r" % docker_path)
+                    LOG.debug("Found Dockerfile (%r): %r" % (k, docker_path))
 
     def _load_docker_urls(self):
         """
@@ -216,7 +222,7 @@ class Service(object):
                     if url is not None:
                         url = url.replace("http://", "")
                         self.remote_docker_image_urls[k] = url
-                        LOG.debug("Found Docker image URL: %r" % self.remote_docker_image_urls[k])
+                        LOG.debug("Found Docker image URL (%r): %r" % (k, self.remote_docker_image_urls[k]))
 
     def _build_images_from_dockerfiles(self):
         """
@@ -235,9 +241,12 @@ class Service(object):
         """
         If the package contains URLs to pre-build Docker images, we download them with this method.
         """
-        # TODO implement this
         dc = DockerClient()
         for url in self.remote_docker_image_urls.itervalues():
+            if not FORCE_PULL:  # only pull if not present (speedup for development)
+                if len(dc.images(name=url)) > 0:
+                    LOG.debug("Image %r present. Skipping pull." % url)
+                    continue
             LOG.info("Pulling image: %r" % url)
             dc.pull(url,
                     insecure_registry=True)
