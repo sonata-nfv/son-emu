@@ -56,9 +56,9 @@ class MultiDatacenterApi(object):
     def __init__(self, dcs):
         self.dcs = dcs
 
-    def compute_action_start(self, dc_label, compute_name, image, network=None, command=None):
+    def compute_action_start(self, dc_label, compute_name, image, network, command):
         """
-        Start a new compute instance: A docker container
+        Start a new compute instance: A docker container (note: zerorpc does not support keyword arguments)
         :param dc_label: name of the DC
         :param compute_name: compute container name
         :param image: image name
@@ -71,7 +71,9 @@ class MultiDatacenterApi(object):
         try:
             c = self.dcs.get(dc_label).startCompute(
                 compute_name, image=image, command=command, network=network)
-            return str(c.name)
+            #return str(c.name)
+            # return docker inspect dict
+            return c.getStatus()
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
@@ -111,6 +113,32 @@ class MultiDatacenterApi(object):
             logging.exception("RPC error.")
             return ex.message
 
+    def compute_profile(self, dc_label, compute_name, image, kwargs):
+        # note: zerorpc does not support keyword arguments
+
+        ## VIM/dummy gatekeeper's tasks:
+        # start vnf
+        vnf_status = self.compute_action_start( dc_label, compute_name, image,
+                                  kwargs.get('network'),
+                                  kwargs.get('command'))
+        # start traffic source (with fixed ip addres, no use for now...)
+        self.compute_action_start( dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
+        # link vnf to traffic source
+        DCNetwork = self.dcs.get(dc_label).net
+        DCNetwork.setChain('psrc', compute_name,
+                           vnf_src_interface='output',
+                           vnf_dst_interface=kwargs.get('input'),
+                           cmd='add-flow', weight=None)
+
+        ## SSM/SP tasks:
+        # get monitor data and analyze
+
+        # create table
+
+        ## VIM/dummy gatekeeper's tasks:
+        # remove vnfs and chain
+
+
     def datacenter_list(self):
         logging.debug("RPC CALL: datacenter list")
         try:
@@ -126,3 +154,10 @@ class MultiDatacenterApi(object):
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
+
+'''
+if __name__ == "__main__":
+    test = MultiDatacenterApi({})
+    test.compute_profile('dc1','vnf1', 'image',network='',command='test',other='other')
+'''
+

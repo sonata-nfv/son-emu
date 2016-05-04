@@ -29,7 +29,7 @@ def create_topology1():
     """
     1. Create a data center network object (DCNetwork) with monitoring enabled
     """
-    net = DCNetwork(monitor=True)
+    net = DCNetwork(monitor=False)
 
     """
     1b. add a monitoring agent to the DCNetwork
@@ -43,28 +43,28 @@ def create_topology1():
         first prototype)
     """
     dc1 = net.addDatacenter("datacenter1")
-    dc2 = net.addDatacenter("datacenter2")
-    dc3 = net.addDatacenter("long_data_center_name3")
-    dc4 = net.addDatacenter(
-        "datacenter4",
-        metadata={"mydata": "we can also add arbitrary metadata to each DC"})
+    #dc2 = net.addDatacenter("datacenter2")
+    #dc3 = net.addDatacenter("long_data_center_name3")
+    #dc4 = net.addDatacenter(
+    #    "datacenter4",
+    #    metadata={"mydata": "we can also add arbitrary metadata to each DC"})
 
     """
     3. You can add additional SDN switches for data center
        interconnections to the network.
     """
-    s1 = net.addSwitch("s1")
+    #s1 = net.addSwitch("s1")
 
     """
     4. Add links between your data centers and additional switches
        to define you topology.
        These links can use Mininet's features to limit bw, add delay or jitter.
     """
-    net.addLink(dc1, dc2, delay="10ms")
-    net.addLink(dc1, dc2)
-    net.addLink("datacenter1", s1, delay="20ms")
-    net.addLink(s1, dc3)
-    net.addLink(s1, "datacenter4")
+    #net.addLink(dc1, dc2, delay="10ms")
+    #net.addLink(dc1, dc2)
+    #net.addLink("datacenter1", s1, delay="20ms")
+    #net.addLink(s1, dc3)
+    #net.addLink(s1, "datacenter4")
 
 
     """
@@ -81,9 +81,9 @@ def create_topology1():
     zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
     # connect data centers to this endpoint
     zapi1.connectDatacenter(dc1)
-    zapi1.connectDatacenter(dc2)
-    zapi1.connectDatacenter(dc3)
-    zapi1.connectDatacenter(dc4)
+    #zapi1.connectDatacenter(dc2)
+    #zapi1.connectDatacenter(dc3)
+    #zapi1.connectDatacenter(dc4)
     # run API endpoint server (in another thread, don't block)
     zapi1.start()
 
@@ -96,10 +96,10 @@ def create_topology1():
          This will look like a real-world multi PoP/data center deployment
          from the perspective of an orchestrator.
     """
-    zapi2 = ZeroRpcApiEndpoint("0.0.0.0", 4343)
-    zapi2.connectDatacenter(dc3)
-    zapi2.connectDatacenter(dc4)
-    zapi2.start()
+    #zapi2 = ZeroRpcApiEndpoint("0.0.0.0", 4343)
+    #zapi2.connectDatacenter(dc3)
+    #zapi2.connectDatacenter(dc4)
+    #zapi2.start()
 
     """
     6. Finally we are done and can start our network (the emulator).
