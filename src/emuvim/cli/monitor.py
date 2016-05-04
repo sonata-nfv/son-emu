@@ -69,6 +69,7 @@ parser.add_argument(
     "--metric", "-m", dest="metric",
     help="tx_bytes, rx_bytes, tx_packets, rx_packets")
 
+
 def main(argv):
     #print "This is the son-emu monitor CLI."
     #print "Arguments: %s" % str(argv)

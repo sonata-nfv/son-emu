@@ -167,8 +167,10 @@ class Datacenter(object):
         # connect all given networks
         # if no --net option is given, network = [{}], so 1 empty dict in the list
         # this results in 1 default interface with a default ip address
+        logging.info('nwlist: {0}'.format(network))
         for nw in network:
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
+            logging.info('nw: {0}'.format(nw))
             self.net.addLink(d, self.switch, params1=nw, cls=Link)
         # do bookkeeping
         self.containers[name] = d
