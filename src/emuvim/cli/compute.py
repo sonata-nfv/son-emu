@@ -31,8 +31,6 @@ class ZeroRpcClient(object):
         if args.get("network") is not None:
             nw_list = self._parse_network(args.get("network"))
 
-        pp.pprint('nwlist1: {0}'.format(nw_list))
-
         r = self.c.compute_action_start(
             args.get("datacenter"),
             args.get("name"),
@@ -85,17 +83,23 @@ class ZeroRpcClient(object):
         nw_list = list()
         if args.get("network") is not None:
             nw_list = self._parse_network(args.get("network"))
-            logging.info('nwlist: {0}'.format(nw_list))
+
+        params = self._create_dict(
+            network=nw_list,
+            command=args.get("docker_command"),
+            input=args.get("input"),
+            output=args.get("output"))
+
         r = self.c.compute_profile(
             args.get("datacenter"),
             args.get("name"),
             args.get("image"),
-            network=nw_list,
-            command=args.get("docker_command"),
-            input=args.get("input"),
-            output=args.get("output")
+            params
         )
         pp.pprint(r)
+
+    def _create_dict(self, **kwargs):
+        return kwargs
 
     def _parse_network(self, network_str):
         '''

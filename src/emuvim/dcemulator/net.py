@@ -124,12 +124,13 @@ class DCNetwork(Dockernet):
         if isinstance(node1, Docker):
             if "id" in params["params1"]:
                 node1_port_id = params["params1"]["id"]
+        node1_port_name = link.intf1.name
 
         node2_port_id = node2.ports[link.intf2]
         if isinstance(node2, Docker):
             if "id" in params["params2"]:
                 node2_port_id = params["params2"]["id"]
-
+        node2_port_name = link.intf2.name
 
 
         # add edge and assigned port number to graph in both directions between node1 and node2
@@ -150,13 +151,17 @@ class DCNetwork(Dockernet):
             attr_dict[attr] = attr_number
 
 
-        attr_dict2 = {'src_port_id': node1_port_id, 'src_port': node1.ports[link.intf1],
-                     'dst_port_id': node2_port_id, 'dst_port': node2.ports[link.intf2]}
+        attr_dict2 = {'src_port_id': node1_port_id, 'src_port_nr': node1.ports[link.intf1],
+                      'src_port_name': node1_port_name,
+                     'dst_port_id': node2_port_id, 'dst_port_nr': node2.ports[link.intf2],
+                      'dst_port_name': node2_port_name}
         attr_dict2.update(attr_dict)
         self.DCNetwork_graph.add_edge(node1.name, node2.name, attr_dict=attr_dict2)
 
-        attr_dict2 = {'src_port_id': node2_port_id, 'src_port': node2.ports[link.intf2],
-                     'dst_port_id': node1_port_id, 'dst_port': node1.ports[link.intf1]}
+        attr_dict2 = {'src_port_id': node2_port_id, 'src_port_nr': node2.ports[link.intf2],
+                      'src_port_name': node2_port_name,
+                     'dst_port_id': node1_port_id, 'dst_port_nr': node1.ports[link.intf1],
+                      'dst_port_name': node1_port_name}
         attr_dict2.update(attr_dict)
         self.DCNetwork_graph.add_edge(node2.name, node1.name, attr_dict=attr_dict2)
 

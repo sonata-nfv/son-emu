@@ -68,7 +68,6 @@ class MultiDatacenterApi(object):
         """
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
-        logging.info('nwlist2: {0}'.format(network))
         try:
             c = self.dcs.get(dc_label).startCompute(
                 compute_name, image=image, command=command, network=network)
@@ -117,13 +116,17 @@ class MultiDatacenterApi(object):
     def compute_profile(self, dc_label, compute_name, image, kwargs):
         # note: zerorpc does not support keyword arguments
 
+        ## VIM/dummy gatekeeper's tasks:
         # start vnf
         vnf_status = self.compute_action_start(self, dc_label, compute_name, image,
                                   kwargs.get('network'),
                                   kwargs.get('command'))
-
         # start traffic source (with fixed ip addres, no use for now...)
-        self.compute_action_start(self, dc_label, 'psrc', 'profile_source', [{'id':'output','ip':'10.0.10.1/24'}], None)
+        self.compute_action_start(self, dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
+        # link vnf to traffic source
+        DCNetwork = self.dcs.get(dc_label).net
+        DCNetwork.setChain()
+
 
 
 
