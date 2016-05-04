@@ -56,9 +56,9 @@ class MultiDatacenterApi(object):
     def __init__(self, dcs):
         self.dcs = dcs
 
-    def compute_action_start(self, dc_label, compute_name, image, network=None, command=None):
+    def compute_action_start(self, dc_label, compute_name, image, network, command):
         """
-        Start a new compute instance: A docker container
+        Start a new compute instance: A docker container (note: zerorpc does not support keyword arguments)
         :param dc_label: name of the DC
         :param compute_name: compute container name
         :param image: image name
@@ -68,6 +68,7 @@ class MultiDatacenterApi(object):
         """
         # TODO what to return UUID / given name / internal name ?
         logging.debug("RPC CALL: compute start")
+        logging.info('nwlist2: {0}'.format(network))
         try:
             c = self.dcs.get(dc_label).startCompute(
                 compute_name, image=image, command=command, network=network)
@@ -113,6 +114,21 @@ class MultiDatacenterApi(object):
             logging.exception("RPC error.")
             return ex.message
 
+    def compute_profile(self, dc_label, compute_name, image, kwargs):
+        # note: zerorpc does not support keyword arguments
+
+        # start vnf
+        vnf_status = self.compute_action_start(self, dc_label, compute_name, image,
+                                  kwargs.get('network'),
+                                  kwargs.get('command'))
+
+        # start traffic source (with fixed ip addres, no use for now...)
+        self.compute_action_start(self, dc_label, 'psrc', 'profile_source', [{'id':'output','ip':'10.0.10.1/24'}], None)
+
+
+
+
+
     def datacenter_list(self):
         logging.debug("RPC CALL: datacenter list")
         try:
@@ -128,3 +144,10 @@ class MultiDatacenterApi(object):
         except Exception as ex:
             logging.exception("RPC error.")
             return ex.message
+
+'''
+if __name__ == "__main__":
+    test = MultiDatacenterApi({})
+    test.compute_profile('dc1','vnf1', 'image',network='',command='test',other='other')
+'''
+
