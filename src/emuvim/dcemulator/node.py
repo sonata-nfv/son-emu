@@ -49,6 +49,7 @@ class EmulatorCompute(Docker):
         status = {}
         status["name"] = self.name
         status["network"] = self.getNetworkStatus()
+        status["docker_network"] = self.dcinfo['NetworkSettings']['IPAddress']
         status["image"] = self.dimage
         status["flavor_name"] = self.flavor_name
         status["cpu_quota"] = self.cpu_quota
@@ -168,7 +169,7 @@ class Datacenter(object):
         # this results in 1 default interface with a default ip address
         for nw in network:
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
-            self.net.addLink(d, self.switch, params1=nw, cls=Link)
+            self.net.addLink(d, self.switch, params1=nw, cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
         self.containers[name] = d
         return d  # we might use UUIDs for naming later on

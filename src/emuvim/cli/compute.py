@@ -35,8 +35,8 @@ class ZeroRpcClient(object):
             args.get("datacenter"),
             args.get("name"),
             args.get("image"),
-            network=nw_list,
-            command=args.get("docker_command")
+            nw_list,
+            args.get("docker_command")
             )
         pp.pprint(r)
 
@@ -79,6 +79,28 @@ class ZeroRpcClient(object):
             args.get("datacenter"), args.get("name"))
         pp.pprint(r)
 
+    def profile(self, args):
+        nw_list = list()
+        if args.get("network") is not None:
+            nw_list = self._parse_network(args.get("network"))
+
+        params = self._create_dict(
+            network=nw_list,
+            command=args.get("docker_command"),
+            input=args.get("input"),
+            output=args.get("output"))
+
+        r = self.c.compute_profile(
+            args.get("datacenter"),
+            args.get("name"),
+            args.get("image"),
+            params
+        )
+        pp.pprint(r)
+
+    def _create_dict(self, **kwargs):
+        return kwargs
+
     def _parse_network(self, network_str):
         '''
         parse the options for all network interfaces of the vnf
@@ -98,7 +120,7 @@ class ZeroRpcClient(object):
 parser = argparse.ArgumentParser(description='son-emu compute')
 parser.add_argument(
     "command",
-    choices=['start', 'stop', 'list', 'status'],
+    choices=['start', 'stop', 'list', 'status', 'profile'],
     help="Action to be executed.")
 parser.add_argument(
     "--datacenter", "-d", dest="datacenter",
@@ -116,6 +138,12 @@ parser.add_argument(
     "--net", dest="network",
     help="Network properties of compute instance e.g. \
           '10.0.0.123/8' or '10.0.0.123/8,11.0.0.123/24' for multiple interfaces.")
+parser.add_argument(
+    "--input", "-in", dest="input",
+    help="input interface of the vnf to profile")
+parser.add_argument(
+    "--output", "-out", dest="output",
+    help="output interface of the vnf to profile")
 
 
 def main(argv):
