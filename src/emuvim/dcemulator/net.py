@@ -240,7 +240,7 @@ class DCNetwork(Dockernet):
                     #logging.info("conn_sw: {2},{0},{1}".format(link_dict[link]['src_port_id'], vnf_src_interface, connected_sw))
                     src_sw = connected_sw
 
-                    src_sw_inport = link_dict[link]['dst_port']
+                    src_sw_inport_nr = link_dict[link]['dst_port_nr']
                     break
 
         if vnf_dst_interface is None:
@@ -256,7 +256,7 @@ class DCNetwork(Dockernet):
                 if link_dict[link]['dst_port_id'] == vnf_dst_interface:
                     # found the right link and connected switch
                     dst_sw = connected_sw
-                    dst_sw_outport = link_dict[link]['src_port']
+                    dst_sw_outport_nr = link_dict[link]['src_port_nr']
                     break
 
 
@@ -274,7 +274,7 @@ class DCNetwork(Dockernet):
 
         #current_hop = vnf_src_name
         current_hop = src_sw
-        switch_inport = src_sw_inport
+        switch_inport_nr = src_sw_inport_nr
 
         for i in range(0,len(path)):
             current_node = self.getNodeByName(current_hop)
@@ -287,7 +287,7 @@ class DCNetwork(Dockernet):
             next_node = self.getNodeByName(next_hop)
 
             if next_hop == vnf_dst_name:
-                switch_outport = dst_sw_outport
+                switch_outport_nr = dst_sw_outport_nr
                 logging.info("end node reached: {0}".format(vnf_dst_name))
             elif not isinstance( next_node, OVSSwitch ):
                 logging.info("Next node: {0} is not a switch".format(next_hop))
@@ -295,19 +295,19 @@ class DCNetwork(Dockernet):
             else:
                 # take first link between switches by default
                 index_edge_out = 0
-                switch_outport = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port']
+                switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
 
 
-            #logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport, switch_outport))
+            #logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport_nr, switch_outport_nr))
             # set of entry via ovs-ofctl
             # TODO use rest API of ryu to set flow entries to correct dpid
             # TODO this only sets port in to out, no match, so this will give trouble when multiple services are deployed...
             # TODO need multiple matches to do this (VLAN tags)
             if isinstance( current_node, OVSSwitch ):
-                match = 'in_port=%s' % switch_inport
+                match = 'in_port=%s' % switch_inport_nr
 
                 if cmd=='add-flow':
-                    action = 'action=%s' % switch_outport
+                    action = 'action=%s' % switch_outport_nr
                     s = ','
                     ofcmd = s.join([match,action])
                 elif cmd=='del-flows':
@@ -316,11 +316,11 @@ class DCNetwork(Dockernet):
                     ofcmd=''
 
                 current_node.dpctl(cmd, ofcmd)
-                logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport,
-                                                                                     switch_outport))
+                logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport_nr,
+                                                                                     switch_outport_nr))
             # take first link between switches by default
             if isinstance( next_node, OVSSwitch ):
-                switch_inport = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port']
+                switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
                 current_hop = next_hop
 
         return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)

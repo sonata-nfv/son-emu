@@ -118,18 +118,25 @@ class MultiDatacenterApi(object):
 
         ## VIM/dummy gatekeeper's tasks:
         # start vnf
-        vnf_status = self.compute_action_start(self, dc_label, compute_name, image,
+        vnf_status = self.compute_action_start( dc_label, compute_name, image,
                                   kwargs.get('network'),
                                   kwargs.get('command'))
         # start traffic source (with fixed ip addres, no use for now...)
-        self.compute_action_start(self, dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
+        self.compute_action_start( dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
         # link vnf to traffic source
         DCNetwork = self.dcs.get(dc_label).net
-        DCNetwork.setChain()
+        DCNetwork.setChain('psrc', compute_name,
+                           vnf_src_interface='output',
+                           vnf_dst_interface=kwargs.get('input'),
+                           cmd='add-flow', weight=None)
 
+        ## SSM/SP tasks:
+        # get monitor data and analyze
 
+        # create table
 
-
+        ## VIM/dummy gatekeeper's tasks:
+        # remove vnfs and chain
 
 
     def datacenter_list(self):

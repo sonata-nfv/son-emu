@@ -169,7 +169,6 @@ class Datacenter(object):
         # this results in 1 default interface with a default ip address
         for nw in network:
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
-            logging.info('nw: {0}'.format(nw))
             self.net.addLink(d, self.switch, params1=nw, cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
         self.containers[name] = d
