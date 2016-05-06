@@ -221,7 +221,8 @@ class DCNetwork(Dockernet):
         CLI(self)
 
     # to remove chain do setChain( src, dst, cmd='del-flows')
-    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow', weight=None):
+    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow',
+                 weight=None, **kwargs):
 
         logging.info('vnf_src_if: {0}'.format(vnf_src_interface))
         #check if port is specified (vnf:port)
@@ -306,6 +307,12 @@ class DCNetwork(Dockernet):
             # TODO need multiple matches to do this (VLAN tags)
             if isinstance( current_node, OVSSwitch ):
                 match = 'in_port=%s' % switch_inport_nr
+                #add additional match entries from the argument
+                match_input = kwargs.get('match')
+                logging.info('match input:{0}'.format(match_input))
+                if match_input:
+                    s = ','
+                    match = s.join([match,match_input])
 
                 if cmd=='add-flow':
                     action = 'action=%s' % switch_outport_nr

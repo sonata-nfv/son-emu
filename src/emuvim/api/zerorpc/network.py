@@ -64,7 +64,7 @@ class DCNetworkApi(object):
     def __init__(self, net):
         self.net = net
 
-    def network_action_start(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, weight=None):
+    def network_action_start(self, vnf_src_name, vnf_dst_name, kwargs):
         # call DCNetwork method, not really datacenter specific API for now...
         # provided dc name needs to be part of API endpoint
         # no check if vnfs are really connected to this datacenter...
@@ -72,9 +72,10 @@ class DCNetworkApi(object):
         try:
             c = self.net.setChain(
                 vnf_src_name, vnf_dst_name,
-                vnf_src_interface=vnf_src_interface,
-                vnf_dst_interface=vnf_dst_interface,
-                weight=weight)
+                vnf_src_interface=kwargs.get('vnf_src_interface'),
+                vnf_dst_interface=kwargs.get('vnf_dst_interface'),
+                weight=kwargs.get('weight'),
+                match=kwargs.get('match'))
             return str(c)
         except Exception as ex:
             logging.exception("RPC error.")
