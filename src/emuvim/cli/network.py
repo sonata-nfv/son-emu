@@ -33,13 +33,14 @@ class ZeroRpcClient(object):
         vnf_dst_name = self._parse_vnf_name(args.get("destination"))
         vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
         weight = args.get("weight")
+        # note zerorpc does not support named arguments
         r = self.c.network_action_start(
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
-            vnf_src_interface=vnf_src_interface,
-            vnf_dst_interface=vnf_dst_interface,
-            weight=weight)
+            vnf_src_interface,
+            vnf_dst_interface,
+            weight)
         pp.pprint(r)
 
     def remove(self, args):
@@ -52,9 +53,9 @@ class ZeroRpcClient(object):
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
-            vnf_src_interface=vnf_src_interface,
-            vnf_dst_interface=vnf_dst_interface,
-            weight=weight)
+            vnf_src_interface,
+            vnf_dst_interface,
+            weight)
         pp.pprint(r)
 
     def _parse_vnf_name(self, vnf_name_str):

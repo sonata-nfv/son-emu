@@ -223,6 +223,7 @@ class DCNetwork(Dockernet):
     # to remove chain do setChain( src, dst, cmd='del-flows')
     def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow', weight=None):
 
+        logging.info('vnf_src_if: {0}'.format(vnf_src_interface))
         #check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default

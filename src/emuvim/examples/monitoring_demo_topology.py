@@ -29,7 +29,7 @@ def create_topology1():
     """
     1. Create a data center network object (DCNetwork) with monitoring enabled
     """
-    net = DCNetwork(monitor=False)
+    net = DCNetwork(monitor=True)
 
     """
     1b. add a monitoring agent to the DCNetwork

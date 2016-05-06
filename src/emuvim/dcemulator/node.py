@@ -39,7 +39,7 @@ class EmulatorCompute(Docker):
         this compute instance is connected to.
         """
         # format list of tuples (name, Ip, MAC, isUp, status)
-        return [(str(i), i.IP(), i.MAC(), i.isUp(), i.status())
+        return [{'intf_name':str(i), 'ip':i.IP(), 'mac':i.MAC(), 'up':i.isUp(), 'status':i.status()}
                 for i in self.intfList()]
 
     def getStatus(self):
