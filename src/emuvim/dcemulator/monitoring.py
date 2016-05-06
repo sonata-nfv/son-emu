@@ -91,7 +91,7 @@ class DCNetworkMonitor():
                 if link_dict[link]['src_port_id'] == vnf_interface:
                     # found the right link and connected switch
                     # logging.info("{0},{1}".format(link_dict[link]['src_port_id'], vnf_source_interface))
-                    network_metric['mon_port'] = link_dict[link]['dst_port']
+                    network_metric['mon_port'] = link_dict[link]['dst_port_nr']
                     break
 
         if 'mon_port' not in network_metric:

@@ -7,6 +7,9 @@ import logging
 import threading
 import zerorpc
 
+import paramiko
+import ipaddress
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -122,7 +125,7 @@ class MultiDatacenterApi(object):
                                   kwargs.get('network'),
                                   kwargs.get('command'))
         # start traffic source (with fixed ip addres, no use for now...)
-        self.compute_action_start( dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
+        psrc_status = self.compute_action_start( dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
         # link vnf to traffic source
         DCNetwork = self.dcs.get(dc_label).net
         DCNetwork.setChain('psrc', compute_name,
@@ -131,6 +134,32 @@ class MultiDatacenterApi(object):
                            cmd='add-flow', weight=None)
 
         ## SSM/SP tasks:
+        # start traffic generation
+        for nw in psrc_status.get('network'):
+            if nw.get('intf_name') == 'output':
+                psrc_output_ip = unicode(nw['ip'])
+                break
+        dummy_iperf_server_ip = ipaddress.IPv4Address(psrc_output_ip) + 1
+        iperf_cmd = 'iperf -c {0} -u -l18 -b10M -t1000 &'.format(dummy_iperf_server_ip)
+
+        psrc_mgmt_ip = psrc_status['docker_network']
+        psrc_user='root'
+        psrc_passw='root'
+
+        # use ssh login when starting command externally
+        ret = self.dcs.get(dc_label).containers.get('psrc').pexec(iperf_cmd)
+        logging.info(ret)
+        self.dcs.get(dc_label).containers.get('psrc').monitor()
+
+        #ssh does not work when exectuted via zerorpc command
+        #psrc_mgmt_ip = '172.17.0.3'
+        #ssh = paramiko.SSHClient()
+        #ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        #ssh.connect(psrc_mgmt_ip, username='steven', password='test')
+        #ssh.connect(psrc_mgmt_ip, username='root', password='root')
+
+        #iperf_cmd = 'iperf -c {0} -u -l18 -b10M -t1000'.format(dummy_iperf_server_ip)
+        #stdin, stdout, stderr = ssh.exec_command(iperf_cmd)
         # get monitor data and analyze
 
         # create table
