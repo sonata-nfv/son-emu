@@ -76,7 +76,8 @@ class DCNetworkApi(object):
                 vnf_dst_interface=kwargs.get('vnf_dst_interface'),
                 weight=kwargs.get('weight'),
                 match=kwargs.get('match'),
-                bidirectional=kwargs.get('bidirectional'))
+                bidirectional=kwargs.get('bidirectional'),
+                cookie=kwargs.get('cookie'))
             return str(c)
         except Exception as ex:
             logging.exception("RPC error.")

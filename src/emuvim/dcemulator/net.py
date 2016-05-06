@@ -306,10 +306,11 @@ class DCNetwork(Dockernet):
             # TODO this only sets port in to out, no match, so this will give trouble when multiple services are deployed...
             # TODO need multiple matches to do this (VLAN tags)
             if isinstance( current_node, OVSSwitch ):
+                cookie = kwargs.get('cookie')
                 match_input = kwargs.get('match')
-                self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, match_input, cmd)
+                self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, match_input, cmd, cookie)
                 if kwargs.get('bidirectional'):
-                    self._set_flow_entry_dpctl(current_node, switch_outport_nr, switch_inport_nr, match_input, cmd)
+                    self._set_flow_entry_dpctl(current_node, switch_outport_nr, switch_inport_nr, match_input, cmd, cookie)
                 '''
                 match = 'in_port=%s' % switch_inport_nr
                 #add additional match entries from the argument
@@ -340,18 +341,19 @@ class DCNetwork(Dockernet):
         return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
         #return "destination node: {0} not reached".format(vnf_dst_name)
 
-    def _set_flow_entry_dpctl(self, node, switch_inport_nr, switch_outport_nr, match_input, cmd):
+    def _set_flow_entry_dpctl(self, node, switch_inport_nr, switch_outport_nr, match_input, cmd, cookie):
         match = 'in_port=%s' % switch_inport_nr
         # add additional match entries from the argument
         #match_input = kwargs.get('match')
         # logging.info('match input:{0}'.format(match_input))
+        s = ','
+        if cookie:
+            cookie = 'cookie=%s' % cookie
+            match = s.join([cookie, match])
         if match_input:
-            s = ','
             match = s.join([match, match_input])
-
         if cmd == 'add-flow':
             action = 'action=%s' % switch_outport_nr
-            s = ','
             ofcmd = s.join([match, action])
         elif cmd == 'del-flows':
             ofcmd = match
