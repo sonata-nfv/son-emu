@@ -75,7 +75,8 @@ class DCNetworkApi(object):
                 vnf_src_interface=kwargs.get('vnf_src_interface'),
                 vnf_dst_interface=kwargs.get('vnf_dst_interface'),
                 weight=kwargs.get('weight'),
-                match=kwargs.get('match'))
+                match=kwargs.get('match'),
+                bidirectional=kwargs.get('bidirectional'))
             return str(c)
         except Exception as ex:
             logging.exception("RPC error.")
@@ -93,7 +94,8 @@ class DCNetworkApi(object):
                 vnf_dst_interface=kwargs.get('vnf_dst_interface'),
                 cmd='del-flows',
                 weight=kwargs.get('weight'),
-                match=kwargs.get('match'))
+                match=kwargs.get('match'),
+                bidirectional=kwargs.get('bidirectional'))
             return c
         except Exception as ex:
             logging.exception("RPC error.")
