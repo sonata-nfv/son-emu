@@ -36,7 +36,8 @@ class ZeroRpcClient(object):
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
             match=args.get("match"),
-            bidirectional=args.get("bidirectional"))
+            bidirectional=args.get("bidirectional"),
+            cookie=args.get("cookie"))
 
         # note zerorpc does not support named arguments
         r = self.c.network_action_start(
@@ -54,7 +55,8 @@ class ZeroRpcClient(object):
             vnf_src_interface=self._parse_vnf_interface(args.get("source")),
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
-            match=args.get("match"))
+            match=args.get("match"),
+            cookie=args.get("cookie"))
 
         r = self.c.network_action_stop(
             #args.get("datacenter"),
@@ -101,7 +103,9 @@ parser.add_argument(
     "--bidirectional", "-b", dest="bidirectional",
     action='store_true',
     help="add/remove the flow entries in 2 directions")
-
+parser.add_argument(
+    "--cookie", "-c", dest="cookie",
+    help="cookie for this flow")
 
 def main(argv):
     args = vars(parser.parse_args(argv))
