@@ -309,7 +309,7 @@ class DCNetwork(Dockernet):
                 match = 'in_port=%s' % switch_inport_nr
                 #add additional match entries from the argument
                 match_input = kwargs.get('match')
-                logging.info('match input:{0}'.format(match_input))
+                #logging.info('match input:{0}'.format(match_input))
                 if match_input:
                     s = ','
                     match = s.join([match,match_input])
