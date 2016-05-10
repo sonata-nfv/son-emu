@@ -9,8 +9,8 @@ import time
 from subprocess import Popen
 import os
 import re
-
-
+import urllib2
+from functools import partial
 
 from mininet.net import Dockernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
@@ -59,6 +59,11 @@ class DCNetwork(Dockernet):
 
         # initialize pool of vlan tags to setup the SDN paths
         self.vlans = range(4096)[::-1]
+
+        # link to Ryu REST_API
+        ryu_ip = '0.0.0.0'
+        ryu_port = '8080'
+        self.ryu_REST_api = 'http://{0}:{1}'.format(ryu_ip, ryu_port)
 
         # monitoring agent
         if monitor:
@@ -292,10 +297,11 @@ class DCNetwork(Dockernet):
         switch_inport_nr = src_sw_inport_nr
 
         # choose free vlan if path contains more than 1 switch
-        if len(path) > 1:
-            vlan = self.vlans.pop()
-        else:
-            vlan = None
+        cmd = kwargs.get('cmd')
+        vlan = None
+        if cmd == 'add-flow':
+            if len(path) > 1:
+                vlan = self.vlans.pop()
 
         for i in range(0,len(path)):
             current_node = self.getNodeByName(current_hop)
@@ -325,15 +331,80 @@ class DCNetwork(Dockernet):
                 kwargs['vlan'] = vlan
                 kwargs['path'] = path
                 kwargs['current_hop'] = current_hop
-                self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
-                # TODO set entry via Ryu REST api (in case emulator is running remote...)
+                ## set flow entry via ovs-ofctl
+                #self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
+                ## set flow entry via ryu rest api
+                self._set_flow_entry_ryu_rest(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
 
             # take first link between switches by default
             if isinstance( next_node, OVSSwitch ):
                 switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
                 current_hop = next_hop
 
-        return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
+        return "path {2} between {0} and {1}".format(vnf_src_name, vnf_dst_name, cmd)
+
+    def _set_flow_entry_ryu_rest(self, node, switch_inport_nr, switch_outport_nr, **kwargs):
+        match = 'in_port=%s' % switch_inport_nr
+
+        cookie = kwargs.get('cookie')
+        match_input = kwargs.get('match')
+        cmd = kwargs.get('cmd')
+        path = kwargs.get('path')
+        current_hop = kwargs.get('current_hop')
+        vlan = kwargs.get('vlan')
+
+        s = ','
+        if match_input:
+            match = s.join([match, match_input])
+
+        flow = {}
+        flow['dpid'] = int(node.dpid, 16)
+        if cookie:
+            flow['cookie'] = int(cookie)
+
+
+        flow['actions'] = []
+
+        # possible Ryu actions, match fields:
+        # http://ryu.readthedocs.io/en/latest/app/ofctl_rest.html#add-a-flow-entry
+        if cmd == 'add-flow':
+            prefix = 'stats/flowentry/add'
+            action = {}
+            action['type'] = 'OUTPUT'
+            action['port'] = switch_outport_nr
+            flow['actions'].append(action)
+            if vlan != None:
+                if path.index(current_hop) == 0:  # first node
+                    action = {}
+                    action['type'] = 'PUSH_VLAN'  # Push a new VLAN tag if a input frame is non-VLAN-tagged
+                    action['ethertype'] = 33024   # Ethertype 0x8100(=33024): IEEE 802.1Q VLAN-tagged frame
+                    action['type'] = 'SET_FIELD'
+                    action['field'] = 'vlan_vid'
+                    action['value'] = vlan
+                    flow['actions'].append(action)
+                elif path.index(current_hop) == len(path) - 1:  # last node
+                    match += ',dl_vlan=%s' % vlan
+                    action = {}
+                    action['type'] = 'POP_VLAN'
+                    flow['actions'].append(action)
+                else:  # middle nodes
+                    match += ',dl_vlan=%s' % vlan
+            #flow['match'] = self._parse_match(match)
+        elif cmd == 'del-flows':
+            #del(flow['actions'])
+            prefix = 'stats/flowentry/delete'
+            if cookie:
+                flow['cookie_mask'] = cookie
+            #if cookie is None:
+            #    flow['match'] = self._parse_match(match)
+
+            action = {}
+            action['type'] = 'OUTPUT'
+            action['port'] = switch_outport_nr
+            flow['actions'].append(action)
+
+        flow['match'] = self._parse_match(match)
+        self.ryu_REST(prefix, data=flow)
 
     def _set_flow_entry_dpctl(self, node, switch_inport_nr, switch_outport_nr, **kwargs):
         match = 'in_port=%s' % switch_inport_nr
@@ -393,4 +464,34 @@ class DCNetwork(Dockernet):
         if self.ryu_process is not None:
             self.ryu_process.terminate()
             self.ryu_process.kill()
+
+    def ryu_REST(self, prefix, dpid=None, data=None):
+        if dpid:
+            url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
+        else:
+            url = self.ryu_REST_api + '/' + str(prefix)
+        if data:
+            #logging.info('POST: {0}'.format(str(data)))
+            req = urllib2.Request(url, str(data))
+        else:
+            req = urllib2.Request(url)
+
+        ret = urllib2.urlopen(req).read()
+        return ret
+
+    # need to respect that some match fields must be integers
+    # http://ryu.readthedocs.io/en/latest/app/ofctl_rest.html#description-of-match-and-actions
+    def _parse_match(self, match):
+        matches = match.split(',')
+        dict = {}
+        for m in matches:
+            match = m.split('=')
+            if len(match) == 2:
+                try:
+                    m2 = int(match[1], 0)
+                except:
+                    m2 = match[1]
+
+                dict.update({match[0]:m2})
+        return dict
 

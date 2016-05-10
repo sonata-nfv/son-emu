@@ -23,10 +23,7 @@ class to read openflow stats from the Ryu controller of the DCNetwork
 class DCNetworkMonitor():
     def __init__(self, net):
         self.net = net
-        # link to Ryu REST_API
-        ryu_ip = '0.0.0.0'
-        ryu_port = '8080'
-        self.ryu_REST_api = 'http://{0}:{1}'.format(ryu_ip, ryu_port)
+
         prometheus_ip = '0.0.0.0'
         prometheus_port = '9090'
         self.prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
@@ -297,7 +294,7 @@ class DCNetworkMonitor():
 
 
                 # query Ryu
-                ret = self.REST_cmd('stats/flow', flow_dict['switch_dpid'], data=data)
+                ret = self.net.ryu_REST('stats/flow', dpid=flow_dict['switch_dpid'], data=data)
                 flow_stat_dict = ast.literal_eval(ret)
 
                 logging.info('received flow stat:{0} '.format(flow_stat_dict))
@@ -318,7 +315,7 @@ class DCNetworkMonitor():
             for dpid in dpid_set:
 
                 # query Ryu
-                ret = self.REST_cmd('stats/port', dpid)
+                ret = self.net.ryu_REST('stats/port', dpid=dpid)
                 port_stat_dict = ast.literal_eval(ret)
 
                 metric_list = [metric_dict for metric_dict in self.network_metrics
@@ -407,17 +404,6 @@ class DCNetworkMonitor():
 
         #logging.exception('metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface))
         #return 'metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface)
-
-    def REST_cmd(self, prefix, dpid, data=None):
-        url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
-        if data:
-            logging.info('POST: {0}'.format(str(data)))
-            req = urllib2.Request(url, str(data))
-        else:
-            req = urllib2.Request(url)
-
-        ret = urllib2.urlopen(req).read()
-        return ret
 
     def query_Prometheus(self, query):
         '''

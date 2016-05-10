@@ -56,6 +56,7 @@ class ZeroRpcClient(object):
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
             match=args.get("match"),
+            bidirectional=args.get("bidirectional"),
             cookie=args.get("cookie"))
 
         r = self.c.network_action_stop(
