@@ -57,6 +57,9 @@ class DCNetwork(Dockernet):
         # graph of the complete DC network
         self.DCNetwork_graph = nx.MultiDiGraph()
 
+        # initialize pool of vlan tags to setup the SDN paths
+        self.vlans = range(4096)[::-1]
+
         # monitoring agent
         if monitor:
             self.monitor_agent = DCNetworkMonitor(self)
@@ -221,23 +224,37 @@ class DCNetwork(Dockernet):
         CLI(self)
 
     # to remove chain do setChain( src, dst, cmd='del-flows')
-    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, cmd='add-flow', weight=None):
+    def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, **kwargs):
+        cmd = kwargs.get('cmd')
+        if cmd == 'add-flow':
+            ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
+            if kwargs.get('bidirectional'):
+                return ret +'\n' + self._chainAddFlow(vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
 
+        elif cmd == 'del-flows':  # TODO: del-flow to be implemented
+            ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
+            if kwargs.get('bidirectional'):
+                return ret + '\n' + self._chainAddFlow(vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
+
+        else:
+            return "Command unknown"
+
+
+    def _chainAddFlow(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, **kwargs):
+
+        # TODO: this needs to be cleaned up
         #check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
             connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             vnf_src_interface = link_dict[0]['src_port_id']
-            #logging.info('vnf_src_if: {0}'.format(vnf_src_interface))
 
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
-                #logging.info("here1: {0},{1}".format(link_dict[link],vnf_src_interface))
                 if link_dict[link]['src_port_id'] == vnf_src_interface:
                     # found the right link and connected switch
-                    #logging.info("conn_sw: {2},{0},{1}".format(link_dict[link]['src_port_id'], vnf_src_interface, connected_sw))
                     src_sw = connected_sw
 
                     src_sw_inport_nr = link_dict[link]['dst_port_nr']
@@ -261,23 +278,28 @@ class DCNetwork(Dockernet):
 
 
         # get shortest path
-        #path = nx.shortest_path(self.DCNetwork_graph, vnf_src_name, vnf_dst_name)
         try:
             # returns the first found shortest path
             # if all shortest paths are wanted, use: all_shortest_paths
-            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=weight)
+            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=kwargs.get('weight'))
         except:
             logging.info("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
             return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
 
         logging.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
 
-        #current_hop = vnf_src_name
         current_hop = src_sw
         switch_inport_nr = src_sw_inport_nr
 
+        # choose free vlan if path contains more than 1 switch
+        if len(path) > 1:
+            vlan = self.vlans.pop()
+        else:
+            vlan = None
+
         for i in range(0,len(path)):
             current_node = self.getNodeByName(current_hop)
+
             if path.index(current_hop) < len(path)-1:
                 next_hop = path[path.index(current_hop)+1]
             else:
@@ -298,33 +320,57 @@ class DCNetwork(Dockernet):
                 switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
 
 
-            #logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport_nr, switch_outport_nr))
-            # set of entry via ovs-ofctl
-            # TODO use rest API of ryu to set flow entries to correct dpid
-            # TODO this only sets port in to out, no match, so this will give trouble when multiple services are deployed...
-            # TODO need multiple matches to do this (VLAN tags)
+           # set of entry via ovs-ofctl
             if isinstance( current_node, OVSSwitch ):
-                match = 'in_port=%s' % switch_inport_nr
+                kwargs['vlan'] = vlan
+                kwargs['path'] = path
+                kwargs['current_hop'] = current_hop
+                self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
+                # TODO set entry via Ryu REST api (in case emulator is running remote...)
 
-                if cmd=='add-flow':
-                    action = 'action=%s' % switch_outport_nr
-                    s = ','
-                    ofcmd = s.join([match,action])
-                elif cmd=='del-flows':
-                    ofcmd = match
-                else:
-                    ofcmd=''
-
-                current_node.dpctl(cmd, ofcmd)
-                logging.info("add flow in switch: {0} in_port: {1} out_port: {2}".format(current_node.name, switch_inport_nr,
-                                                                                     switch_outport_nr))
             # take first link between switches by default
             if isinstance( next_node, OVSSwitch ):
                 switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
                 current_hop = next_hop
 
         return "path added between {0} and {1}".format(vnf_src_name, vnf_dst_name)
-        #return "destination node: {0} not reached".format(vnf_dst_name)
+
+    def _set_flow_entry_dpctl(self, node, switch_inport_nr, switch_outport_nr, **kwargs):
+        match = 'in_port=%s' % switch_inport_nr
+
+        cookie = kwargs.get('cookie')
+        match_input = kwargs.get('match')
+        cmd = kwargs.get('cmd')
+        path = kwargs.get('path')
+        current_hop = kwargs.get('current_hop')
+        vlan = kwargs.get('vlan')
+
+        s = ','
+        if cookie:
+            cookie = 'cookie=%s' % cookie
+            match = s.join([cookie, match])
+        if match_input:
+            match = s.join([match, match_input])
+        if cmd == 'add-flow':
+            action = 'action=%s' % switch_outport_nr
+            if vlan != None:
+                if path.index(current_hop) == 0:  # first node
+                    action = ('action=mod_vlan_vid:%s' % vlan) + (',output=%s' % switch_outport_nr)
+                    match = '-O OpenFlow13 ' + match
+                elif path.index(current_hop) == len(path) - 1:  # last node
+                    match += ',dl_vlan=%s' % vlan
+                    action = 'action=strip_vlan,output=%s' % switch_outport_nr
+                else:  # middle nodes
+                    match += ',dl_vlan=%s' % vlan
+            ofcmd = s.join([match, action])
+        elif cmd == 'del-flows':
+            ofcmd = match
+        else:
+            ofcmd = ''
+
+        node.dpctl(cmd, ofcmd)
+        logging.info("{3} in switch: {0} in_port: {1} out_port: {2}".format(node.name, switch_inport_nr,
+                                                                                 switch_outport_nr, cmd))
 
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
     def startRyu(self):

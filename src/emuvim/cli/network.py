@@ -29,32 +29,40 @@ class ZeroRpcClient(object):
 
     def add(self, args):
         vnf_src_name = self._parse_vnf_name(args.get("source"))
-        vnf_src_interface = self._parse_vnf_interface(args.get("source"))
         vnf_dst_name = self._parse_vnf_name(args.get("destination"))
-        vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
-        weight = args.get("weight")
+
+        params = self._create_dict(
+            vnf_src_interface=self._parse_vnf_interface(args.get("source")),
+            vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
+            weight=args.get("weight"),
+            match=args.get("match"),
+            bidirectional=args.get("bidirectional"),
+            cookie=args.get("cookie"))
+
+        # note zerorpc does not support named arguments
         r = self.c.network_action_start(
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
-            vnf_src_interface=vnf_src_interface,
-            vnf_dst_interface=vnf_dst_interface,
-            weight=weight)
+            params)
         pp.pprint(r)
 
     def remove(self, args):
         vnf_src_name = self._parse_vnf_name(args.get("source"))
-        vnf_src_interface = self._parse_vnf_interface(args.get("source"))
         vnf_dst_name = self._parse_vnf_name(args.get("destination"))
-        vnf_dst_interface = self._parse_vnf_interface(args.get("destination"))
-        weight = args.get("weight")
+
+        params = self._create_dict(
+            vnf_src_interface=self._parse_vnf_interface(args.get("source")),
+            vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
+            weight=args.get("weight"),
+            match=args.get("match"),
+            cookie=args.get("cookie"))
+
         r = self.c.network_action_stop(
             #args.get("datacenter"),
             vnf_src_name,
             vnf_dst_name,
-            vnf_src_interface=vnf_src_interface,
-            vnf_dst_interface=vnf_dst_interface,
-            weight=weight)
+            params)
         pp.pprint(r)
 
     def _parse_vnf_name(self, vnf_name_str):
@@ -69,6 +77,8 @@ class ZeroRpcClient(object):
 
         return vnf_interface
 
+    def _create_dict(self, **kwargs):
+        return kwargs
 
 parser = argparse.ArgumentParser(description='son-emu network')
 parser.add_argument(
@@ -86,6 +96,16 @@ parser.add_argument(
 parser.add_argument(
     "--weight", "-w", dest="weight",
     help="weight metric to calculate the path")
+parser.add_argument(
+    "--match", "-m", dest="match",
+    help="string holding extra matches for the flow entries")
+parser.add_argument(
+    "--bidirectional", "-b", dest="bidirectional",
+    action='store_true',
+    help="add/remove the flow entries in 2 directions")
+parser.add_argument(
+    "--cookie", "-c", dest="cookie",
+    help="cookie for this flow")
 
 def main(argv):
     args = vars(parser.parse_args(argv))

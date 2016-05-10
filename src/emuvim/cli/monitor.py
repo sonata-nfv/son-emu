@@ -46,6 +46,27 @@ class ZeroRpcClient(object):
             args.get("metric"))
         pp.pprint(r)
 
+    def setup_flow(self, args):
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        r = self.c.setup_flow(
+            vnf_name,
+            vnf_interface,
+            args.get("metric"),
+            args.get("cookie"))
+        pp.pprint(r)
+
+    def prometheus(self, args):
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        r = self.c.prometheus(
+            args.get("datacenter"),
+            vnf_name,
+            vnf_interface,
+            args.get("query"))
+        pp.pprint(r)
+
+
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
         return vnf_name
@@ -58,7 +79,7 @@ class ZeroRpcClient(object):
 
         return vnf_interface
 
-parser = argparse.ArgumentParser(description='son-emu network')
+parser = argparse.ArgumentParser(description='son-emu monitor')
 parser.add_argument(
     "command",
     help="Action to be executed")
@@ -68,7 +89,15 @@ parser.add_argument(
 parser.add_argument(
     "--metric", "-m", dest="metric",
     help="tx_bytes, rx_bytes, tx_packets, rx_packets")
-
+parser.add_argument(
+    "--cookie", "-c", dest="cookie",
+    help="flow cookie to monitor")
+parser.add_argument(
+    "--query", "-q", dest="query",
+    help="prometheus query")
+parser.add_argument(
+    "--datacenter", "-d", dest="datacenter",
+    help="Data center where the vnf is deployed")
 
 def main(argv):
     #print "This is the son-emu monitor CLI."

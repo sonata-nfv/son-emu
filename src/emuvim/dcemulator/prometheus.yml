@@ -34,7 +34,7 @@ scrape_configs:
   - job_name: 'cAdvisor'
 
     # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 5s
+    scrape_interval: 1s
 
     target_groups:
       - targets: ['172.17.0.1:8090']
@@ -42,7 +42,7 @@ scrape_configs:
   - job_name: 'PushGateway'
 
     # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 5s
+    scrape_interval: 1s
 
     target_groups:
       - targets: ['172.17.0.1:9091']
