@@ -183,6 +183,10 @@ class Datacenter(object):
             raise Exception("Container with name %s not found." % name)
         LOG.debug("Stopping compute instance %r in data center %r" % (name, str(self)))
 
+        #  stop the monitored metrics
+        if self.net.monitor_agent is not None:
+            self.net.monitor_agent.stop_metric(name)
+
         # call resource model and free resources
         if self._resource_model is not None:
             self._resource_model.free(self.containers[name])

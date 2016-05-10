@@ -74,6 +74,7 @@ class DCNetworkApi(object):
                 vnf_src_name, vnf_dst_name,
                 vnf_src_interface=kwargs.get('vnf_src_interface'),
                 vnf_dst_interface=kwargs.get('vnf_dst_interface'),
+                cmd='add-flow',
                 weight=kwargs.get('weight'),
                 match=kwargs.get('match'),
                 bidirectional=kwargs.get('bidirectional'),
@@ -117,6 +118,32 @@ class DCNetworkApi(object):
         logging.debug("RPC CALL: stop metric")
         try:
             c = self.net.monitor_agent.stop_metric(vnf_name, vnf_interface, metric)
+            return c
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
+    # setup the flow metrics measurement
+    def setup_flow(self, vnf_name, vnf_interface, metric, cookie):
+        logging.debug("RPC CALL: setup flow")
+        try:
+            c = self.net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+            return c
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
+    # do prometheus query
+    def prometheus(self, dc_label, vnf_name, vnf_interface, query):
+        logging.debug("RPC CALL: query prometheus")
+        vnf_status = self.net.dcs.get(dc_label).containers.get(vnf_name).getStatus()
+        uuid = vnf_status['id']
+        query = query.replace('<uuid>', uuid)
+        #if needed, replace interface id with emu-intfs name
+        # query = query.replace('<intf>', vnf_interface)
+        logging.info('query: {0}'.format(query))
+        try:
+            c = self.net.monitor_agent.query_Prometheus(query)
             return c
         except Exception as ex:
             logging.exception("RPC error.")

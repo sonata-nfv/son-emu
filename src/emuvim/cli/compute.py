@@ -15,7 +15,7 @@ pp = pprint.PrettyPrinter(indent=4)
 class ZeroRpcClient(object):
 
     def __init__(self):
-        self.c = zerorpc.Client()
+        self.c = zerorpc.Client(heartbeat=None, timeout=120) #heartbeat=None, timeout=120
         self.c.connect("tcp://127.0.0.1:4242")  # TODO hard coded for now. we'll change this later
         self.cmds = {}
 
@@ -90,13 +90,16 @@ class ZeroRpcClient(object):
             input=args.get("input"),
             output=args.get("output"))
 
-        r = self.c.compute_profile(
+        for output in self.c.compute_profile(
             args.get("datacenter"),
             args.get("name"),
             args.get("image"),
             params
-        )
-        pp.pprint(r)
+            ):
+            print(output + '\n')
+
+        #pp.pprint(r)
+        #print(r)
 
     def _create_dict(self, **kwargs):
         return kwargs

@@ -9,6 +9,8 @@ import zerorpc
 
 import paramiko
 import ipaddress
+import time
+import gevent
 
 logging.basicConfig(level=logging.INFO)
 
@@ -116,6 +118,7 @@ class MultiDatacenterApi(object):
             logging.exception("RPC error.")
             return ex.message
 
+    @zerorpc.stream
     def compute_profile(self, dc_label, compute_name, image, kwargs):
         # note: zerorpc does not support keyword arguments
 
@@ -126,47 +129,95 @@ class MultiDatacenterApi(object):
                                   kwargs.get('command'))
         # start traffic source (with fixed ip addres, no use for now...)
         psrc_status = self.compute_action_start( dc_label, 'psrc', 'profile_source', [{'id':'output'}], None)
+        # start traffic sink (with fixed ip addres)
+        psink_status = self.compute_action_start(dc_label, 'psink', 'profile_sink', [{'id': 'input'}], None)
         # link vnf to traffic source
         DCNetwork = self.dcs.get(dc_label).net
         DCNetwork.setChain('psrc', compute_name,
                            vnf_src_interface='output',
                            vnf_dst_interface=kwargs.get('input'),
-                           cmd='add-flow', weight=None)
+                           cmd='add-flow', weight=None, bidirectional=True)
+        DCNetwork.setChain('psrc', compute_name,
+                           vnf_src_interface='output',
+                           vnf_dst_interface=kwargs.get('input'),
+                           cmd='add-flow', weight=None,
+                           match='dl_type=0x0800,nw_proto=17,udp_dst=5001',
+                           cookie=10)
+        DCNetwork.setChain( compute_name, 'psink',
+                           vnf_src_interface='output',
+                           vnf_dst_interface=kwargs.get('input'),
+                           cmd='add-flow', weight=None, bidirectional=True)
+        DCNetwork.setChain(compute_name, 'psink',
+                       vnf_src_interface='output',
+                       vnf_dst_interface=kwargs.get('input'),
+                       cmd='add-flow', weight=None,
+                       match='dl_type=0x0800,nw_proto=17,udp_dst=5001',
+                       cookie=11)
 
         ## SSM/SP tasks:
         # start traffic generation
+        '''
         for nw in psrc_status.get('network'):
             if nw.get('intf_name') == 'output':
                 psrc_output_ip = unicode(nw['ip'])
                 break
         dummy_iperf_server_ip = ipaddress.IPv4Address(psrc_output_ip) + 1
-        iperf_cmd = 'iperf -c {0} -u -l18 -b10M -t1000 &'.format(dummy_iperf_server_ip)
+        '''
+        for nw in psink_status.get('network'):
+            if nw.get('intf_name') == 'input':
+                psink_input_ip = nw['ip']
+                break
 
-        psrc_mgmt_ip = psrc_status['docker_network']
-        psrc_user='root'
-        psrc_passw='root'
 
-        # use ssh login when starting command externally
-        ret = self.dcs.get(dc_label).containers.get('psrc').pexec(iperf_cmd)
-        logging.info(ret)
-        self.dcs.get(dc_label).containers.get('psrc').monitor()
-
-        #ssh does not work when exectuted via zerorpc command
-        #psrc_mgmt_ip = '172.17.0.3'
-        #ssh = paramiko.SSHClient()
-        #ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        #ssh.connect(psrc_mgmt_ip, username='steven', password='test')
-        #ssh.connect(psrc_mgmt_ip, username='root', password='root')
-
-        #iperf_cmd = 'iperf -c {0} -u -l18 -b10M -t1000'.format(dummy_iperf_server_ip)
-        #stdin, stdout, stderr = ssh.exec_command(iperf_cmd)
         # get monitor data and analyze
+        vnf_uuid = vnf_status['id']
+        psrc_mgmt_ip = psrc_status['docker_network']
 
-        # create table
+        # query rate
 
-        ## VIM/dummy gatekeeper's tasks:
-        # remove vnfs and chain
+        #need to wait a bit before containers are fully up?
+        time.sleep(2)
 
+        def generate():
+            for rate in [0, 1, 2, 3]:
+                #logging.info('query:{0}'.format(query_cpu))
+
+                output_line = DCNetwork.monitor_agent.profile(psrc_mgmt_ip, rate, psink_input_ip, vnf_uuid)
+                gevent.sleep(0)
+                yield output_line
+
+            # query loss
+
+
+            # create table
+
+            ## VIM/dummy gatekeeper's tasks:
+            # remove vnfs and chain
+            DCNetwork.setChain('psrc', compute_name,
+                               vnf_src_interface='output',
+                               vnf_dst_interface=kwargs.get('input'),
+                               cmd='del-flows', weight=None, bidirectional=True)
+            DCNetwork.setChain('psrc', compute_name,
+                               vnf_src_interface='output',
+                               vnf_dst_interface=kwargs.get('input'),
+                               cmd='del-flows', weight=None,
+                               match='dl_type=0x0800,nw_proto=17,udp_dst=5001',
+                               cookie=10)
+            DCNetwork.setChain(compute_name, 'psink',
+                               vnf_src_interface='output',
+                               vnf_dst_interface=kwargs.get('input'),
+                               cmd='del-flows', weight=None, bidirectional=True)
+            DCNetwork.setChain(compute_name, 'psink',
+                               vnf_src_interface='output',
+                               vnf_dst_interface=kwargs.get('input'),
+                               cmd='del-flows', weight=None,
+                               match='dl_type=0x0800,nw_proto=17,udp_dst=5001',
+                               cookie=11)
+            self.compute_action_stop(dc_label, compute_name)
+            self.compute_action_stop(dc_label, 'psink')
+            self.compute_action_stop(dc_label, 'psrc')
+
+        return generate()
 
     def datacenter_list(self):
         logging.debug("RPC CALL: datacenter list")
@@ -184,9 +235,4 @@ class MultiDatacenterApi(object):
             logging.exception("RPC error.")
             return ex.message
 
-'''
-if __name__ == "__main__":
-    test = MultiDatacenterApi({})
-    test.compute_profile('dc1','vnf1', 'image',network='',command='test',other='other')
-'''
 

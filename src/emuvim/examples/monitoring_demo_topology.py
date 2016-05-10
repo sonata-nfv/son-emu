@@ -43,7 +43,7 @@ def create_topology1():
         first prototype)
     """
     dc1 = net.addDatacenter("datacenter1")
-    #dc2 = net.addDatacenter("datacenter2")
+    dc2 = net.addDatacenter("datacenter2")
     #dc3 = net.addDatacenter("long_data_center_name3")
     #dc4 = net.addDatacenter(
     #    "datacenter4",
@@ -60,7 +60,7 @@ def create_topology1():
        to define you topology.
        These links can use Mininet's features to limit bw, add delay or jitter.
     """
-    #net.addLink(dc1, dc2, delay="10ms")
+    net.addLink(dc1, dc2, delay="10ms")
     #net.addLink(dc1, dc2)
     #net.addLink("datacenter1", s1, delay="20ms")
     #net.addLink(s1, dc3)
@@ -81,7 +81,7 @@ def create_topology1():
     zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
     # connect data centers to this endpoint
     zapi1.connectDatacenter(dc1)
-    #zapi1.connectDatacenter(dc2)
+    zapi1.connectDatacenter(dc2)
     #zapi1.connectDatacenter(dc3)
     #zapi1.connectDatacenter(dc4)
     # run API endpoint server (in another thread, don't block)
