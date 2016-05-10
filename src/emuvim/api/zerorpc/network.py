@@ -97,7 +97,8 @@ class DCNetworkApi(object):
                 cmd='del-flows',
                 weight=kwargs.get('weight'),
                 match=kwargs.get('match'),
-                bidirectional=kwargs.get('bidirectional'))
+                bidirectional=kwargs.get('bidirectional'),
+                cookie=kwargs.get('cookie'))
             return c
         except Exception as ex:
             logging.exception("RPC error.")
