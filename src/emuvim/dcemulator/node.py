@@ -39,7 +39,7 @@ class EmulatorCompute(Docker):
         this compute instance is connected to.
         """
         # format list of tuples (name, Ip, MAC, isUp, status)
-        return [(str(i), i.IP(), i.MAC(), i.isUp(), i.status())
+        return [{'intf_name':str(i), 'ip':i.IP(), 'mac':i.MAC(), 'up':i.isUp(), 'status':i.status()}
                 for i in self.intfList()]
 
     def getStatus(self):
@@ -182,6 +182,10 @@ class Datacenter(object):
         if name not in self.containers:
             raise Exception("Container with name %s not found." % name)
         LOG.debug("Stopping compute instance %r in data center %r" % (name, str(self)))
+
+        #  stop the monitored metrics
+        if self.net.monitor_agent is not None:
+            self.net.monitor_agent.stop_metric(name)
 
         # call resource model and free resources
         if self._resource_model is not None:
