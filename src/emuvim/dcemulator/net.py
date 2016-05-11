@@ -30,6 +30,7 @@ class DCNetwork(Dockernet):
     """
 
     def __init__(self, controller=RemoteController, monitor=False,
+                 enable_learning = True,   # in case of RemoteController (Ryu), learning switch behavior can be turned off/on
                  dc_emulation_max_cpu=1.0,  # fraction of overall CPU time for emulation
                  dc_emulation_max_mem=512,  # emulation max mem in MB
                  **kwargs):
@@ -43,13 +44,13 @@ class DCNetwork(Dockernet):
 
         # call original Docker.__init__ and setup default controller
         Dockernet.__init__(
-            self, switch=OVSKernelSwitch, **kwargs)
+            self, switch=OVSKernelSwitch, controller=controller, **kwargs)
 
         # Ryu management
         self.ryu_process = None
         if controller == RemoteController:
             # start Ryu controller
-            self.startRyu()
+            self.startRyu(learning_switch=enable_learning)
 
         # add the specified controller
         self.addController('c0', controller=controller)
@@ -331,10 +332,15 @@ class DCNetwork(Dockernet):
                 kwargs['vlan'] = vlan
                 kwargs['path'] = path
                 kwargs['current_hop'] = current_hop
-                ## set flow entry via ovs-ofctl
-                #self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
-                ## set flow entry via ryu rest api
-                self._set_flow_entry_ryu_rest(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
+
+                if self.controller == RemoteController:
+                    ## set flow entry via ryu rest api
+                    self._set_flow_entry_ryu_rest(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
+                else:
+                    ## set flow entry via ovs-ofctl
+                    self._set_flow_entry_dpctl(current_node, switch_inport_nr, switch_outport_nr, **kwargs)
+
+
 
             # take first link between switches by default
             if isinstance( next_node, OVSSwitch ):
@@ -359,6 +365,8 @@ class DCNetwork(Dockernet):
 
         flow = {}
         flow['dpid'] = int(node.dpid, 16)
+        logging.info('node name:{0}'.format(node.name))
+
         if cookie:
             flow['cookie'] = int(cookie)
 
@@ -369,15 +377,13 @@ class DCNetwork(Dockernet):
         # http://ryu.readthedocs.io/en/latest/app/ofctl_rest.html#add-a-flow-entry
         if cmd == 'add-flow':
             prefix = 'stats/flowentry/add'
-            action = {}
-            action['type'] = 'OUTPUT'
-            action['port'] = switch_outport_nr
-            flow['actions'].append(action)
             if vlan != None:
                 if path.index(current_hop) == 0:  # first node
                     action = {}
                     action['type'] = 'PUSH_VLAN'  # Push a new VLAN tag if a input frame is non-VLAN-tagged
                     action['ethertype'] = 33024   # Ethertype 0x8100(=33024): IEEE 802.1Q VLAN-tagged frame
+                    flow['actions'].append(action)
+                    action = {}
                     action['type'] = 'SET_FIELD'
                     action['field'] = 'vlan_vid'
                     action['value'] = vlan
@@ -389,6 +395,11 @@ class DCNetwork(Dockernet):
                     flow['actions'].append(action)
                 else:  # middle nodes
                     match += ',dl_vlan=%s' % vlan
+            # output action must come last
+            action = {}
+            action['type'] = 'OUTPUT'
+            action['port'] = switch_outport_nr
+            flow['actions'].append(action)
             #flow['match'] = self._parse_match(match)
         elif cmd == 'del-flows':
             #del(flow['actions'])
@@ -444,7 +455,7 @@ class DCNetwork(Dockernet):
                                                                                  switch_outport_nr, cmd))
 
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
-    def startRyu(self):
+    def startRyu(self, learning_switch=True):
         # start Ryu controller with rest-API
         python_install_path = site.getsitepackages()[0]
         ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
@@ -455,9 +466,11 @@ class DCNetwork(Dockernet):
         ryu_of_port = '6653'
         ryu_cmd = 'ryu-manager'
         FNULL = open("/tmp/ryu.log", 'w')
-        self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
-        # no learning switch
-        #self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        if learning_switch:
+            self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
+        else:
+            # no learning switch
+            self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
     def stopRyu(self):
@@ -466,18 +479,22 @@ class DCNetwork(Dockernet):
             self.ryu_process.kill()
 
     def ryu_REST(self, prefix, dpid=None, data=None):
-        if dpid:
-            url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
-        else:
-            url = self.ryu_REST_api + '/' + str(prefix)
-        if data:
-            #logging.info('POST: {0}'.format(str(data)))
-            req = urllib2.Request(url, str(data))
-        else:
-            req = urllib2.Request(url)
+        try:
+            if dpid:
+                url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
+            else:
+                url = self.ryu_REST_api + '/' + str(prefix)
+            if data:
+                #logging.info('POST: {0}'.format(str(data)))
+                req = urllib2.Request(url, str(data))
+            else:
+                req = urllib2.Request(url)
 
-        ret = urllib2.urlopen(req).read()
-        return ret
+            ret = urllib2.urlopen(req).read()
+            return ret
+        except:
+            logging.info('error url: {0}'.format(str(url)))
+            if data: logging.info('error POST: {0}'.format(str(data)))
 
     # need to respect that some match fields must be integers
     # http://ryu.readthedocs.io/en/latest/app/ofctl_rest.html#description-of-match-and-actions
