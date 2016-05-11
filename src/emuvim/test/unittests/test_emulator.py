@@ -10,6 +10,7 @@ import time
 import unittest
 from emuvim.dcemulator.node import EmulatorCompute
 from emuvim.test.base import SimpleTestTopology
+from mininet.node import RemoteController
 
 
 #@unittest.skip("disabled topology tests for development")
@@ -87,6 +88,112 @@ class testEmulatorTopology( SimpleTestTopology ):
         # stop Mininet network
         self.stopNet()
 
+class testEmulatorNetworking( SimpleTestTopology ):
+
+    def testSDNChainingSingleService(self):
+        """
+        Create a two data centers and interconnect them with additional
+        switches between them.
+        Uses Ryu SDN controller.
+        Connect the Docker hosts to different datacenters and setup the links between.
+        """
+        # create network
+        self.createNet(
+            nswitches=3, ndatacenter=2, nhosts=0, ndockers=0,
+            autolinkswitches=True,
+            controller=RemoteController,
+            enable_learning=False)
+        # setup links
+        self.net.addLink(self.dc[0], self.s[0])
+        self.net.addLink(self.s[2], self.dc[1])
+        # start Mininet network
+        self.startNet()
+
+        # add compute resources
+        vnf1 = self.dc[0].startCompute("vnf1", network=[{'id':'intf1', 'ip':'10.0.10.1/24'}])
+        vnf2 = self.dc[1].startCompute("vnf2", network=[{'id':'intf2', 'ip':'10.0.10.2/24'}])
+        # check number of running nodes
+        self.assertTrue(len(self.getContainernetContainers()) == 2)
+        self.assertTrue(len(self.net.hosts) == 2)
+        self.assertTrue(len(self.net.switches) == 5)
+        # check status
+        # check get status
+        s1 = self.dc[0].containers.get("vnf1").getStatus()
+        self.assertTrue(s1["name"] == "vnf1")
+        self.assertTrue(s1["state"]["Running"])
+        self.assertTrue(s1["network"][0]['intf_name'] == 'intf1')
+        self.assertTrue(s1["network"][0]['ip'] == '10.0.10.1')
+
+        s2 = self.dc[1].containers.get("vnf2").getStatus()
+        self.assertTrue(s2["name"] == "vnf2")
+        self.assertTrue(s2["state"]["Running"])
+        self.assertTrue(s2["network"][0]['intf_name'] == 'intf2')
+        self.assertTrue(s2["network"][0]['ip'] == '10.0.10.2')
+
+        # setup links
+        self.net.setChain('vnf1', 'vnf2', 'intf1', 'intf2', bidirectional=True, cmd='add-flow')
+        # check connectivity by using ping
+        self.assertTrue(self.net.ping([vnf1, vnf2]) <= 0.0)
+        # stop Mininet network
+        self.stopNet()
+
+    def testSDNChainingMultiService(self):
+        """
+        Create a two data centers and interconnect them with additional
+        switches between them.
+        Uses Ryu SDN controller.
+        Setup 2 services and setup isolated paths between them
+        Delete only the first service, and check that other one still works
+        """
+        # create network
+        self.createNet(
+            nswitches=3, ndatacenter=2, nhosts=0, ndockers=0,
+            autolinkswitches=True,
+            controller=RemoteController,
+            enable_learning=False)
+        # setup links
+        self.net.addLink(self.dc[0], self.s[0])
+        self.net.addLink(self.s[2], self.dc[1])
+        # start Mininet network
+        self.startNet()
+
+        ## First Service
+        # add compute resources
+        vnf1 = self.dc[0].startCompute("vnf1", network=[{'id': 'intf1', 'ip': '10.0.10.1/24'}])
+        vnf2 = self.dc[1].startCompute("vnf2", network=[{'id': 'intf2', 'ip': '10.0.10.2/24'}])
+        # setup links
+        self.net.setChain('vnf1', 'vnf2', 'intf1', 'intf2', bidirectional=True, cmd='add-flow', cookie=1)
+        # check connectivity by using ping
+        self.assertTrue(self.net.ping([vnf1, vnf2]) <= 0.0)
+
+        ## Second Service
+        # add compute resources
+        vnf11 = self.dc[0].startCompute("vnf11", network=[{'id': 'intf1', 'ip': '10.0.20.1/24'}])
+        vnf22 = self.dc[1].startCompute("vnf22", network=[{'id': 'intf2', 'ip': '10.0.20.2/24'}])
+
+        # check number of running nodes
+        self.assertTrue(len(self.getContainernetContainers()) == 4)
+        self.assertTrue(len(self.net.hosts) == 4)
+        self.assertTrue(len(self.net.switches) == 5)
+
+        # setup links
+        self.net.setChain('vnf11', 'vnf22', 'intf1', 'intf2', bidirectional=True, cmd='add-flow', cookie=2)
+        # check connectivity by using ping
+        self.assertTrue(self.net.ping([vnf11, vnf22]) <= 0.0)
+        # check first service cannot ping second service
+        self.assertTrue(self.net.ping([vnf1, vnf22]) > 0.0)
+        self.assertTrue(self.net.ping([vnf2, vnf11]) > 0.0)
+
+        # delete the first service chain
+        self.net.setChain('vnf1', 'vnf2', 'intf1', 'intf2', bidirectional=True, cmd='del-flows', cookie=1)
+        # check connectivity of first service is down
+        self.assertTrue(self.net.ping([vnf1, vnf2]) > 0.0)
+        #time.sleep(100)
+        # check connectivity of second service is still up
+        self.assertTrue(self.net.ping([vnf11, vnf22]) <= 0.0)
+
+        # stop Mininet network
+        self.stopNet()
 
 #@unittest.skip("disabled compute tests for development")
 class testEmulatorCompute( SimpleTestTopology ):

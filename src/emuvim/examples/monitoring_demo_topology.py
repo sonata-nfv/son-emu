@@ -29,7 +29,7 @@ def create_topology1():
     """
     1. Create a data center network object (DCNetwork) with monitoring enabled
     """
-    net = DCNetwork(monitor=True)
+    net = DCNetwork(monitor=True, enable_learning=False)
 
     """
     1b. add a monitoring agent to the DCNetwork
@@ -53,15 +53,17 @@ def create_topology1():
     3. You can add additional SDN switches for data center
        interconnections to the network.
     """
-    #s1 = net.addSwitch("s1")
+    s1 = net.addSwitch("s1")
 
     """
     4. Add links between your data centers and additional switches
        to define you topology.
        These links can use Mininet's features to limit bw, add delay or jitter.
     """
-    net.addLink(dc1, dc2, delay="10ms")
+    #net.addLink(dc1, dc2, delay="10ms")
     #net.addLink(dc1, dc2)
+    net.addLink(dc1, s1)
+    net.addLink(s1, dc2)
     #net.addLink("datacenter1", s1, delay="20ms")
     #net.addLink(s1, dc3)
     #net.addLink(s1, "datacenter4")
