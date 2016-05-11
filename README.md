@@ -93,4 +93,3 @@ In the `~/son-emu` directory:
 
 ### CLI
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
-
