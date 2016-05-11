@@ -10,4 +10,4 @@ cd ${BASE_DIR}
 rm -rf utils/ci/junit-xml/*
 
 # Launch the unit testing on emuvim
-py.test -v --junit-xml=utils/ci/junit-xml/pytest_emuvim.xml src/emuvim
+py.test -v --junit-xml=utils/ci/junit-xml/pytest_emuvim.xml src/emuvim/test/unittests
