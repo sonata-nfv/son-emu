@@ -1,5 +1,6 @@
 import time
 import os
+import unittest
 from emuvim.test.base import SimpleTestTopology
 from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor, NotEnoughResourcesAvailable, ResourceModelRegistrar
 from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM, UpbDummyRM
@@ -211,15 +212,13 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         rm.free(c1)
         self.assertTrue(rm.dc_alloc_cu == 0)
 
+    @unittest.skipIf(os.environ.get("SON_EMU_IN_DOCKER") is not None,
+                     "skipping test when running inside Docker container")
     def testInRealTopo(self):
         """
         Start a real container and check if limitations are really passed down to Conteinernet.
         :return:
         """
-        # ATTENTION: This test should only be executed if emu runs not inside a Docker container,
-        # because it manipulates cgroups.
-        if os.environ.get("SON_EMU_IN_DOCKER") is not None:
-            return
         # create network
         self.createNet(nswitches=0, ndatacenter=1, nhosts=2, ndockers=0)
         # setup links

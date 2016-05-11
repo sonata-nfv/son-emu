@@ -89,8 +89,7 @@ In the `~/son-emu` directory:
 
 ### Run Unit Tests
 * `cd ~/son-emu`
-* `sudo py.test -v src/emuvim` (equivalent to `python setup.py test -v --addopts 'src/emuvim'` but with direct access to the commandline arguments)
+* `sudo py.test -v src/emuvim/test/unittests`
 
 ### CLI
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
-
