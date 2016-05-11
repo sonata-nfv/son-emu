@@ -15,6 +15,9 @@
    - name: install libffi-dev
      apt: pkg=libffi-dev state=installed
 
+   - name: install libssl-dev
+     apt: pkg=libssl-dev state=installed
+
    - name: install pip
      apt: pkg=python-pip state=installed
 
@@ -55,13 +58,16 @@
      pip: name=requests state=latest
 
    - name: install docker-py
-     pip: name=docker-py state=latest
+     pip: name=docker-py version=1.7.1
 
    - name: install prometheus_client
      pip: name=prometheus_client state=latest
 
    - name: install paramiko
      pip: name=paramiko state=latest
+
+   - name: install latest urllib3 (fix error urllib3.connection.match_hostname = match_hostname)
+     pip: name=urllib3 state=latest
 
 
 
