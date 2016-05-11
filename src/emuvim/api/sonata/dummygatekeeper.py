@@ -134,8 +134,9 @@ class Service(object):
             src_node, src_port = link["connection_points_reference"][0].split(":")
             dst_node, dst_port = link["connection_points_reference"][1].split(":")
 
-            network = self.vnfds[src_node].get("dc").net  # there should be a cleaner way to find the DCNetwork
-            network.setChain(src_node, dst_node, vnf_src_interface=src_port, vnf_dst_interface=dst_port)
+            if src_node in self.vnfds:
+                network = self.vnfds[src_node].get("dc").net  # there should be a cleaner way to find the DCNetwork
+                network.setChain(src_node, dst_node, vnf_src_interface=src_port, vnf_dst_interface=dst_port)
 
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
