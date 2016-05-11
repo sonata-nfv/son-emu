@@ -9,6 +9,8 @@ COPY . /son-emu/
 RUN cd /son-emu/ansible \
     && ansible-playbook install.yml \
     && cd /son-emu \
+    # we need to reset the __pycache__ for correct test discovery
+    && rm -rf src/emuvim/test/__pycache__ \
     && python setup.py install \
     && echo 'Done'
 

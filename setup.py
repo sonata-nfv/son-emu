@@ -21,10 +21,11 @@ setup(name='emuvim',
           'pytest',
           'Flask',
           'flask_restful',
-          'docker-py',
+          'docker-py==1.7.1',
           'requests',
-	      'prometheus_client',
-          'paramiko'
+          'prometheus_client',
+          'paramiko',
+          'urllib3'
       ],
       zip_safe=False,
       entry_points={
