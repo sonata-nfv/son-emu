@@ -12,7 +12,7 @@ import re
 import urllib2
 from functools import partial
 
-from mininet.net import Dockernet
+from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
 from mininet.link import TCLink
@@ -21,9 +21,9 @@ from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
-class DCNetwork(Dockernet):
+class DCNetwork(Containernet):
     """
-    Wraps the original Mininet/Dockernet class and provides
+    Wraps the original Mininet/Containernet class and provides
     methods to add data centers, switches, etc.
 
     This class is used by topology definition scripts.
@@ -34,7 +34,7 @@ class DCNetwork(Dockernet):
                  dc_emulation_max_mem=512,  # emulation max mem in MB
                  **kwargs):
         """
-        Create an extended version of a Dockernet network
+        Create an extended version of a Containernet network
         :param dc_emulation_max_cpu: max. CPU time used by containers in data centers
         :param kwargs: path through for Mininet parameters
         :return:
@@ -42,7 +42,7 @@ class DCNetwork(Dockernet):
         self.dcs = {}
 
         # call original Docker.__init__ and setup default controller
-        Dockernet.__init__(
+        Containernet.__init__(
             self, switch=OVSKernelSwitch, **kwargs)
 
         # Ryu management
@@ -121,11 +121,11 @@ class DCNetwork(Dockernet):
                 params["params2"]["ip"] = self.getNextIp()
         # ensure that we allow TCLinks between data centers
         # TODO this is not optimal, we use cls=Link for containers and TCLink for data centers
-        # see Dockernet issue: https://github.com/mpeuster/dockernet/issues/3
+        # see Containernet issue: https://github.com/mpeuster/containernet/issues/3
         if "cls" not in params:
             params["cls"] = TCLink
 
-        link = Dockernet.addLink(self, node1, node2, **params)
+        link = Containernet.addLink(self, node1, node2, **params)
 
         # try to give container interfaces a default id
         node1_port_id = node1.ports[link.intf1]
@@ -143,7 +143,7 @@ class DCNetwork(Dockernet):
 
         # add edge and assigned port number to graph in both directions between node1 and node2
         # port_id: id given in descriptor (if available, otherwise same as port)
-        # port: portnumber assigned by Dockernet
+        # port: portnumber assigned by Containernet
 
         attr_dict = {}
         # possible weight metrics allowed by TClink class:
@@ -180,14 +180,14 @@ class DCNetwork(Dockernet):
         Wrapper for addDocker method to use custom container class.
         """
         self.DCNetwork_graph.add_node(label)
-        return Dockernet.addDocker(self, label, cls=EmulatorCompute, **params)
+        return Containernet.addDocker(self, label, cls=EmulatorCompute, **params)
 
     def removeDocker( self, label, **params ):
         """
         Wrapper for removeDocker method to update graph.
         """
         self.DCNetwork_graph.remove_node(label)
-        return Dockernet.removeDocker(self, label, **params)
+        return Containernet.removeDocker(self, label, **params)
 
     def addSwitch( self, name, add_to_graph=True, **params ):
         """
@@ -195,7 +195,7 @@ class DCNetwork(Dockernet):
         """
         if add_to_graph:
             self.DCNetwork_graph.add_node(name)
-        return Dockernet.addSwitch(self, name, protocols='OpenFlow10,OpenFlow12,OpenFlow13', **params)
+        return Containernet.addSwitch(self, name, protocols='OpenFlow10,OpenFlow12,OpenFlow13', **params)
 
     def getAllContainers(self):
         """
@@ -210,7 +210,7 @@ class DCNetwork(Dockernet):
         # start
         for dc in self.dcs.itervalues():
             dc.start()
-        Dockernet.start(self)
+        Containernet.start(self)
 
     def stop(self):
 
@@ -219,7 +219,7 @@ class DCNetwork(Dockernet):
             self.monitor_agent.stop()
 
         # stop emulator net
-        Dockernet.stop(self)
+        Containernet.stop(self)
 
         # stop Ryu controller
         self.stopRyu()

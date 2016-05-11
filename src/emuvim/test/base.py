@@ -74,11 +74,11 @@ class SimpleTestTopology(unittest.TestCase):
                 base_url='unix://var/run/docker.sock')
         return self.docker_cli
 
-    def getDockernetContainers(self):
+    def getContainernetContainers(self):
         """
-        List the containers managed by dockernet
+        List the containers managed by containernet
         """
-        return self.getDockerCli().containers(filters={"label": "com.dockernet"})
+        return self.getDockerCli().containers(filters={"label": "com.containernet"})
 
     @staticmethod
     def setUp():
@@ -90,7 +90,7 @@ class SimpleTestTopology(unittest.TestCase):
         # make sure that all pending docker containers are killed
         with open(os.devnull, 'w') as devnull:
             subprocess.call(
-                "sudo docker rm -f $(sudo docker ps --filter 'label=com.dockernet' -a -q)",
+                "sudo docker rm -f $(sudo docker ps --filter 'label=com.containernet' -a -q)",
                 stdout=devnull,
                 stderr=devnull,
                 shell=True)
