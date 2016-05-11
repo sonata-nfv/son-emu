@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(name='emuvim',
       version='0.0.1',
-      license='TODO',
+      license='Apache 2.0',
       description='emuvim is a VIM for the SONATA platform',
       url='http://github.com/sonata-emu',
       author_email='sonata-dev@sonata-nfv.eu',
@@ -21,9 +21,11 @@ setup(name='emuvim',
           'pytest',
           'Flask',
           'flask_restful',
-          'docker-py',
+          'docker-py==1.7.1',
           'requests',
-	  'prometheus_client'
+          'prometheus_client',
+          'paramiko',
+          'urllib3'
       ],
       zip_safe=False,
       entry_points={

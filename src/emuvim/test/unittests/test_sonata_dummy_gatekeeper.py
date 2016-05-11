@@ -6,11 +6,12 @@ import unittest
 from emuvim.test.base import SimpleTestTopology
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
-
+PACKAGE_PATH = "misc/sonata-demo-docker.son"
 
 class testSonataDummyGatekeeper(SimpleTestTopology):
 
-    @unittest.skip("disabled test since ubuntu:trusty not used in current example package")
+    @unittest.skipIf(os.environ.get("SON_EMU_IN_DOCKER") is None or True,
+                     "skipping dummy GK test in local environment")
     def testAPI(self):
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)
@@ -28,22 +29,12 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.startNet()
         time.sleep(1)
 
-        # download example from GitHub
-        print "downloading latest son-demo.son from GitHub"
-        subprocess.call(
-            ["wget",
-             "http://github.com/sonata-nfv/son-schema/blob/master/package-descriptor/examples/sonata-demo.son?raw=true",
-             "-O",
-             "son-demo.son"]
-        )
-
         print "starting tests"
         # board package
-        files = {"package": open("son-demo.son", "rb")}
+        files = {"package": open(PACKAGE_PATH, "rb")}
         r = requests.post("http://127.0.0.1:5000/packages", files=files)
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json().get("service_uuid") is not None)
-        os.remove("son-demo.son")
 
         # instantiate service
         service_uuid = r.json().get("service_uuid")
@@ -60,7 +51,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.assertEqual(len(r4.json().get("service_instance_list")), 1)
 
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 3)
+        self.assertTrue(len(self.getContainernetContainers()) == 3)
         self.assertTrue(len(self.net.hosts) == 5)
         self.assertTrue(len(self.net.switches) == 2)
         # check compute list result
