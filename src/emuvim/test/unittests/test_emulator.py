@@ -90,7 +90,7 @@ class testEmulatorTopology( SimpleTestTopology ):
 
 class testEmulatorNetworking( SimpleTestTopology ):
 
-    def testSDNChaining(self):
+    def testSDNChainingSingleService(self):
         """
         Create a two data centers and interconnect them with additional
         switches between them.
@@ -113,7 +113,7 @@ class testEmulatorNetworking( SimpleTestTopology ):
         vnf1 = self.dc[0].startCompute("vnf1", network=[{'id':'intf1', 'ip':'10.0.10.1/24'}])
         vnf2 = self.dc[1].startCompute("vnf2", network=[{'id':'intf2', 'ip':'10.0.10.2/24'}])
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 2)
+        self.assertTrue(len(self.getContainernetContainers()) == 2)
         self.assertTrue(len(self.net.hosts) == 2)
         self.assertTrue(len(self.net.switches) == 5)
         # check status
