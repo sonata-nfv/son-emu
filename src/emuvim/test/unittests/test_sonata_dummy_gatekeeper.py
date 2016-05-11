@@ -10,7 +10,7 @@ PACKAGE_PATH = "misc/sonata-demo-docker.son"
 
 class testSonataDummyGatekeeper(SimpleTestTopology):
 
-    @unittest.skipIf(os.environ.get("SON_EMU_IN_DOCKER") is None,
+    @unittest.skipIf(os.environ.get("SON_EMU_IN_DOCKER") is None or True,
                      "skipping dummy GK test in local environment")
     def testAPI(self):
         # create network
