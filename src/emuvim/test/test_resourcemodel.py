@@ -41,7 +41,7 @@ class testResourceModel(SimpleTestTopology):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 0)
+        self.assertTrue(len(self.getContainernetContainers()) == 0)
         self.assertTrue(len(self.net.hosts) == 2)
         self.assertTrue(len(self.net.switches) == 1)
         # check resource model and resource model registrar
@@ -213,7 +213,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
 
     def testInRealTopo(self):
         """
-        Start a real container and check if limitations are really passed down to Dockernet.
+        Start a real container and check if limitations are really passed down to Conteinernet.
         :return:
         """
         # ATTENTION: This test should only be executed if emu runs not inside a Docker container,
@@ -231,7 +231,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 0)
+        self.assertTrue(len(self.getContainernetContainers()) == 0)
         self.assertTrue(len(self.net.hosts) == 2)
         self.assertTrue(len(self.net.switches) == 1)
         # check resource model and resource model registrar

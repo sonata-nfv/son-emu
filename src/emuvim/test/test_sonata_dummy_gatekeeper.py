@@ -60,7 +60,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.assertEqual(len(r4.json().get("service_instance_list")), 1)
 
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 3)
+        self.assertTrue(len(self.getContainernetContainers()) == 3)
         self.assertTrue(len(self.net.hosts) == 5)
         self.assertTrue(len(self.net.switches) == 2)
         # check compute list result
