@@ -366,7 +366,6 @@ class DCNetwork(Containernet):
 
         flow = {}
         flow['dpid'] = int(node.dpid, 16)
-        logging.info('node name:{0}'.format(node.name))
 
         if cookie:
             flow['cookie'] = int(cookie)
@@ -401,14 +400,14 @@ class DCNetwork(Containernet):
             action['type'] = 'OUTPUT'
             action['port'] = switch_outport_nr
             flow['actions'].append(action)
-            #flow['match'] = self._parse_match(match)
+
         elif cmd == 'del-flows':
-            #del(flow['actions'])
             prefix = 'stats/flowentry/delete'
+
+            # if cookie is given, only delete flows by cookie
+            # do not specify other match -> also other cookies can be matched
             if cookie:
-                flow['cookie_mask'] = cookie
-            #if cookie is None:
-            #    flow['match'] = self._parse_match(match)
+                flow['cookie_mask'] = int('0xffffffffffffffff', 16)  # need full mask to match complete cookie
 
             action = {}
             action['type'] = 'OUTPUT'
@@ -480,6 +479,7 @@ class DCNetwork(Containernet):
             self.ryu_process.kill()
 
     def ryu_REST(self, prefix, dpid=None, data=None):
+        if data: logging.info('log POST: {0}'.format(str(data)))
         try:
             if dpid:
                 url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
