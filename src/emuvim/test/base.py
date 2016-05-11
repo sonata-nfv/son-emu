@@ -40,7 +40,9 @@ class SimpleTestTopology(unittest.TestCase):
         self.net = DCNetwork(controller=controller, **kwargs)
 
         # add some switches
-        for i in range(0, nswitches):
+        # start from s1 because ovs does not like to have dpid = 0
+        # and switch name-number is being used by mininet to set the dpid
+        for i in range(1, nswitches+1):
             self.s.append(self.net.addSwitch('s%d' % i))
         # if specified, chain all switches
         if autolinkswitches:
