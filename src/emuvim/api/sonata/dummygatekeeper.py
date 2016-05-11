@@ -108,11 +108,13 @@ class Service(object):
         :return:
         """
         LOG.info("Starting service %r" % self.uuid)
+
         # 1. each service instance gets a new uuid to identify it
         instance_uuid = str(uuid.uuid4())
         # build a instances dict (a bit like a NSR :))
         self.instances[instance_uuid] = dict()
         self.instances[instance_uuid]["vnf_instances"] = list()
+
         # 2. compute placement of this service instance (adds DC names to VNFDs)
         if not GK_STANDALONE_MODE:
             self._calculate_placement(FirstDcPlacement)
@@ -122,6 +124,19 @@ class Service(object):
             if not GK_STANDALONE_MODE:
                 vnfi = self._start_vnfd(vnfd)
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
+
+        # 3. Configure the chaining of the network functions (currently only E-Line links supported)
+        vlinks = self.nsd["virtual_links"]
+        fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
+        eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
+
+        for link in eline_fwd_links:
+            src_node, src_port = link["connection_points_reference"][0].split(":")
+            dst_node, dst_port = link["connection_points_reference"][1].split(":")
+
+            network = self.vnfds[src_node].get("dc").net  # there should be a cleaner way to find the DCNetwork
+            network.setChain(src_node, dst_node, vnf_src_interface=src_port, vnf_dst_interface=dst_port)
+
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
 
@@ -146,7 +161,8 @@ class Service(object):
                 raise Exception("Docker image %r not found. Abort." % docker_name)
             # 3. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
-            vnfi = target_dc.startCompute(GK.get_next_vnf_name(), image=docker_name, flavor_name="small")
+            intfs = vnfd.get("connection_points")
+            vnfi = target_dc.startCompute(GK.get_next_vnf_name(), network=intfs, image=docker_name, flavor_name="small")
             # 6. store references to the compute objects in self.instances
             return vnfi
 
