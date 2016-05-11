@@ -2,29 +2,34 @@
 
 # Distributed Cloud Emulator
 
-## Lead Developers
+### Lead Developers
 The following lead developers are responsible for this repository and have admin rights. They can, for example, merge pull requests.
-
 
 * Manuel Peuster (mpeuster)
 * Steven Van Rossem (stevenvanrossem)
 
+### Environment
+* Python 2.7
+* Latest [Containernet](https://github.com/mpeuster/containernet) installed on the system
+
 ### Dependencies
-* needs the latest [Dockernet](https://github.com/mpeuster/dockernet) to be installed on the system
-* pyaml
-* zerorpc
-* tabulate
-* argparse
-* networkx
-* six>=1.9
-* ryu
-* oslo.config
-* pytest
-* pytest-runner
-* Flask
-* flask_restful
-* requests 
-* docker-py
+* pyaml (public domain)
+* zerorpc (MIT)
+* tabulate (public domain)
+* argparse (Python software foundation license)
+* networkx (BSD)
+* six>=1.9 (MIT)
+* ryu (Apache 2.0)
+* oslo.config (Apache 2.0)
+* pytest (MIT)
+* pytest-runner (MIT)
+* Flask (BSD)
+* flask_restful (BSD)
+* requests  (Apache 2.0)
+* docker-py (Apache 2.0)
+
+### 3rd-party code used
+* (none)
 
 
 ### Project structure
