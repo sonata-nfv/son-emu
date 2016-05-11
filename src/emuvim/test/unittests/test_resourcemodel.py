@@ -1,5 +1,6 @@
 import time
 import os
+import unittest
 from emuvim.test.base import SimpleTestTopology
 from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor, NotEnoughResourcesAvailable, ResourceModelRegistrar
 from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM, UpbDummyRM
@@ -41,7 +42,7 @@ class testResourceModel(SimpleTestTopology):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 0)
+        self.assertTrue(len(self.getContainernetContainers()) == 0)
         self.assertTrue(len(self.net.hosts) == 2)
         self.assertTrue(len(self.net.switches) == 1)
         # check resource model and resource model registrar
@@ -211,15 +212,13 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         rm.free(c1)
         self.assertTrue(rm.dc_alloc_cu == 0)
 
+    @unittest.skipIf(os.environ.get("SON_EMU_IN_DOCKER") is not None,
+                     "skipping test when running inside Docker container")
     def testInRealTopo(self):
         """
-        Start a real container and check if limitations are really passed down to Dockernet.
+        Start a real container and check if limitations are really passed down to Conteinernet.
         :return:
         """
-        # ATTENTION: This test should only be executed if emu runs not inside a Docker container,
-        # because it manipulates cgroups.
-        if os.environ.get("SON_EMU_IN_DOCKER") is not None:
-            return
         # create network
         self.createNet(nswitches=0, ndatacenter=1, nhosts=2, ndockers=0)
         # setup links
@@ -231,7 +230,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         # start Mininet network
         self.startNet()
         # check number of running nodes
-        self.assertTrue(len(self.getDockernetContainers()) == 0)
+        self.assertTrue(len(self.getContainernetContainers()) == 0)
         self.assertTrue(len(self.net.hosts) == 2)
         self.assertTrue(len(self.net.switches) == 1)
         # check resource model and resource model registrar
