@@ -15,3 +15,5 @@ RUN cd /son-emu/ansible \
     && echo 'Done'
 
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
+
+EXPORT
