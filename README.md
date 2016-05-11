@@ -27,6 +27,7 @@ The following lead developers are responsible for this repository and have admin
 * flask_restful (BSD)
 * requests  (Apache 2.0)
 * docker-py (Apache 2.0)
+* paramiko (LGPL)
 
 ### 3rd-party code used
 * (none)
@@ -37,7 +38,7 @@ The following lead developers are responsible for this repository and have admin
 * **src/emuvim/** all emulator code 
  * **api/** Data center API endpoint implementations (zerorpc, OpenStack REST, ...)
  * **cli/** CLI client to interact with a running emulator
- * **dcemulator/** Dockernet wrapper that introduces the notion of data centers and API endpoints
+ * **dcemulator/** Containernet wrapper that introduces the notion of data centers and API endpoints
  * **examples/** Example topology scripts
  * **test/** Unit tests
 * **ansible/** Ansible install scripts
@@ -51,10 +52,10 @@ Automatic installation is provide through Ansible playbooks.
 * `sudo vim /etc/ansible/hosts`
 * Add: `localhost ansible_connection=local`
 
-#### 1. Dockernet
+#### 1. Containernet
 * `cd`
-* `git clone -b dockernet-sonata https://github.com/mpeuster/dockernet.git`
-* `cd ~/dockernet/ansible`
+* `git clone https://github.com/mpeuster/containernet.git`
+* `cd ~/containernet/ansible`
 * `sudo ansible-playbook install.yml`
 * Wait (and have a coffee) ...
 
@@ -82,7 +83,7 @@ In the `~/son-emu` directory:
  * `son-emu-cli compute start -d datacenter1 -n vnf2`
  * `son-emu-cli compute list`
 * First terminal:
- * `dockernet> vnf1 ping -c 2 vnf2`
+ * `containernet> vnf1 ping -c 2 vnf2`
 * Second terminal:
  *  `son-emu-cli monitor get_rate -vnf vnf1`
 

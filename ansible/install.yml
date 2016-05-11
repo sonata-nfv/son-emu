@@ -12,6 +12,9 @@
    - name: install libzmq-dev
      apt: pkg=libzmq-dev state=installed
 
+   - name: install libffi-dev
+     apt: pkg=libffi-dev state=installed
+
    - name: install pip
      apt: pkg=python-pip state=installed
 
@@ -56,6 +59,9 @@
 
    - name: install prometheus_client
      pip: name=prometheus_client state=latest
+
+   - name: install paramiko
+     pip: name=paramiko state=latest
 
 
 

@@ -19,7 +19,7 @@ DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
 class EmulatorCompute(Docker):
     """
     Emulator specific compute node class.
-    Inherits from Dockernet's Docker host class.
+    Inherits from Containernet's Docker host class.
     Represents a single container connected to a (logical)
     data center.
     We can add emulator specific helper functions to it.
@@ -168,7 +168,7 @@ class Datacenter(object):
         # if no --net option is given, network = [{}], so 1 empty dict in the list
         # this results in 1 default interface with a default ip address
         for nw in network:
-            # TODO we cannot use TCLink here (see: https://github.com/mpeuster/dockernet/issues/3)
+            # TODO we cannot use TCLink here (see: https://github.com/mpeuster/containernet/issues/3)
             self.net.addLink(d, self.switch, params1=nw, cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
         self.containers[name] = d
