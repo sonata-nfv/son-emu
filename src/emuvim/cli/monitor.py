@@ -56,6 +56,16 @@ class ZeroRpcClient(object):
             args.get("cookie"))
         pp.pprint(r)
 
+    def stop_flow(self, args):
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        r = self.c.stop_flow(
+            vnf_name,
+            vnf_interface,
+            args.get("metric"),
+            args.get("cookie"))
+        pp.pprint(r)
+
     def prometheus(self, args):
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
@@ -82,7 +92,8 @@ class ZeroRpcClient(object):
 parser = argparse.ArgumentParser(description='son-emu monitor')
 parser.add_argument(
     "command",
-    help="Action to be executed")
+    choices=['setup_metric', 'stop_metric', 'setup_flow', 'stop_flow','prometheus'],
+    help="setup/stop a metric/flow to be monitored")
 parser.add_argument(
     "--vnf_name", "-vnf", dest="vnf_name",
     help="vnf name:interface to be monitored")
