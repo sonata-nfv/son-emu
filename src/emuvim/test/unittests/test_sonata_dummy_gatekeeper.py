@@ -37,7 +37,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
 
         # instantiate service
         service_uuid = json.loads(r.text).get("service_uuid")
-        r2 = requests.post("http://127.0.0.1:5000/instantiations", json={"service_uuid": service_uuid})
+        r2 = requests.post("http://127.0.0.1:5000/instantiations", data=json.dumps({"service_uuid": service_uuid}))
         self.assertEqual(r2.status_code, 200)
 
         # give the emulator some time to instantiate everything
