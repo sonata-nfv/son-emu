@@ -67,7 +67,6 @@ Automatic installation is provide through Ansible playbooks.
 * `sudo ansible-playbook install.yml`
 
 
-
 ### Run
 
 In the `~/son-emu` directory:
