@@ -1,6 +1,6 @@
 import time
 import requests
-import subprocess
+import json
 import os
 import unittest
 from emuvim.test.base import SimpleTestTopology
@@ -33,10 +33,10 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         files = {"package": open(PACKAGE_PATH, "rb")}
         r = requests.post("http://127.0.0.1:5000/packages", files=files)
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(r.json().get("service_uuid") is not None)
+        self.assertTrue(json.loads(r.text).get("service_uuid") is not None)
 
         # instantiate service
-        service_uuid = r.json().get("service_uuid")
+        service_uuid = json.loads(r.text).get("service_uuid")
         r2 = requests.post("http://127.0.0.1:5000/instantiations", json={"service_uuid": service_uuid})
         self.assertEqual(r2.status_code, 200)
 
@@ -45,9 +45,9 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
 
         # check get request APIs
         r3 = requests.get("http://127.0.0.1:5000/packages")
-        self.assertEqual(len(r3.json().get("service_uuid_list")), 1)
+        self.assertEqual(len(json.loads(r3.text).get("service_uuid_list")), 1)
         r4 = requests.get("http://127.0.0.1:5000/instantiations")
-        self.assertEqual(len(r4.json().get("service_instance_list")), 1)
+        self.assertEqual(len(json.loads(r4.text).get("service_instance_list")), 1)
 
         # check number of running nodes
         self.assertTrue(len(self.getContainernetContainers()) == 3)
