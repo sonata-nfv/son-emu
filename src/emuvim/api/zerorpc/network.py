@@ -135,10 +135,10 @@ class DCNetworkApi(object):
             return ex.message
 
     # remove the flow metrics measurement
-    def setup_flow(self, vnf_name, vnf_interface, metric, cookie):
+    def stop_flow(self, vnf_name, vnf_interface, metric, cookie):
         logging.debug("RPC CALL: stop flow")
         try:
-            c = self.net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+            c = self.net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
             return c
         except Exception as ex:
             logging.exception("RPC error.")

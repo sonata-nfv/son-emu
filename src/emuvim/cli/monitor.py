@@ -93,7 +93,7 @@ parser = argparse.ArgumentParser(description='son-emu monitor')
 parser.add_argument(
     "command",
     choices=['setup_metric', 'stop_metric', 'setup_flow', 'stop_flow','prometheus'],
-    help="setup/stop a metric/flow to be monitored")
+    help="setup/stop a metric/flow to be monitored or Prometheus query")
 parser.add_argument(
     "--vnf_name", "-vnf", dest="vnf_name",
     help="vnf name:interface to be monitored")
