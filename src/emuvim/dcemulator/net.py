@@ -479,7 +479,6 @@ class DCNetwork(Containernet):
             self.ryu_process.kill()
 
     def ryu_REST(self, prefix, dpid=None, data=None):
-        if data: logging.info('log POST: {0}'.format(str(data)))
         try:
             if dpid:
                 url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
