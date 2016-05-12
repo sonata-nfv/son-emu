@@ -406,9 +406,8 @@ class DCNetwork(Containernet):
         elif cmd == 'del-flows':
             prefix = 'stats/flowentry/delete'
 
-            # if cookie is given, only delete flows by cookie
-            # do not specify other match -> also other cookies can be matched
             if cookie:
+                # TODO: add cookie_mask as argument
                 flow['cookie_mask'] = int('0xffffffffffffffff', 16)  # need full mask to match complete cookie
 
             action = {}
