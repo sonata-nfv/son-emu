@@ -1,6 +1,6 @@
 import time
 import requests
-import subprocess
+import json
 import os
 import unittest
 from emuvim.test.base import SimpleTestTopology
@@ -8,10 +8,9 @@ from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 
 PACKAGE_PATH = "misc/sonata-demo-docker.son"
 
+
 class testSonataDummyGatekeeper(SimpleTestTopology):
 
-    @unittest.skipIf(os.environ.get("SON_EMU_IN_DOCKER") is None or True,
-                     "skipping dummy GK test in local environment")
     def testAPI(self):
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)
@@ -34,11 +33,11 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         files = {"package": open(PACKAGE_PATH, "rb")}
         r = requests.post("http://127.0.0.1:5000/packages", files=files)
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(r.json().get("service_uuid") is not None)
+        self.assertTrue(json.loads(r.text).get("service_uuid") is not None)
 
         # instantiate service
-        service_uuid = r.json().get("service_uuid")
-        r2 = requests.post("http://127.0.0.1:5000/instantiations", json={"service_uuid": service_uuid})
+        service_uuid = json.loads(r.text).get("service_uuid")
+        r2 = requests.post("http://127.0.0.1:5000/instantiations", data=json.dumps({"service_uuid": service_uuid}))
         self.assertEqual(r2.status_code, 200)
 
         # give the emulator some time to instantiate everything
@@ -46,9 +45,9 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
 
         # check get request APIs
         r3 = requests.get("http://127.0.0.1:5000/packages")
-        self.assertEqual(len(r3.json().get("service_uuid_list")), 1)
+        self.assertEqual(len(json.loads(r3.text).get("service_uuid_list")), 1)
         r4 = requests.get("http://127.0.0.1:5000/instantiations")
-        self.assertEqual(len(r4.json().get("service_instance_list")), 1)
+        self.assertEqual(len(json.loads(r4.text).get("service_instance_list")), 1)
 
         # check number of running nodes
         self.assertTrue(len(self.getContainernetContainers()) == 3)

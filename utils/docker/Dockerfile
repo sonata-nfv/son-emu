@@ -11,6 +11,8 @@ RUN cd /son-emu/ansible \
     && cd /son-emu \
     # we need to reset the __pycache__ for correct test discovery
     && rm -rf src/emuvim/test/__pycache__ \
+    && rm -rf src/emuvim/test/unittests/__pycache__ \
+    && rm -rf src/emuvim/test/integrationtests/__pycache__ \
     && python setup.py install \
     && echo 'Done'
 
