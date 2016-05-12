@@ -134,6 +134,16 @@ class DCNetworkApi(object):
             logging.exception("RPC error.")
             return ex.message
 
+    # remove the flow metrics measurement
+    def setup_flow(self, vnf_name, vnf_interface, metric, cookie):
+        logging.debug("RPC CALL: stop flow")
+        try:
+            c = self.net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+            return c
+        except Exception as ex:
+            logging.exception("RPC error.")
+            return ex.message
+
     # do prometheus query
     def prometheus(self, dc_label, vnf_name, vnf_interface, query):
         logging.debug("RPC CALL: query prometheus")
