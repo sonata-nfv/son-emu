@@ -32,11 +32,16 @@ def create_topology1():
     net = DCNetwork(monitor=True, enable_learning=False)
 
     """
-    1b. add a monitoring agent to the DCNetwork
+    1b. Add endpoint APIs for the whole DCNetwork,
+        to access and control the networking from outside.
+        e.g., to setup forwarding paths between compute
+        instances aka. VNFs (represented by Docker containers), passing through
+        different switches and datacenters of the emulated topology
     """
     mon_api = ZeroRpcApiEndpointDCNetwork("0.0.0.0", 5151)
     mon_api.connectDCNetwork(net)
     mon_api.start()
+
     """
     2. Add (logical) data centers to the topology
        (each data center is one "bigswitch" in our simplified
