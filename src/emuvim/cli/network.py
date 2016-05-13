@@ -84,7 +84,8 @@ class ZeroRpcClient(object):
 parser = argparse.ArgumentParser(description='son-emu network')
 parser.add_argument(
     "command",
-    help="Action to be executed: add|remove")
+    choices=['add', 'remove'],
+    help="Action to be executed.")
 parser.add_argument(
     "--datacenter", "-d", dest="datacenter",
     help="Data center to in which the network action should be initiated")
@@ -103,10 +104,10 @@ parser.add_argument(
 parser.add_argument(
     "--bidirectional", "-b", dest="bidirectional",
     action='store_true',
-    help="add/remove the flow entries in 2 directions")
+    help="add/remove the flow entries from src to dst and back")
 parser.add_argument(
     "--cookie", "-c", dest="cookie",
-    help="cookie for this flow")
+    help="cookie for this flow, as easy to use identifier (eg. per tenant/service)")
 
 def main(argv):
     args = vars(parser.parse_args(argv))

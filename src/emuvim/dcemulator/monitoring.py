@@ -75,8 +75,8 @@ class DCNetworkMonitor():
         self.monitor_flow_thread.start()
 
         # helper tools
-        self.pushgateway_process = self.start_PushGateway()
-        self.prometheus_process = self.start_Prometheus()
+        #self.pushgateway_process = self.start_PushGateway()
+        #self.prometheus_process = self.start_Prometheus()
         self.cadvisor_process = self.start_cadvisor()
 
     # first set some parameters, before measurement can start
@@ -138,6 +138,28 @@ class DCNetworkMonitor():
         except Exception as ex:
             logging.exception("setup_metric error.")
             return ex.message
+
+    def stop_flow(self, vnf_name, vnf_interface=None, metric=None, cookie=0):
+        for flow_dict in self.flow_metrics:
+            if flow_dict['vnf_name'] == vnf_name and flow_dict['vnf_interface'] == vnf_interface \
+                    and flow_dict['metric_key'] == metric and flow_dict['cookie'] == cookie:
+
+                self.monitor_flow_lock.acquire()
+
+                self.flow_metrics.remove(flow_dict)
+
+                for collector in self.registry._collectors:
+                    if (vnf_name, vnf_interface, cookie) in collector._metrics:
+                        #logging.info('2 name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames,
+                        #                                                        collector._metrics))
+                        collector.remove(vnf_name, vnf_interface, cookie)
+
+                delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
+
+                self.monitor_flow_lock.release()
+
+                logging.info('Stopped monitoring flow {3}: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie))
+                return 'Stopped monitoring flow {3}: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie)
 
 
     # first set some parameters, before measurement can start
@@ -297,7 +319,7 @@ class DCNetworkMonitor():
                 ret = self.net.ryu_REST('stats/flow', dpid=flow_dict['switch_dpid'], data=data)
                 flow_stat_dict = ast.literal_eval(ret)
 
-                logging.info('received flow stat:{0} '.format(flow_stat_dict))
+                #logging.info('received flow stat:{0} '.format(flow_stat_dict))
                 self.set_flow_metric(flow_dict, flow_stat_dict)
 
             self.monitor_flow_lock.release()
@@ -474,6 +496,7 @@ class DCNetworkMonitor():
         self.monitor_thread.join()
         self.monitor_flow_thread.join()
 
+        '''
         if self.prometheus_process is not None:
             logging.info('stopping prometheus container')
             self.prometheus_process.terminate()
@@ -485,6 +508,7 @@ class DCNetworkMonitor():
             self.pushgateway_process.terminate()
             self.pushgateway_process.kill()
             self._stop_container('pushgateway')
+        '''
 
         if self.cadvisor_process is not None:
             logging.info('stopping cadvisor container')
