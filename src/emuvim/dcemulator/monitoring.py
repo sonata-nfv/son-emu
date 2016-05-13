@@ -75,8 +75,8 @@ class DCNetworkMonitor():
         self.monitor_flow_thread.start()
 
         # helper tools
-        self.pushgateway_process = self.start_PushGateway()
-        self.prometheus_process = self.start_Prometheus()
+        #self.pushgateway_process = self.start_PushGateway()
+        #self.prometheus_process = self.start_Prometheus()
         self.cadvisor_process = self.start_cadvisor()
 
     # first set some parameters, before measurement can start
@@ -496,6 +496,7 @@ class DCNetworkMonitor():
         self.monitor_thread.join()
         self.monitor_flow_thread.join()
 
+        '''
         if self.prometheus_process is not None:
             logging.info('stopping prometheus container')
             self.prometheus_process.terminate()
@@ -507,6 +508,7 @@ class DCNetworkMonitor():
             self.pushgateway_process.terminate()
             self.pushgateway_process.kill()
             self._stop_container('pushgateway')
+        '''
 
         if self.cadvisor_process is not None:
             logging.info('stopping cadvisor container')

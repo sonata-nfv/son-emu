@@ -5,20 +5,24 @@ son-emu monitor CLI
 
 import argparse
 import pprint
-from tabulate import tabulate
 import zerorpc
-import time
-
+import prometheus
 
 pp = pprint.PrettyPrinter(indent=4)
 
 class ZeroRpcClient(object):
 
     def __init__(self):
+        # network zerorpc
         self.c = zerorpc.Client()
         # TODO connect to DCNetwork API
         #self.c.connect("tcp://127.0.0.1:4242")  # TODO hard coded for now. we'll change this later
         self.c.connect("tcp://127.0.0.1:5151")
+
+        # compute zerorpc
+        self.compute_api = zerorpc.Client(heartbeat=None, timeout=120)  # heartbeat=None, timeout=120
+        self.compute_api.connect("tcp://127.0.0.1:4242")  # TODO hard coded for now. we'll change this later
+
         self.cmds = {}
 
     def execute_command(self, args):
@@ -66,7 +70,7 @@ class ZeroRpcClient(object):
             args.get("cookie"))
         pp.pprint(r)
 
-    def prometheus(self, args):
+    def prometheus_zrpc(self, args):
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
         r = self.c.prometheus(
@@ -74,6 +78,18 @@ class ZeroRpcClient(object):
             vnf_name,
             vnf_interface,
             args.get("query"))
+        pp.pprint(r)
+
+    def prometheus(self, args):
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        dc_label = args.get("datacenter")
+        query = args.get("query")
+        vnf_status = self.compute_api.compute_status(dc_label, vnf_name)
+        uuid = vnf_status['id']
+        query = query.replace('<uuid>', uuid)
+
+        r = prometheus.query_Prometheus(query)
         pp.pprint(r)
 
 
@@ -93,7 +109,7 @@ parser = argparse.ArgumentParser(description='son-emu monitor')
 parser.add_argument(
     "command",
     choices=['setup_metric', 'stop_metric', 'setup_flow', 'stop_flow','prometheus'],
-    help="setup/stop a metric/flow to be monitored or Prometheus query")
+    help="setup/stop a metric/flow to be monitored or query Prometheus")
 parser.add_argument(
     "--vnf_name", "-vnf", dest="vnf_name",
     help="vnf name:interface to be monitored")
