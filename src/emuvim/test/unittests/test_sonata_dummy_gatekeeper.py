@@ -11,6 +11,7 @@ PACKAGE_PATH = "misc/sonata-demo-docker.son"
 
 class testSonataDummyGatekeeper(SimpleTestTopology):
 
+    @unittest.skip("disabled")
     def testAPI(self):
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)
