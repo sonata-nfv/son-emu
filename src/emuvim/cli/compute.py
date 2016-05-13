@@ -30,7 +30,6 @@ class ZeroRpcClient(object):
         nw_list = list()
         if args.get("network") is not None:
             nw_list = self._parse_network(args.get("network"))
-
         r = self.c.compute_action_start(
             args.get("datacenter"),
             args.get("name"),
