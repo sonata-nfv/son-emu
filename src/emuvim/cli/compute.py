@@ -56,9 +56,9 @@ class ZeroRpcClient(object):
                 eth0ip = None
                 eth0status = "down"
                 if len(status.get("network")) > 0:
-                    eth0ip = status.get("network")[0][1]
+                    eth0ip = status.get("network")[0].get("ip")
                     eth0status = "up" if status.get(
-                        "network")[0][3] else "down"
+                        "network")[0].get("up") else "down"
                 table.append([status.get("datacenter"),
                               name,
                               status.get("image"),
