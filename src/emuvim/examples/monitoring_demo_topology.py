@@ -116,9 +116,9 @@ def create_topology1():
        can be executed again and again.
     """
     net.start()
-    net.CLI()
+    #net.CLI()
     # when the user types exit in the CLI, we stop the emulator
-    net.stop()
+    #net.stop()
 
 
 def main():
