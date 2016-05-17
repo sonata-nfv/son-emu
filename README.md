@@ -84,8 +84,7 @@ In the `~/son-emu` directory:
  * `son-emu-cli compute list`
 * First terminal:
  * `containernet> vnf1 ping -c 2 vnf2`
-* Second terminal:
- *  `son-emu-cli monitor get_rate -vnf vnf1`
+
 
 ### Run Unit Tests
 * `cd ~/son-emu`
