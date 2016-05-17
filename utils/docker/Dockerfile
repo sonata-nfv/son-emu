@@ -18,5 +18,5 @@ RUN cd /son-emu/ansible \
 
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 
-# dummy GK, zerorpc
-EXPOSE 5000 4242
+# dummy GK, zerorpc, DCNetwork zerorpc, cAdvisor
+EXPOSE 5000 4242 5151 8090
