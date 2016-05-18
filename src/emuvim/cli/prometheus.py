@@ -6,7 +6,9 @@ Prometheus API helper functions
 import urllib2
 import ast
 
-prometheus_ip = '0.0.0.0'
+# set this to localhost for now
+# this is correct for son-emu started outside of a container or as a container with net=host
+prometheus_ip = '127.0.0.1'
 prometheus_port = '9090'
 prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
 
