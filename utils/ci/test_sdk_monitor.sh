@@ -21,11 +21,11 @@ son-emu-cli monitor stop_metric -vnf vnf1:output --metric tx_packets
 son-emu-cli compute stop -d datacenter1 -n vnf1
 
 # test if prometheus query worked
+echo $cpu_load
 if [[ $cpu_load =~ $regex ]] ; then
 	echo " cpu monitor test OK"
 	exit 0
 else
-	echo $cpu_load
 	echo "cpu monitor test not OK"
 	exit 1
 fi
