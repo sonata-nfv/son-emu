@@ -24,7 +24,7 @@ class DCNetworkMonitor():
     def __init__(self, net):
         self.net = net
 
-        prometheus_ip = '0.0.0.0'
+        prometheus_ip = '127.0.0.1'
         prometheus_port = '9090'
         self.prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
 
