@@ -2,7 +2,7 @@
 # test if a vnf can be deployed and monitored
 
 #start test emulator topology
-python src/emuvim/examples/monitoring_demo_topology.py &
+#python src/emuvim/examples/monitoring_demo_topology.py &
 
 # start a vnf
 son-emu-cli compute start -d datacenter1 -n vnf1  --net '(id=input,ip=10.0.10.3/24),(id=output,ip=10.0.10.4/24)'
