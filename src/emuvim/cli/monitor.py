@@ -1,12 +1,13 @@
 """
 son-emu monitor CLI
 (c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
+Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 """
 
 import argparse
 import pprint
 import zerorpc
-import prometheus
+from emuvim.cli import prometheus
 
 pp = pprint.PrettyPrinter(indent=4)
 
