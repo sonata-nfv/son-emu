@@ -24,7 +24,7 @@ class ZeroRpcClient(object):
             # call the local method with the same name as the command arg
             getattr(self, args["command"])(args)
         else:
-            print "Command not implemented."
+            print("Command not implemented.")
 
     def list(self, args):
         r = self.c.datacenter_list()
@@ -42,7 +42,7 @@ class ZeroRpcClient(object):
                    "Switch",
                    "# Containers",
                    "# Metadata Items"]
-        print tabulate(table, headers=headers, tablefmt="grid")
+        print(tabulate(table, headers=headers, tablefmt="grid"))
 
     def status(self, args):
         r = self.c.datacenter_status(
