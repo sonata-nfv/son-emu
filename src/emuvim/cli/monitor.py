@@ -30,7 +30,7 @@ class ZeroRpcClient(object):
             # call the local method with the same name as the command arg
             getattr(self, args["command"])(args)
         else:
-            print "Command not implemented."
+            print("Command not implemented.")
 
     def setup_metric(self, args):
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
