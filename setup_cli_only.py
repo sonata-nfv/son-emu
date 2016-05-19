@@ -14,6 +14,7 @@ setup(name='emuvim',
           'zerorpc',
           'tabulate',
           'argparse',
+          'requests'
       ],
       zip_safe=False,
       entry_points={

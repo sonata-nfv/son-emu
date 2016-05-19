@@ -1,6 +1,7 @@
 """
 son-emu network CLI
 (c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
+Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 """
 
 import argparse

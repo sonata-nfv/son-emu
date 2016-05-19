@@ -25,7 +25,8 @@ setup(name='emuvim',
           'requests',
           'prometheus_client',
           'paramiko',
-          'urllib3'
+          'urllib3',
+          'requests'
       ],
       zip_safe=False,
       entry_points={
