@@ -29,6 +29,9 @@ son-emu-cli compute stop -d datacenter1 -n vnf1
 
 # test if prometheus query worked
 echo $cpu_load
+
+regex='\[[0-9.]*, .*\]'
+
 if [[ $cpu_load =~ $regex ]] ; then
 	echo " cpu monitor test OK"
 	exit 0
@@ -36,3 +39,5 @@ else
 	echo "cpu monitor test not OK"
 	exit 1
 fi
+
+

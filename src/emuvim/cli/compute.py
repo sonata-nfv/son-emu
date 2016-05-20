@@ -24,7 +24,7 @@ class ZeroRpcClient(object):
             # call the local method with the same name as the command arg
             getattr(self, args["command"])(args)
         else:
-            print "Command not implemented."
+            print("Command not implemented.")
 
     def start(self, args):
         nw_list = list()
@@ -71,7 +71,7 @@ class ZeroRpcClient(object):
                    "eth0 IP",
                    "eth0 status",
                    "Status"]
-        print tabulate(table, headers=headers, tablefmt="grid")
+        print(tabulate(table, headers=headers, tablefmt="grid"))
 
     def status(self, args):
         r = self.c.compute_status(
@@ -86,15 +86,14 @@ class ZeroRpcClient(object):
         params = self._create_dict(
             network=nw_list,
             command=args.get("docker_command"),
+            image=args.get("image"),
             input=args.get("input"),
             output=args.get("output"))
 
         for output in self.c.compute_profile(
             args.get("datacenter"),
             args.get("name"),
-            args.get("image"),
-            params
-            ):
+            params):
             print(output + '\n')
 
         #pp.pprint(r)
@@ -138,8 +137,8 @@ parser.add_argument(
     help="Startup command of the container e.g. './start.sh'")
 parser.add_argument(
     "--net", dest="network",
-    help="Network properties of compute instance e.g. \
-          '10.0.0.123/8' or '10.0.0.123/8,11.0.0.123/24' for multiple interfaces.")
+    help="Network properties of a compute instance e.g. \
+          '(id=input,ip=10.0.10.3/24),(id=output,ip=10.0.10.4/24)' for multiple interfaces.")
 parser.add_argument(
     "--input", "-in", dest="input",
     help="input interface of the vnf to profile")

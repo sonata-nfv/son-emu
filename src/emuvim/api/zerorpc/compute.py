@@ -119,12 +119,13 @@ class MultiDatacenterApi(object):
             return ex.message
 
     @zerorpc.stream
-    def compute_profile(self, dc_label, compute_name, image, kwargs):
+    def compute_profile(self, dc_label, compute_name, kwargs):
         # note: zerorpc does not support keyword arguments
 
         ## VIM/dummy gatekeeper's tasks:
         # start vnf
-        vnf_status = self.compute_action_start( dc_label, compute_name, image,
+        vnf_status = self.compute_action_start( dc_label, compute_name,
+                                  kwargs.get('image'),
                                   kwargs.get('network'),
                                   kwargs.get('command'))
         # start traffic source (with fixed ip addres, no use for now...)

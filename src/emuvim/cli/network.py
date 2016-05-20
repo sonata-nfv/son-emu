@@ -1,6 +1,7 @@
 """
 son-emu network CLI
 (c) 2016 by Manuel Peuster <manuel.peuster@upb.de>
+Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 """
 
 import argparse
@@ -25,7 +26,7 @@ class ZeroRpcClient(object):
             # call the local method with the same name as the command arg
             getattr(self, args["command"])(args)
         else:
-            print "Command not implemented."
+            print("Command not implemented.")
 
     def add(self, args):
         vnf_src_name = self._parse_vnf_name(args.get("source"))
