@@ -20,7 +20,7 @@ from emuvim.cli import monitor
 
 def main():
     if len(sys.argv) < 2:
-        print "Usage: son-emu-cli <toolname> <arguments>"
+        print("Usage: son-emu-cli <toolname> <arguments>")
         exit(0)
     if sys.argv[1] == "compute":
         compute.main(sys.argv[2:])

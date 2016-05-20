@@ -86,15 +86,14 @@ class ZeroRpcClient(object):
         params = self._create_dict(
             network=nw_list,
             command=args.get("docker_command"),
+            image=args.get("image"),
             input=args.get("input"),
             output=args.get("output"))
 
         for output in self.c.compute_profile(
             args.get("datacenter"),
             args.get("name"),
-            args.get("image"),
-            params
-            ):
+            params):
             print(output + '\n')
 
         #pp.pprint(r)
