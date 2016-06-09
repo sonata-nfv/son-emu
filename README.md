@@ -99,3 +99,6 @@ A Vagrantfile allows to automatically create and provision a VM in which son-emu
 * `cd ~/son-emu`
 * `vagrant up`
 * `vagrant ssh` to enter the new VM in which the emulator is installed.
+
+Follow the MOTD in the VM to run the example topology and the fake-gatekeeper. The fake-gatekeeper's default port 5000 is forwarded to the host machine and can be accessed from it by using, e.g., curl http://127.0.0.1:5000/packages.
+
