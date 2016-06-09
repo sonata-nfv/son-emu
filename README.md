@@ -92,3 +92,10 @@ In the `~/son-emu` directory:
 
 ### CLI
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
+
+### Vagrant VM creation
+A Vagrantfile allows to automatically create and provision a VM in which son-emu is installed and ready to be used.
+
+* `cd ~/son-emu`
+* `vagrant up`
+* `vagrant ssh` to enter the new VM in which the emulator is installed.
