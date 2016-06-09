@@ -1,0 +1,17 @@
+************************************************************
+**           Welcome to SONATA's son-emu VM               **
+**                 http://sonata-nfv.eu                   **
+**                                                        **
+** To run the emulator with a simple example topology     **
+** and its fake-gatekeeper run the following commands.    **
+**                                                        **
+** Switch to example folder:                              **
+** - cd son-emu/src/emuvim/examples                       **
+**                                                        **
+** Start the emulator with SONATA's example topology:     **
+** - sudo python sonata_y1_demo_topology_1.py             **
+**                                                        **
+** The emulator will be started and the fake-gatekeeper   **
+** API will be accessible on port 5000 from both, the     **
+** VM and your host machine.                              **
+************************************************************

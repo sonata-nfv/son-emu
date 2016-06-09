@@ -32,7 +32,7 @@ Vagrant.configure(2) do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 5000, host: 5000
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -78,7 +78,7 @@ Vagrant.configure(2) do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
-     #sudo apt-get update
+     sudo apt-get update
      sudo apt-get install -y git ansible aptitude
      sudo echo "localhost ansible_connection=local" >> /etc/ansible/hosts
      # install containernet
@@ -95,7 +95,11 @@ Vagrant.configure(2) do |config|
      # execute son-emu tests at the end to validate installation
      echo "Running son-emu unit tests to validate installation"
      cd /home/vagrant/son-emu
+     sudo python setup.py develop
      sudo py.test -v
+
+     # place motd
+     sudo cp utils/vagrant/motd /etc/motd
   SHELL
 
   # TODO the native ansible provisioner does not work so we directly call the shell commands
