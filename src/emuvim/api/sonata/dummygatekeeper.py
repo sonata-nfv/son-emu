@@ -130,13 +130,18 @@ class Service(object):
         fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
 
+        LOG.debug("eline_fwd_links %r" % eline_fwd_links)
+
         for link in eline_fwd_links:
             src_node, src_port = link["connection_points_reference"][0].split(":")
             dst_node, dst_port = link["connection_points_reference"][1].split(":")
 
+            LOG.debug("vnfds.keys: %r" % list(self.vnfds.iterkeys()))
+
             if src_node in self.vnfds:
                 network = self.vnfds[src_node].get("dc").net  # there should be a cleaner way to find the DCNetwork
-                network.setChain(src_node, dst_node, vnf_src_interface=src_port, vnf_dst_interface=dst_port)
+                ret = network.setChain(src_node, dst_node, vnf_src_interface=src_port, vnf_dst_interface=dst_port)
+                LOG.debug("setChain return: %r" % ret)
 
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
