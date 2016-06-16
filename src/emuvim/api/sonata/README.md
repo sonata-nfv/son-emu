@@ -37,7 +37,6 @@ To list all running services do:
 
 * `curl http://127.0.0.1:5000/instantiations`
 
-
 ## API definition
 
 This page describes the dummy gatekeeper API. This gatekeeper fakes the original platform gatekeeper during development SDK tools like son-push. 
