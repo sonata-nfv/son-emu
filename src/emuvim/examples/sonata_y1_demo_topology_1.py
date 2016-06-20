@@ -9,13 +9,14 @@ from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
+from mininet.node import RemoteController
 
 logging.basicConfig(level=logging.INFO)
 
 
 def create_topology1():
     # create topology
-    net = DCNetwork()
+    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning = False)
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
     s1 = net.addSwitch("s1")
