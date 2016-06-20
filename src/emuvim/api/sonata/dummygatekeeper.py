@@ -14,6 +14,7 @@ import yaml
 from docker import Client as DockerClient
 from flask import Flask, request
 import flask_restful as fr
+from collections import defaultdict
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -31,8 +32,7 @@ BUILD_DOCKERFILE = False
 GK_STANDALONE_MODE = False
 
 # should a new version of an image be pulled even if its available
-FORCE_PULL = True
-
+FORCE_PULL = False
 
 class Gatekeeper(object):
 
@@ -78,6 +78,7 @@ class Service(object):
         self.local_docker_files = dict()
         self.remote_docker_image_urls = dict()
         self.instances = dict()
+        self.vnfname2num = dict()
 
     def onboard(self):
         """
@@ -126,22 +127,30 @@ class Service(object):
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
 
         # 3. Configure the chaining of the network functions (currently only E-Line links supported)
+        nfid2name = defaultdict(lambda :"NotExistingNode", 
+                                reduce(lambda x,y: dict(x, **y),
+                                       map(lambda d:{d["vnf_id"]:d["vnf_name"]},
+                                           self.nsd["network_functions"])))
+        
         vlinks = self.nsd["virtual_links"]
         fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
 
-        LOG.debug("eline_fwd_links %r" % eline_fwd_links)
-
+        cookie = 1 # not clear why this is needed - to check with Steven
         for link in eline_fwd_links:
             src_node, src_port = link["connection_points_reference"][0].split(":")
             dst_node, dst_port = link["connection_points_reference"][1].split(":")
 
-            LOG.debug("vnfds.keys: %r" % list(self.vnfds.iterkeys()))
+            srcname = nfid2name[src_node]
+            dstname = nfid2name[dst_node]
+            LOG.debug("src name: "+srcname+" dst name: "+dstname)
 
-            if src_node in self.vnfds:
-                network = self.vnfds[src_node].get("dc").net  # there should be a cleaner way to find the DCNetwork
-                ret = network.setChain(src_node, dst_node, vnf_src_interface=src_port, vnf_dst_interface=dst_port)
-                LOG.debug("setChain return: %r" % ret)
+            if (srcname in self.vnfds) and (dstname in self.vnfds) :
+                network = self.vnfds[srcname].get("dc").net  # there should be a cleaner way to find the DCNetwork
+                src_vnf = self.vnfname2num[srcname]
+                dst_vnf = self.vnfname2num[dstname]
+                ret = network.setChain(src_vnf, dst_vnf, vnf_src_interface=src_port, vnf_dst_interface=dst_port, bidirectional = True, cmd="add-flow", cookie = cookie)
+                cookie += 1
 
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
@@ -168,7 +177,9 @@ class Service(object):
             # 3. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
-            vnfi = target_dc.startCompute(GK.get_next_vnf_name(), network=intfs, image=docker_name, flavor_name="small")
+            self.vnfname2num[vnf_name] = GK.get_next_vnf_name()
+            LOG.info("VNF "+vnf_name+" mapped to "+self.vnfname2num[vnf_name]+" on dc "+str(vnfd.get("dc")))
+            vnfi = target_dc.startCompute(self.vnfname2num[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             # 6. store references to the compute objects in self.instances
             return vnfi
 
