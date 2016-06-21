@@ -152,6 +152,9 @@ class Service(object):
                 ret = network.setChain(src_vnf, dst_vnf, vnf_src_interface=src_port, vnf_dst_interface=dst_port, bidirectional = True, cmd="add-flow", cookie = cookie)
                 cookie += 1
 
+        # 4. run the emulator specific entrypoint scripts in the VNFIs of this service instance
+        self._trigger_emulator_start_scripts_in_vnfis(self.instances[instance_uuid]["vnf_instances"])
+
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
 
@@ -180,8 +183,17 @@ class Service(object):
             self.vnfname2num[vnf_name] = GK.get_next_vnf_name()
             LOG.info("VNF "+vnf_name+" mapped to "+self.vnfname2num[vnf_name]+" on dc "+str(vnfd.get("dc")))
             vnfi = target_dc.startCompute(self.vnfname2num[vnf_name], network=intfs, image=docker_name, flavor_name="small")
-            # 6. store references to the compute objects in self.instances
             return vnfi
+
+    def _trigger_emulator_start_scripts_in_vnfis(self, vnfi_list):
+        for vnfi in vnfi_list:
+            config = vnfi.dcinfo.get("Config", dict())
+            env = config.get("Env", list())
+            for env_var in env:
+                if "SON_EMU_CMD=" in env_var:
+                    cmd = str(env_var.split("=")[1])
+                    LOG.info("Executing entrypoint script in %r: %r" % (vnfi.name, cmd))
+                    vnfi.cmdPrint(cmd)
 
     def _unpack_service_package(self):
         """
