@@ -37,6 +37,16 @@ To list all running services do:
 
 * `curl http://127.0.0.1:5000/instantiations`
 
+## VNF Requirements
+
+A VNF container that is used with the dummy gatekeeper should specify a emulator specific entrypoint script in its Dockerfile:
+
+* `ENV SON_EMU_CMD ./start.sh`
+
+This script is called by the dummy gatekeeper after a VNF was started and the chaining was done. The script can then be used to trigger the execution of individual VNF software.
+
+ATTENTION: The specified script must not block!
+
 ## API definition
 
 This page describes the dummy gatekeeper API. This gatekeeper fakes the original platform gatekeeper during development SDK tools like son-push. 
