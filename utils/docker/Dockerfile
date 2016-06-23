@@ -6,6 +6,8 @@ ENV SON_EMU_IN_DOCKER 1
 WORKDIR /son-emu
 COPY . /son-emu/
 
+RUN apt-get clean
+
 RUN cd /son-emu/ansible \
     && ansible-playbook install.yml \
     && cd /son-emu \
