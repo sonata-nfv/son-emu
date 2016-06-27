@@ -13,23 +13,33 @@
 """
 
 import sys
+
 from emuvim.cli import compute
-from emuvim.cli import network
 from emuvim.cli import datacenter
 from emuvim.cli import monitor
+from emuvim.cli import network
+from emuvim.cli.rest import compute as restcom
+from emuvim.cli.rest import datacenter as restdc
+
+
 
 def main():
     if len(sys.argv) < 2:
         print("Usage: son-emu-cli <toolname> <arguments>")
         exit(0)
-    if sys.argv[1] == "compute":
+    if sys.argv[1] == "compute-zapi":
         compute.main(sys.argv[2:])
-    elif sys.argv[1] == "network":
+    elif sys.argv[1] == "network-zapi":
         network.main(sys.argv[2:])
-    elif sys.argv[1] == "datacenter":
+    elif sys.argv[1] == "datacenter-zapi":
         datacenter.main(sys.argv[2:])
-    elif sys.argv[1] == "monitor":
+    elif sys.argv[1] == "monitor-zapi":
         monitor.main(sys.argv[2:])
+    elif sys.argv[1] == "compute":
+        restcom.main(sys.argv[2:])
+    elif sys.argv[1] == "datacenter":
+        restdc.main(sys.argv[2:])
+
 
 if __name__ == '__main__':
     main()
