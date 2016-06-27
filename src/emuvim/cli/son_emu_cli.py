@@ -29,11 +29,11 @@ def main():
         exit(0)
     if sys.argv[1] == "compute-zapi":
         compute.main(sys.argv[2:])
-    elif sys.argv[1] == "network-zapi":
+    elif sys.argv[1] == "network":
         network.main(sys.argv[2:])
     elif sys.argv[1] == "datacenter-zapi":
         datacenter.main(sys.argv[2:])
-    elif sys.argv[1] == "monitor-zapi":
+    elif sys.argv[1] == "monitor":
         monitor.main(sys.argv[2:])
     elif sys.argv[1] == "compute":
         restcom.main(sys.argv[2:])
