@@ -9,6 +9,7 @@ import requests
 
 # set this to localhost for now
 # this is correct for son-emu started outside of a container or as a container with net=host
+#TODO prometheus sdk DB is started outside of emulator, place these globals in an external SDK config file?
 prometheus_ip = '127.0.0.1'
 prometheus_port = '9090'
 prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
