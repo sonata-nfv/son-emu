@@ -5,7 +5,7 @@
 #python src/emuvim/examples/monitoring_demo_topology.py &
 
 # start a vnf
-son-emu-cli compute start -d datacenter1 -n vnf1  --net '(id=input,ip=10.0.10.3/24),(id=output,ip=10.0.10.4/24)'
+son-emu-cli compute-zapi start -d datacenter1 -n vnf1  --net '(id=input,ip=10.0.10.3/24),(id=output,ip=10.0.10.4/24)'
 
 sleep 1
 
@@ -19,13 +19,6 @@ cpu_load=$(son-emu-cli monitor prometheus -d datacenter1 -vnf vnf1 -q 'sum(rate(
 
 sleep 1
 
-# stop the monitor
-son-emu-cli monitor stop_metric -vnf vnf1:output --metric tx_packets
-
-sleep 1
-
-#stop the vnf
-son-emu-cli compute stop -d datacenter1 -n vnf1
 
 # test if prometheus query worked
 echo $cpu_load
