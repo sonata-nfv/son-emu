@@ -7,7 +7,6 @@ import unittest
 from emuvim.test.api_base import SimpleTestTopology
 import subprocess
 
-
 class testRestApi( SimpleTestTopology ):
     """
     Tests to check the REST API endpoints of the emulator.
@@ -37,6 +36,14 @@ class testRestApi( SimpleTestTopology ):
         print('compute list ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         subprocess.call("son-emu-cli compute list", shell=True)
+
+        print('network add vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        subprocess.call("son-emu-cli network add -src vnf1 -dst vnf2 -b -c 10", shell=True)
+        print('network remove vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        subprocess.call("son-emu-cli network remove -src vnf1 -dst vnf2 -b", shell=True)
+
         print('compute stop datacenter0, vnf2 ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         subprocess.call("son-emu-cli compute stop -d datacenter0 -n vnf2", shell=True)

@@ -20,7 +20,8 @@ from emuvim.cli import monitor
 from emuvim.cli import network
 from emuvim.cli.rest import compute as restcom
 from emuvim.cli.rest import datacenter as restdc
-
+from emuvim.cli.rest import monitor as restmon
+from emuvim.cli.rest import network as restnetw
 
 
 def main():
@@ -29,12 +30,16 @@ def main():
         exit(0)
     if sys.argv[1] == "compute-zapi":
         compute.main(sys.argv[2:])
-    elif sys.argv[1] == "network":
+    elif sys.argv[1] == "network-zapi":
         network.main(sys.argv[2:])
     elif sys.argv[1] == "datacenter-zapi":
         datacenter.main(sys.argv[2:])
-    elif sys.argv[1] == "monitor":
+    elif sys.argv[1] == "monitor-zapi":
         monitor.main(sys.argv[2:])
+    elif sys.argv[1] == "monitor":
+        restmon.main(sys.argv[2:])
+    elif sys.argv[1] == "network":
+        restnetw.main(sys.argv[2:])
     elif sys.argv[1] == "compute":
         restcom.main(sys.argv[2:])
     elif sys.argv[1] == "datacenter":
