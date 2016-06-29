@@ -27,19 +27,20 @@ class RestApiClient():
                'command':args.get("docker_command"),
                'network':nw_list}
 
-        responce = put("%s/restapi/compute/%s/%s/start" %
+        response = put("%s/restapi/compute/%s/%s/start" %
                        (args.get("endpoint"),
                         args.get("datacenter"),
                         args.get("name")),
                        json = json.dumps(req))
-        pp.pprint(responce.json())
+        pp.pprint(response.json())
+
     def stop(self, args):
 
-        responce = get("%s/restapi/compute/%s/%s/stop" %
+        response = get("%s/restapi/compute/%s/%s/stop" %
                        (args.get("endpoint"),
                         args.get("datacenter"),
                         args.get("name")))
-        pp.pprint(responce.json())
+        pp.pprint(response.json())
 
     def list(self,args):
 

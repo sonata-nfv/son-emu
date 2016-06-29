@@ -470,7 +470,7 @@ class DCNetwork(Containernet):
         if learning_switch:
             self.ryu_process = Popen([ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         else:
-            # no learning switch
+            # no learning switch, but with rest api
             self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 

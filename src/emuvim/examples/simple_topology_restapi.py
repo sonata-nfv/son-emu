@@ -19,8 +19,9 @@ script.
 import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
-from emuvim.api.rest.compute import RestApiEndpoint
-#from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
+from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
+
+from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 from emuvim.api.zerorpc.network import ZeroRpcApiEndpointDCNetwork
 
 logging.basicConfig(level=logging.INFO)
@@ -30,11 +31,12 @@ def create_topology1():
     """
     1. Create a data center network object (DCNetwork)
     """
-    net = DCNetwork()
+    net = DCNetwork(monitor=True, enable_learning=False)
 
     """
     1b. add a monitoring agent to the DCNetwork
     """
+    #keep old zeroRPC interface to test the prometheus metric query
     mon_api = ZeroRpcApiEndpointDCNetwork("0.0.0.0", 5151)
     mon_api.connectDCNetwork(net)
     mon_api.start()
@@ -76,6 +78,14 @@ def create_topology1():
        one or more data centers to it, which can then be controlled through
        this API, e.g., start/stop/list compute instances.
     """
+    # keep the old zeroRPC interface for the prometheus metric query test
+    zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
+    # connect data centers to this endpoint
+    zapi1.connectDatacenter(dc1)
+    zapi1.connectDatacenter(dc2)
+    # run API endpoint server (in another thread, don't block)
+    zapi1.start()
+
     # create a new instance of a endpoint implementation
     api1 = RestApiEndpoint("127.0.0.1", 5000)
     # connect data centers to this endpoint
@@ -83,6 +93,8 @@ def create_topology1():
     api1.connectDatacenter(dc2)
     api1.connectDatacenter(dc3)
     api1.connectDatacenter(dc4)
+    # connect total network also, needed to do the chaining and monitoring
+    api1.connectDCNetwork(net)
     # run API endpoint server (in another thread, don't block)
     api1.start()
 

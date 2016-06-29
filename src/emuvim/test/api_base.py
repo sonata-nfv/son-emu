@@ -7,7 +7,7 @@ import os
 import subprocess
 import docker
 from emuvim.dcemulator.net import DCNetwork
-from emuvim.api.rest.compute import RestApiEndpoint
+from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from mininet.clean import cleanup
 from mininet.node import Controller
 
