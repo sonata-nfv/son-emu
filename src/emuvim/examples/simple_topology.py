@@ -20,6 +20,7 @@ import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
+from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.zerorpc.network import ZeroRpcApiEndpointDCNetwork
 
 logging.basicConfig(level=logging.INFO)
@@ -77,13 +78,19 @@ def create_topology1():
     """
     # create a new instance of a endpoint implementation
     zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
+    rapi1 = RestApiEndpoint("127.0.0.1", 5000)
     # connect data centers to this endpoint
     zapi1.connectDatacenter(dc1)
     zapi1.connectDatacenter(dc2)
     zapi1.connectDatacenter(dc3)
     zapi1.connectDatacenter(dc4)
+    rapi1.connectDatacenter(dc1)
+    rapi1.connectDatacenter(dc2)
+    rapi1.connectDatacenter(dc3)
+    rapi1.connectDatacenter(dc4)
     # run API endpoint server (in another thread, don't block)
     zapi1.start()
+    rapi1.start()
 
     """
     5.1. For our example, we create a second endpoint to illustrate that
