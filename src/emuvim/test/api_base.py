@@ -40,7 +40,7 @@ class SimpleTestTopology(unittest.TestCase):
         specific controller functionality.
         """
         self.net = DCNetwork(controller=controller, **kwargs)
-        self.api = RestApiEndpoint("127.0.0.1",5000)
+        self.api = RestApiEndpoint("127.0.0.1", 5001)
         # add some switches
         # start from s1 because ovs does not like to have dpid = 0
         # and switch name-number is being used by mininet to set the dpid
