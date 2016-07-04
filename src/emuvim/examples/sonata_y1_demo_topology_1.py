@@ -7,7 +7,7 @@ A simple topology with two PoPs for the y1 demo story board.
 import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
-from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
+from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 from mininet.node import RemoteController
 
@@ -23,12 +23,12 @@ def create_topology1():
     net.addLink(dc1, s1, delay="10ms")
     net.addLink(dc2, s1, delay="20ms")
 
-    # add the command line interface endpoint to each DC
-    zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
-    zapi1.connectDatacenter(dc1)
-    zapi1.connectDatacenter(dc2)
+    # add the command line interface endpoint to each DC (REST API)
+    rapi1 = RestApiEndpoint("0.0.0.0", 5001)
+    rapi1.connectDatacenter(dc1)
+    rapi1.connectDatacenter(dc2)
     # run API endpoint server (in another thread, don't block)
-    zapi1.start()
+    rapi1.start()
 
     # add the SONATA dummy gatekeeper to each DC
     sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000)
