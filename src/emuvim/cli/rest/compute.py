@@ -121,7 +121,7 @@ parser.add_argument(
           '(id=input,ip=10.0.10.3/24),(id=output,ip=10.0.10.4/24)' for multiple interfaces.")
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
-    default="http://127.0.0.1:5000",
+    default="http://127.0.0.1:5001",
     help="UUID of the plugin to be manipulated.")
 
 def main(argv):
