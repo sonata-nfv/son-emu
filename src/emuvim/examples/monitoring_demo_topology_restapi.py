@@ -89,7 +89,7 @@ def create_topology1():
     zapi1.start()
 
     # create a new instance of a endpoint implementation
-    api1 = RestApiEndpoint("0.0.0.0", 5000)
+    api1 = RestApiEndpoint("0.0.0.0", 5001)
     # connect data centers to this endpoint
     api1.connectDatacenter(dc1)
     api1.connectDatacenter(dc2)
