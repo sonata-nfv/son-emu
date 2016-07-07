@@ -42,6 +42,7 @@ def create_topology1():
         instances aka. VNFs (represented by Docker containers), passing through
         different switches and datacenters of the emulated topology
     """
+    # create monitoring api endpoint for backwards compatibility with zerorpc api 
     mon_api = ZeroRpcApiEndpointDCNetwork("0.0.0.0", 5151)
     mon_api.connectDCNetwork(net)
     mon_api.start()
@@ -89,6 +90,7 @@ def create_topology1():
     zapi1.start()
 
     # create a new instance of a endpoint implementation
+    # the restapi handles all compute, networking and monitoring commands in one api endpoint
     api1 = RestApiEndpoint("0.0.0.0", 5001)
     # connect data centers to this endpoint
     api1.connectDatacenter(dc1)
