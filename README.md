@@ -7,7 +7,7 @@ This emulation platform was created to support network  service developers to lo
 
 More details about the the emulator's architecture and concepts can be found in the following publication(s):
 
-* Peuster, Manuel, Holger Karl, and Steven van Rossem. ["MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments."](http://arxiv.org/abs/1606.05995) pre-print arXiv:1606.05995 (2016).
+* Manuel Peuster, Holger Karl, and Steven van Rossem. ["MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments."](http://arxiv.org/abs/1606.05995) pre-print arXiv:1606.05995 (2016).
 
 A short demo that showcases son-emu together with its dummy gatekeeper is available [here](https://youtu.be/BgWDp5CM0io).
 
@@ -22,15 +22,15 @@ To install the emulator package in development mode, do:
 * `ansible`
 * `misc`
 * `src` 
- * `emuvim`
-  * `api`
-   * `rest` REST API for son-emu-cli
-   * `sonata` Dummy gatekeeper API
-  * `cli` Command line client to control the emulator
-  * `dcemulator` Emulator core
-   * `resourcemodel` Resource limitation models
-  * `examples` Example topology scripts
-  * `test` Test scripts
+	* `emuvim`
+		* `api`
+			* `rest` REST API for son-emu-cli
+    		* `sonata` Dummy gatekeeper API
+		* `cli` Command line client to control the emulator
+		* `dcemulator` Emulator core
+			* `resourcemodel` Resource limitation models
+	* `examples` Example topology scripts
+	* `test` Test scripts
 * `utils` Helper scripts for SONATA's CI/CD setup
 
 
@@ -137,6 +137,8 @@ This example shows how to deploy a SONATA example package in the emulator using 
  * Upload: `curl -i -X POST -F package=@sonata-demo-docker.son http://127.0.0.1:5000/packages`
  * Instantiate: `curl -X POST http://127.0.0.1:5000/instantiations -d "{}"`
  * Verify that service runs: `son-emu-cli compute list`
+
+Note: The [son-push](https://github.com/mpeuster/son-cli) tool can be used instead of CURL.
 
 
 ### CLI Commands
