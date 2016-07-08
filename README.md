@@ -19,11 +19,11 @@ To install the emulator package in development mode, do:
 
 #### Folder Structure
 
-* `ansible`
-* `misc`
+* `ansible` Install scripts
+* `misc` Example packages and VNFs
 * `src` 
-	* `emuvim`
-		* `api`
+	* `emuvim` Emulator components
+		* `api` API endpoint implementations
 			* `rest` REST API for son-emu-cli
     		* `sonata` Dummy gatekeeper API
 		* `cli` Command line client to control the emulator
