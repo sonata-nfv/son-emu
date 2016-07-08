@@ -163,4 +163,4 @@ The following lead developers are responsible for this repository and have admin
 #### Feedback-Chanel
 
 * You may use the mailing list [sonata-dev@lists.atosresearch.eu](mailto:sonata-dev@lists.atosresearch.eu)
-* * [GitHub issues](https://github.com/sonata-nfv/son-emu/issues)
+* [GitHub issues](https://github.com/sonata-nfv/son-emu/issues)
