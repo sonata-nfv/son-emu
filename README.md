@@ -1,58 +1,102 @@
 [![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu)](http://jenkins.sonata-nfv.eu/job/son-emu)
 
-# Distributed Cloud Emulator
+# son-emu
+This is the repository of [SONATA's](http://sonata-nfv.eu) emulation platform.
 
-### Lead Developers
-The following lead developers are responsible for this repository and have admin rights. They can, for example, merge pull requests.
+This emulation platform was created to support network  service developers to locally prototype and test complete network service chains in realistic end-to-end multi-PoP scenarios. It allows the direct execution of real network functions, packaged as Docker containers, in emulated network topologies running locally on the network service developer's machine.
 
-* Manuel Peuster (mpeuster)
-* Steven Van Rossem (stevenvanrossem)
+More details about the the emulator's architecture and concepts can be found in the following publication(s):
 
-### Environment
-* Python 2.7
-* Latest [Containernet](https://github.com/mpeuster/containernet) installed on the system
+* Manuel Peuster, Holger Karl, and Steven van Rossem. ["MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments."](http://arxiv.org/abs/1606.05995) pre-print arXiv:1606.05995 (2016).
+
+A short demo that showcases son-emu together with its dummy gatekeeper is available [here](https://youtu.be/BgWDp5CM0io).
+
+### Development
+
+To install the emulator package in development mode, do:
+
+* `python setup.py develop`
+
+#### Folder Structure
+
+* `ansible` Install scripts
+* `misc` Example packages and VNFs
+* `src` 
+	* `emuvim` Emulator components
+		* `api` API endpoint implementations
+			* `rest` REST API for son-emu-cli
+    		* `sonata` Dummy gatekeeper API
+		* `cli` Command line client to control the emulator
+		* `dcemulator` Emulator core
+			* `resourcemodel` Resource limitation models
+	* `examples` Example topology scripts
+	* `test` Test scripts
+* `utils` Helper scripts for SONATA's CI/CD setup
+
+
+#### Run Unit Tests
+* `cd ~/son-emu`
+* `sudo py.test -v src/emuvim/test/unittests`
+
+
+### Building
+
+Son-emu is entirely written in Python and does not require a special build process. Please check the [Installation](https://github.com/sonata-nfv/son-emu#installation) section for more details about the installation of son-emu.
 
 ### Dependencies
-* pyaml (public domain)
-* zerorpc (MIT)
-* tabulate (public domain)
-* argparse (Python software foundation license)
-* networkx (BSD)
-* six>=1.9 (MIT)
-* ryu (Apache 2.0)
-* oslo.config (Apache 2.0)
-* pytest (MIT)
-* pytest-runner (MIT)
-* Flask (BSD)
-* flask_restful (BSD)
-* requests  (Apache 2.0)
-* docker-py (Apache 2.0)
-* paramiko (LGPL)
 
-### 3rd-party code used
-* (none)
+Son-emu requires the latest version of [Containernet](https://github.com/mpeuster/containernet) to be installed on the system.
 
+Despite of this son-emu has the following dependencies:
 
-### Project structure
+* [argparse](https://pypi.python.org/pypi/argparse) >= 1.4.0 (Python software foundation License)
+* [docker-py](https://pypi.python.org/pypi/docker-py) == 1.7.1(Apache 2.0)
+* [Flask](https://pypi.python.org/pypi/Flask) >= 0.11 (BSD)
+* [flask_restful](https://pypi.python.org/pypi/Flask-RESTful) >= 0.3 (BSD)
+* [networkx](https://pypi.python.org/pypi/networkx/) >= 1.11  (BSD)
+* [oslo.config](http://docs.openstack.org/developer/oslo.config/) >= 3.9.0  (Apache 2.0)
+* [paramiko](https://pypi.python.org/pypi/paramiko/1.16.0) >= 1.6 (LGPL)
+* [prometheus_client](https://pypi.python.org/pypi/prometheus_client) >= 0.0.13 (Apache 2.0)
+* [pyaml](https://pypi.python.org/pypi/pyaml) >=15.8.2 (WTFPL)
+* [pytest-runner](https://pypi.python.org/pypi/pytest-runner) >= 2.8 (MIT)
+* [pytest](https://pypi.python.org/pypi/pytest) >= 2.9 (MIT)
+* [requests](https://pypi.python.org/pypi/requests) >= 2.10 (Apache 2.0)
+* [ryu](https://pypi.python.org/pypi/ryu/4.4) >= 4.4 (Apache 2.0)
+* [six](https://pypi.python.org/pypi/six/) >=1.9 (MIT)
+* [tabulate](https://pypi.python.org/pypi/tabulate) >= 0.7.5 (public domain)
+* [urllib3](https://pypi.python.org/pypi/urllib3) >= 1.15 (MIT)
+* [zerorpc](http://www.zerorpc.io) >= 0.5.2 (MIT)
 
-* **src/emuvim/** all emulator code 
- * **api/** Data center API endpoint implementations (zerorpc, OpenStack REST, ...)
- * **cli/** CLI client to interact with a running emulator
- * **dcemulator/** Containernet wrapper that introduces the notion of data centers and API endpoints
- * **examples/** Example topology scripts
- * **test/** Unit tests
-* **ansible/** Ansible install scripts
-* **util/** helper scripts
+### Contributing
+Contributing to the Gatekeeper is really easy. You must:
 
-### Installation
-Automatic installation is provide through Ansible playbooks.
+1. Clone [this repository](http://github.com/sonata-nfv/son-emu);
+2. Work on your proposed changes, preferably through submiting [issues](https://github.com/sonata-nfv/son-emu/issues);
+3. Submit a Pull Request;
+4. Follow/answer related [issues](https://github.com/sonata-nfv/son-emu/issues) (see Feedback-Chanel, below).
 
-* Requires: Ubuntu 14.04 LTS
+## Installation
+There are two ways to install and use son-emu. The simple one is to use Vagrant to create a VirtualBox-based VM on you machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 14.04 LTS or 16.04 LTS and is done by a ansible playbook.
+
+### Vagrant Installation
+
+* Request VirtualBox and Vagrant to be installed on the system.
+* `git clone https://github.com/sonata-nfv/son-emu.git`
+* `cd ~/son-emu`
+* `vagrant up`
+* `vagrant ssh` to enter the new VM in which the emulator is installed.
+
+Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. The dummy-gatekeeper's default port 5000 is forwarded to the host machine and can be accessed from it by using, e.g., curl http://127.0.0.1:5000/packages.
+
+### Ansible Installation
+
+* Requires: Ubuntu 14.04 LTS or 16.04 LTS
 * `sudo apt-get install ansible git`
 * `sudo vim /etc/ansible/hosts`
 * Add: `localhost ansible_connection=local`
 
 #### 1. Containernet
+
 * `cd`
 * `git clone https://github.com/mpeuster/containernet.git`
 * `cd ~/containernet/ansible`
@@ -60,45 +104,63 @@ Automatic installation is provide through Ansible playbooks.
 * Wait (and have a coffee) ...
 
 #### 2. Emulator
-* Fork the repository.
+
 * `cd`
-* `git clone https://github.com/<user>/son-emu.git`
+* `git clone https://github.com/sonata-nfv/son-emu.git`
 * `cd ~/son-emu/ansible`
 * `sudo ansible-playbook install.yml`
 
+## Usage
 
-### Run
+### Examples
+#### Manual Usage Example:
 
-In the `~/son-emu` directory:
+This simple example shows how to start the emulator with a simple topology (terminal 1) and how to start (terminal 2) some empty VNF containers in the emulated datacenters (PoPs) by using the son-emu-cli.
 
-* During development:
- * `python setup.py develop`
-* Otherwise, for a classic installation:
- * `python setup.py install`
-* First terminal:
- * `sudo python src/emuvim/examples/simple_topology.py 
-`
+* First terminal (start the emulation platform):
+ * `sudo python src/emuvim/examples/simple_topology.py`
 * Second terminal:
  * `son-emu-cli compute start -d datacenter1 -n vnf1`
  * `son-emu-cli compute start -d datacenter1 -n vnf2`
  * `son-emu-cli compute list`
 * First terminal:
+ * `containernet> vnf1 ifconfig`
  * `containernet> vnf1 ping -c 2 vnf2`
 
+#### Dummy Gatekeeper Example:
 
-### Run Unit Tests
-* `cd ~/son-emu`
-* `sudo py.test -v src/emuvim/test/unittests`
+This example shows how to deploy a SONATA example package in the emulator using the dummy gatekeeper.
 
-### CLI
+* First terminal (start the emulation platform):
+ * `sudo python src/emuvim/examples/sonata_y1_demo_topology_1.py`
+* Second terminal (deploy the example package):
+ * Upload: `curl -i -X POST -F package=@sonata-demo-docker.son http://127.0.0.1:5000/packages`
+ * Instantiate: `curl -X POST http://127.0.0.1:5000/instantiations -d "{}"`
+ * Verify that service runs: `son-emu-cli compute list`
+
+Note: The [son-push](https://github.com/mpeuster/son-cli) tool can be used instead of CURL.
+
+
+### CLI Commands
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
 
-### Vagrant VM creation
-A Vagrantfile allows to automatically create and provision a VM in which son-emu is installed and ready to be used.
+## License
 
-* `cd ~/son-emu`
-* `vagrant up`
-* `vagrant ssh` to enter the new VM in which the emulator is installed.
+Son-emu is published under Apache 2.0 license. Please see the LICENSE file for more details.
 
-Follow the MOTD in the VM to run the example topology and the fake-gatekeeper. The fake-gatekeeper's default port 5000 is forwarded to the host machine and can be accessed from it by using, e.g., curl http://127.0.0.1:5000/packages.
+## Useful Links
 
+* [Mininet](http://mininet.org)
+
+---
+#### Lead Developers
+
+The following lead developers are responsible for this repository and have admin rights. They can, for example, merge pull requests.
+
+* Manuel Peuster (https://github.com/mpeuster)
+* Steven Van Rossem (https://github.com/stevenvanrossem)
+
+#### Feedback-Chanel
+
+* You may use the mailing list [sonata-dev@lists.atosresearch.eu](mailto:sonata-dev@lists.atosresearch.eu)
+* [GitHub issues](https://github.com/sonata-nfv/son-emu/issues)
