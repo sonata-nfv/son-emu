@@ -68,7 +68,7 @@ Despite of this son-emu has the following dependencies:
 * [zerorpc](http://www.zerorpc.io) >= 0.5.2 (MIT)
 
 ### Contributing
-Contributing to the Gatekeeper is really easy. You must:
+Contributing to the son-emu is really easy. You must:
 
 1. Clone [this repository](http://github.com/sonata-nfv/son-emu);
 2. Work on your proposed changes, preferably through submiting [issues](https://github.com/sonata-nfv/son-emu/issues);
