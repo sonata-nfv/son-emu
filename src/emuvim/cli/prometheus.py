@@ -26,14 +26,16 @@ acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
 
-#import urllib2
+
 import requests
-#import ast
+
 
 # set this to localhost for now
 # this is correct for son-emu started outside of a container or as a container with net=host
-#TODO prometheus sdk DB is started outside of emulator, place these globals in an external SDK config file?
-prometheus_ip = '127.0.0.1'
+#TODO if prometheus sdk DB is started outside of emulator, place these globals in an external SDK config file?
+prometheus_ip = 'localhost'
+# when sdk is started with docker-compose, we could use
+# prometheus_ip = 'prometheus'
 prometheus_port = '9090'
 prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
 
@@ -41,10 +43,7 @@ prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
 def query_Prometheus(query):
     url = prometheus_REST_api + '/' + 'api/v1/query?query=' + query
     # logging.info('query:{0}'.format(url))
-    #req = urllib2.Request(url)
     req = requests.get(url)
-    #ret = urllib2.urlopen(req).read()
-    #ret = ast.literal_eval(ret)
     ret = req.json()
     if ret['status'] == 'success':
         # logging.info('return:{0}'.format(ret))

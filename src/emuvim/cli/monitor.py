@@ -93,17 +93,9 @@ class ZeroRpcClient(object):
             args.get("cookie"))
         pp.pprint(r)
 
-    def prometheus_zrpc(self, args):
-        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
-        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
-        r = self.c.prometheus(
-            args.get("datacenter"),
-            vnf_name,
-            vnf_interface,
-            args.get("query"))
-        pp.pprint(r)
-
     def prometheus(self, args):
+        # This functions makes it more user-friendly to create the correct prometheus query
+        # <uuid> is replaced by the correct uuid of the deployed vnf container
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
         dc_label = args.get("datacenter")
