@@ -12,6 +12,6 @@
 ** - sudo python sonata_y1_demo_topology_1.py             **
 **                                                        **
 ** The emulator will be started and the fake-gatekeeper   **
-** API will be accessible on port 5000 from both, the     **
+** API will be accessible on port 5000 from both the      **
 ** VM and your host machine.                              **
 ************************************************************

@@ -28,7 +28,7 @@ partner consortium (www.sonata-nfv.eu).
 from setuptools import setup, find_packages
 
 setup(name='emuvim',
-      version='0.0.1',
+      version='0.9',
       license='Apache 2.0',
       description='emuvim is a VIM for the SONATA platform',
       url='http://github.com/sonata-emu',
