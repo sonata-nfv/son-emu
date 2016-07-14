@@ -52,7 +52,9 @@ class ComputeStart(Resource):
         try:
             #check if json data is a dict
             data = request.json
-            if type(data) is not dict:
+            if data is None:
+                data = {}
+            elif type(data) is not dict:
                 data = json.loads(request.json)
 
             network = data.get("network")
