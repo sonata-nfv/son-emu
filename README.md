@@ -160,6 +160,12 @@ The following lead developers are responsible for this repository and have admin
 * Manuel Peuster (https://github.com/mpeuster)
 * Steven Van Rossem (https://github.com/stevenvanrossem)
 
+#### Contributors
+
+* Hadi Razzaghi Kouchaksaraei (https://github.com/hadik3r)
+* Wouter Tavernier (https://github.com/wtaverni)
+* Geoffroy Chollon (https://github.com/cgeoffroy)
+
 #### Feedback-Chanel
 
 * You may use the mailing list [sonata-dev@lists.atosresearch.eu](mailto:sonata-dev@lists.atosresearch.eu)
