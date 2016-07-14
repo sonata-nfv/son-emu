@@ -94,6 +94,23 @@ class RestApiClient():
 
         pp.pprint(response.json())
 
+    def prometheus(self, args):
+        # This functions makes it more user-friendly to create the correct prometheus query
+        # <uuid> is replaced by the correct uuid of the deployed vnf container
+        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
+        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        dc_label = args.get("datacenter")
+        query = args.get("query")
+        vnf_status = get("%s/restapi/compute/%s/%s" %
+            (args.get("endpoint"),
+             args.get("datacenter"),
+             vnf_name)).json()
+        uuid = vnf_status['id']
+        query = query.replace('<uuid>', uuid)
+
+        response = prometheus.query_Prometheus(query)
+        pp.pprint(response)
+
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
         return vnf_name

@@ -26,7 +26,6 @@ acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
 
-import urllib2
 import logging
 from mininet.node import  OVSSwitch
 import ast
@@ -34,11 +33,9 @@ import time
 from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY, CollectorRegistry, \
     pushadd_to_gateway, push_to_gateway, delete_from_gateway
 import threading
-from subprocess import Popen, PIPE
+from subprocess import Popen
 import os
 
-import paramiko
-import gevent
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,16 +47,22 @@ class DCNetworkMonitor():
     def __init__(self, net):
         self.net = net
 
+        # TODO: these global variables should be part of a config file?
+        '''
+        # prometheus is started outside of son-emu
         prometheus_ip = '127.0.0.1'
         prometheus_port = '9090'
         self.prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
-
-
-
+        '''
         # helper variables to calculate the metrics
+        # pushgateway is started outside of son-emu and son-emu is started with net=host
+        # so localhost:9091 works
         self.pushgateway = 'localhost:9091'
-        # Start up the server to expose the metrics to Prometheus.
+        # when sdk is started with docker-compose, we could use
+        # self.pushgateway = 'pushgateway:9091'
+        # Start up the server to expose the metrics to Prometheus
         #start_http_server(8000)
+
         # supported Prometheus metrics
         self.registry = CollectorRegistry()
         self.prom_tx_packet_count = Gauge('sonemu_tx_count_packets', 'Total number of packets sent',
@@ -101,6 +104,7 @@ class DCNetworkMonitor():
         self.monitor_flow_thread.start()
 
         # helper tools
+        # Prometheus pushgateway and DB are started as external contianer, outside of son-emu
         #self.pushgateway_process = self.start_PushGateway()
         #self.prometheus_process = self.start_Prometheus()
         self.cadvisor_process = self.start_cadvisor()
@@ -124,10 +128,8 @@ class DCNetworkMonitor():
         for connected_sw in self.net.DCNetwork_graph.neighbors(vnf_name):
             link_dict = self.net.DCNetwork_graph[vnf_name][connected_sw]
             for link in link_dict:
-                # logging.info("{0},{1}".format(link_dict[link],vnf_interface))
                 if link_dict[link]['src_port_id'] == vnf_interface:
                     # found the right link and connected switch
-                    # logging.info("{0},{1}".format(link_dict[link]['src_port_id'], vnf_source_interface))
                     vnf_switch = connected_sw
                     flow_metric['mon_port'] = link_dict[link]['dst_port_nr']
                     break
@@ -176,8 +178,6 @@ class DCNetworkMonitor():
 
                 for collector in self.registry._collectors:
                     if (vnf_name, vnf_interface, cookie) in collector._metrics:
-                        #logging.info('2 name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames,
-                        #                                                        collector._metrics))
                         collector.remove(vnf_name, vnf_interface, cookie)
 
                 delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
@@ -206,10 +206,8 @@ class DCNetworkMonitor():
         for connected_sw in self.net.DCNetwork_graph.neighbors(vnf_name):
             link_dict = self.net.DCNetwork_graph[vnf_name][connected_sw]
             for link in link_dict:
-                # logging.info("{0},{1}".format(link_dict[link],vnf_interface))
                 if link_dict[link]['src_port_id'] == vnf_interface:
                     # found the right link and connected switch
-                    # logging.info("{0},{1}".format(link_dict[link]['src_port_id'], vnf_source_interface))
                     network_metric['mon_port'] = link_dict[link]['dst_port_nr']
                     break
 
@@ -261,7 +259,6 @@ class DCNetworkMonitor():
     def stop_metric(self, vnf_name, vnf_interface=None, metric=None):
 
         for metric_dict in self.network_metrics:
-            #logging.info('start Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric_dict))
             if metric_dict['vnf_name'] == vnf_name and metric_dict['vnf_interface'] == vnf_interface \
                     and metric_dict['metric_key'] == metric:
 
@@ -274,7 +271,7 @@ class DCNetworkMonitor():
                 #self.registry.unregister(self.prom_metrics[metric_dict['metric_key']])
 
                 for collector in self.registry._collectors :
-                    #logging.info('name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames, collector._metrics))
+
                     """
                     INFO:root:name:sonemu_rx_count_packets
                     labels:('vnf_name', 'vnf_interface')
@@ -284,11 +281,10 @@ class DCNetworkMonitor():
                     0x7f353447fd10 >}
                     """
                     logging.info('{0}'.format(collector._metrics.values()))
-                    #if self.prom_metrics[metric_dict['metric_key']]
+
                     if (vnf_name, vnf_interface, 'None') in collector._metrics:
                         logging.info('2 name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames,
                                                                               collector._metrics))
-                        #collector._metrics = {}
                         collector.remove(vnf_name, vnf_interface, 'None')
 
                 # set values to NaN, prometheus api currently does not support removal of metrics
@@ -345,7 +341,7 @@ class DCNetworkMonitor():
                 ret = self.net.ryu_REST('stats/flow', dpid=flow_dict['switch_dpid'], data=data)
                 flow_stat_dict = ast.literal_eval(ret)
 
-                #logging.info('received flow stat:{0} '.format(flow_stat_dict))
+                logging.debug('received flow stat:{0} '.format(flow_stat_dict))
                 self.set_flow_metric(flow_dict, flow_stat_dict)
 
             self.monitor_flow_lock.release()
@@ -368,7 +364,7 @@ class DCNetworkMonitor():
 
                 metric_list = [metric_dict for metric_dict in self.network_metrics
                                if int(metric_dict['switch_dpid'])==int(dpid)]
-                #logging.info('1set prom packets:{0} '.format(self.network_metrics))
+
                 for metric_dict in metric_list:
                     self.set_network_metric(metric_dict, port_stat_dict)
 
@@ -390,23 +386,21 @@ class DCNetworkMonitor():
             if int(port_stat['port_no']) == int(mon_port):
                 port_uptime = port_stat['duration_sec'] + port_stat['duration_nsec'] * 10 ** (-9)
                 this_measurement = int(port_stat[metric_key])
-                #logging.info('set prom packets:{0} {1}:{2}'.format(this_measurement, vnf_name, vnf_interface))
 
                 # set prometheus metric
                 self.prom_metrics[metric_dict['metric_key']].\
                     labels({'vnf_name': vnf_name, 'vnf_interface': vnf_interface, 'flow_id': None}).\
                     set(this_measurement)
-                #push_to_gateway(self.pushgateway, job='SDNcontroller',
-                #                grouping_key={'metric':metric_dict['metric_key']}, registry=self.registry)
 
                 # 1 single monitor job for all metrics of the SDN controller
                 pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
 
+                # also the rate is calculated here, but not used for now
+                # (rate can be easily queried from prometheus also)
                 if previous_monitor_time <= 0 or previous_monitor_time >= port_uptime:
                     metric_dict['previous_measurement'] = int(port_stat[metric_key])
                     metric_dict['previous_monitor_time'] = port_uptime
                     # do first measurement
-                    #logging.info('first measurement')
                     time.sleep(1)
                     self.monitor_lock.release()
 
@@ -416,7 +410,6 @@ class DCNetworkMonitor():
                 else:
                     time_delta = (port_uptime - metric_dict['previous_monitor_time'])
                     metric_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
-                    #logging.info('metric: {0} rate:{1}'.format(metric_dict['metric_key'], metric_rate))
 
                 metric_dict['previous_measurement'] = this_measurement
                 metric_dict['previous_monitor_time'] = port_uptime
@@ -427,7 +420,6 @@ class DCNetworkMonitor():
 
     def set_flow_metric(self, metric_dict, flow_stat_dict):
         # vnf tx is the datacenter switch rx and vice-versa
-        #metric_key = self.switch_tx_rx(metric_dict['metric_key'])
         metric_key = metric_dict['metric_key']
         switch_dpid = metric_dict['switch_dpid']
         vnf_name = metric_dict['vnf_name']
@@ -450,30 +442,6 @@ class DCNetworkMonitor():
             set(counter)
         pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
 
-        #logging.exception('metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface))
-        #return 'metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface)
-
-    def query_Prometheus(self, query):
-        '''
-        escaped_chars='{}[]'
-        for old in escaped_chars:
-            new = '\{0}'.format(old)
-            query = query.replace(old, new)
-        '''
-        url = self.prometheus_REST_api + '/' + 'api/v1/query?query=' + query
-        #logging.info('query:{0}'.format(url))
-        req = urllib2.Request(url)
-        ret = urllib2.urlopen(req).read()
-        ret = ast.literal_eval(ret)
-        if ret['status'] == 'success':
-            #logging.info('return:{0}'.format(ret))
-            try:
-                ret = ret['data']['result'][0]['value']
-            except:
-                ret = None
-        else:
-            ret = None
-        return ret
 
     def start_Prometheus(self, port=9090):
         # prometheus.yml configuration file is located in the same directory as this file
@@ -562,34 +530,4 @@ class DCNetworkMonitor():
                "rm",
                name]
         Popen(cmd).wait()
-
-    def profile(self, mgmt_ip, rate, input_ip, vnf_uuid ):
-
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        #ssh.connect(mgmt_ip, username='steven', password='test')
-        ssh.connect(mgmt_ip, username='root', password='root')
-
-        iperf_cmd = 'iperf -c {0} -u -l18 -b{1}M -t1000 &'.format(input_ip, rate)
-        if rate > 0:
-            stdin, stdout, stderr = ssh.exec_command(iperf_cmd)
-
-        start_time = time.time()
-        query_cpu = '(sum(rate(container_cpu_usage_seconds_total{{id="/docker/{0}"}}[{1}s])))'.format(vnf_uuid, 1)
-        while (time.time() - start_time) < 15:
-            data = self.query_Prometheus(query_cpu)
-            # logging.info('rate: {1} data:{0}'.format(data, rate))
-            gevent.sleep(0)
-            time.sleep(1)
-
-        query_cpu2 = '(sum(rate(container_cpu_usage_seconds_total{{id="/docker/{0}"}}[{1}s])))'.format(vnf_uuid, 8)
-        cpu_load = float(self.query_Prometheus(query_cpu2)[1])
-        output = 'rate: {1}Mbps; cpu_load: {0}%'.format(round(cpu_load * 100, 2), rate)
-        output_line = output
-        logging.info(output_line)
-
-        stop_iperf = 'pkill -9 iperf'
-        stdin, stdout, stderr = ssh.exec_command(stop_iperf)
-
-        return output_line
 

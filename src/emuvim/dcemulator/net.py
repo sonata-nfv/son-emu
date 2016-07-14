@@ -261,7 +261,7 @@ class DCNetwork(Containernet):
             if kwargs.get('bidirectional'):
                 ret = ret +'\n' + self._chainAddFlow(vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
 
-        elif cmd == 'del-flows':  # TODO: del-flow to be implemented
+        elif cmd == 'del-flows':
             ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
             if kwargs.get('bidirectional'):
                 ret = ret + '\n' + self._chainAddFlow(vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
@@ -274,7 +274,6 @@ class DCNetwork(Containernet):
 
     def _chainAddFlow(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, **kwargs):
 
-        # TODO: this needs to be cleaned up
         #check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
