@@ -72,12 +72,17 @@ class NetworkAction(Resource):
         # call DCNetwork method, not really datacenter specific API for now...
         # no check if vnfs are really connected to this datacenter...
         try:
-            vnf_src_interface = json.loads(request.json).get("vnf_src_interface")
-            vnf_dst_interface = json.loads(request.json).get("vnf_dst_interface")
-            weight = json.loads(request.json).get("weight")
-            match = json.loads(request.json).get("match")
-            bidirectional = json.loads(request.json).get("bidirectional")
-            cookie = json.loads(request.json).get("cookie")
+            # check if json data is a dict
+            data = request.json
+            if type(data) is not dict:
+                data = json.loads(request.json)
+
+            vnf_src_interface = data.get("vnf_src_interface")
+            vnf_dst_interface = data.get("vnf_dst_interface")
+            weight = data.get("weight")
+            match = data.get("match")
+            bidirectional = data.get("bidirectional")
+            cookie = data.get("cookie")
             c = net.setChain(
                 vnf_src_name, vnf_dst_name,
                 vnf_src_interface=vnf_src_interface,

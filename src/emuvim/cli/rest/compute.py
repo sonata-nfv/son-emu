@@ -47,18 +47,16 @@ class RestApiClient():
 
     def start(self, args):
 
-        nw_list = list()
-        if args.get("network") is not None:
-            nw_list = self._parse_network(args.get("network"))
         req = {'image':args.get("image"),
                'command':args.get("docker_command"),
-               'network':nw_list}
+               'network':args.get("network")}
 
         response = put("%s/restapi/compute/%s/%s/start" %
                        (args.get("endpoint"),
                         args.get("datacenter"),
                         args.get("name")),
-                       json = json.dumps(req))
+                        json = req)
+
         pp.pprint(response.json())
 
     def stop(self, args):
@@ -107,22 +105,6 @@ class RestApiClient():
                     args.get("datacenter"),
                     args.get("name"))).json()
         pp.pprint(list)
-
-
-
-    def _parse_network(self, network_str):
-        '''
-        parse the options for all network interfaces of the vnf
-        :param network_str: (id=x,ip=x.x.x.x/x), ...
-        :return: list of dicts [{"id":x,"ip":"x.x.x.x/x"}, ...]
-        '''
-        nw_list = list()
-        networks = network_str[1:-1].split('),(')
-        for nw in networks:
-            nw_dict = dict(tuple(e.split('=')) for e in nw.split(','))
-            nw_list.append(nw_dict)
-
-        return nw_list
 
 
 parser = argparse.ArgumentParser(description='son-emu datacenter')
