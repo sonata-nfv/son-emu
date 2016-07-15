@@ -101,27 +101,6 @@ class ZeroRpcClient(object):
             args.get("datacenter"), args.get("name"))
         pp.pprint(r)
 
-    def profile(self, args):
-        nw_list = list()
-        if args.get("network") is not None:
-            nw_list = self._parse_network(args.get("network"))
-
-        params = self._create_dict(
-            network=nw_list,
-            command=args.get("docker_command"),
-            image=args.get("image"),
-            input=args.get("input"),
-            output=args.get("output"))
-
-        for output in self.c.compute_profile(
-            args.get("datacenter"),
-            args.get("name"),
-            params):
-            print(output + '\n')
-
-        #pp.pprint(r)
-        #print(r)
-
     def _create_dict(self, **kwargs):
         return kwargs
 
@@ -144,7 +123,7 @@ class ZeroRpcClient(object):
 parser = argparse.ArgumentParser(description='son-emu compute')
 parser.add_argument(
     "command",
-    choices=['start', 'stop', 'list', 'status', 'profile'],
+    choices=['start', 'stop', 'list', 'status'],
     help="Action to be executed.")
 parser.add_argument(
     "--datacenter", "-d", dest="datacenter",
@@ -162,13 +141,6 @@ parser.add_argument(
     "--net", dest="network",
     help="Network properties of a compute instance e.g. \
           '(id=input,ip=10.0.10.3/24),(id=output,ip=10.0.10.4/24)' for multiple interfaces.")
-parser.add_argument(
-    "--input", "-in", dest="input",
-    help="input interface of the vnf to profile")
-parser.add_argument(
-    "--output", "-out", dest="output",
-    help="output interface of the vnf to profile")
-
 
 def main(argv):
     args = vars(parser.parse_args(argv))

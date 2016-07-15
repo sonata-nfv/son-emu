@@ -63,9 +63,6 @@
    - name: install prometheus_client
      pip: name=prometheus_client state=latest
 
-   - name: install paramiko
-     pip: name=paramiko state=latest
-
    - name: install latest urllib3 (fix error urllib3.connection.match_hostname = match_hostname)
      pip: name=urllib3 state=latest
 

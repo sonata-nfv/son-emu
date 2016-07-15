@@ -61,7 +61,7 @@ class RestApiClient():
                        (args.get("endpoint"),
                         vnf_src_name,
                         vnf_dst_name),
-                       json=json.dumps(params))
+                       json=params)
         pp.pprint(response.json())
 
     def remove(self, args):
@@ -80,7 +80,7 @@ class RestApiClient():
                        (args.get("endpoint"),
                         vnf_src_name,
                         vnf_dst_name),
-                       json=json.dumps(params))
+                       json=params)
         pp.pprint(response.json())
 
     def _parse_vnf_name(self, vnf_name_str):

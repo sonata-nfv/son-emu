@@ -25,6 +25,13 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
+
+"""
+Distributed Cloud Emulator (dcemulator)
+Networking and monitoring functions
+(c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
+"""
+
 import logging
 from flask_restful import Resource
 from flask import request

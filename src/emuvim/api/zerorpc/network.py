@@ -27,6 +27,8 @@ partner consortium (www.sonata-nfv.eu).
 """
 """
 Distributed Cloud Emulator (dcemulator)
+Networking and monitoring functions
+(c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 """
 
 import logging

@@ -50,17 +50,43 @@ class ComputeStart(Resource):
     def put(self, dc_label, compute_name):
         logging.debug("API CALL: compute start")
         try:
+            #check if json data is a dict
+            data = request.json
+            if data is None:
+                data = {}
+            elif type(data) is not dict:
+                data = json.loads(request.json)
 
-            image = json.loads(request.json).get("image")
-            network = json.loads(request.json).get("network")
-            command = json.loads(request.json).get("docker_command")
+            network = data.get("network")
+            nw_list = self._parse_network(network)
+            image = data.get("image")
+            command = data.get("docker_command")
+
             c = dcs.get(dc_label).startCompute(
-                compute_name, image= image, command= command, network= network)
+                compute_name, image= image, command= command, network= nw_list)
             # return docker inspect dict
             return c.getStatus(), 200
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
+
+    def _parse_network(self, network_str):
+        '''
+        parse the options for all network interfaces of the vnf
+        :param network_str: (id=x,ip=x.x.x.x/x), ...
+        :return: list of dicts [{"id":x,"ip":"x.x.x.x/x"}, ...]
+        '''
+        nw_list = list()
+
+        if network_str is None or '),(' not in network_str :
+            return nw_list
+
+        networks = network_str[1:-1].split('),(')
+        for nw in networks:
+            nw_dict = dict(tuple(e.split('=')) for e in nw.split(','))
+            nw_list.append(nw_dict)
+
+        return nw_list
 
 class ComputeStop(Resource):
 
@@ -134,3 +160,5 @@ class DatacenterStatus(Resource):
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
+
+

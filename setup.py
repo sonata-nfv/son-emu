@@ -51,7 +51,6 @@ setup(name='emuvim',
           'docker-py==1.7.1',
           'requests',
           'prometheus_client',
-          'paramiko',
           'urllib3'
       ],
       zip_safe=False,
