@@ -25,6 +25,13 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
+
+"""
+Distributed Cloud Emulator (dcemulator)
+Networking and monitoring functions
+(c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
+"""
+
 import logging
 from flask_restful import Resource
 from flask import request
@@ -65,12 +72,19 @@ class NetworkAction(Resource):
         # call DCNetwork method, not really datacenter specific API for now...
         # no check if vnfs are really connected to this datacenter...
         try:
-            vnf_src_interface = json.loads(request.json).get("vnf_src_interface")
-            vnf_dst_interface = json.loads(request.json).get("vnf_dst_interface")
-            weight = json.loads(request.json).get("weight")
-            match = json.loads(request.json).get("match")
-            bidirectional = json.loads(request.json).get("bidirectional")
-            cookie = json.loads(request.json).get("cookie")
+            # check if json data is a dict
+            data = request.json
+            if data is None:
+                data = {}
+            elif type(data) is not dict:
+                data = json.loads(request.json)
+
+            vnf_src_interface = data.get("vnf_src_interface")
+            vnf_dst_interface = data.get("vnf_dst_interface")
+            weight = data.get("weight")
+            match = data.get("match")
+            bidirectional = data.get("bidirectional")
+            cookie = data.get("cookie")
             c = net.setChain(
                 vnf_src_name, vnf_dst_name,
                 vnf_src_interface=vnf_src_interface,

@@ -55,7 +55,6 @@ Despite of this son-emu has the following dependencies:
 * [flask_restful](https://pypi.python.org/pypi/Flask-RESTful) >= 0.3 (BSD)
 * [networkx](https://pypi.python.org/pypi/networkx/) >= 1.11  (BSD)
 * [oslo.config](http://docs.openstack.org/developer/oslo.config/) >= 3.9.0  (Apache 2.0)
-* [paramiko](https://pypi.python.org/pypi/paramiko/1.16.0) >= 1.6 (LGPL)
 * [prometheus_client](https://pypi.python.org/pypi/prometheus_client) >= 0.0.13 (Apache 2.0)
 * [pyaml](https://pypi.python.org/pypi/pyaml) >=15.8.2 (WTFPL)
 * [pytest-runner](https://pypi.python.org/pypi/pytest-runner) >= 2.8 (MIT)
