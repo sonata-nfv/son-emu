@@ -34,17 +34,19 @@ COPY . /son-emu/
 
 RUN apt-get clean
 
-RUN cd /son-emu/ansible \
-    && ansible-playbook install.yml \
-    && cd /son-emu \
-    # we need to reset the __pycache__ for correct test discovery
-    && rm -rf src/emuvim/test/__pycache__ \
-    && rm -rf src/emuvim/test/unittests/__pycache__ \
-    && rm -rf src/emuvim/test/integrationtests/__pycache__ \
-    && python setup.py install \
-    && echo 'Done'
+WORKDIR /son-emu/ansible
+RUN ansible-playbook install.yml
+
+WORKDIR /son-emu
+# we need to reset the __pycache__ for correct test discovery
+RUN rm -rf src/emuvim/test/__pycache__ 
+RUN rm -rf src/emuvim/test/unittests/__pycache__ 
+RUN rm -rf src/emuvim/test/integrationtests/__pycache__ 
+RUN python setup.py install 
+RUN echo 'Done'
+
 
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 
-# dummy GK, zerorpc, DCNetwork zerorpc, cAdvisor
-EXPOSE 5000 4242 5151 8090
+# dummy GK, zerorpc, DCNetwork zerorpc, cAdvisor, restAPI
+EXPOSE 5000 4242 5151 8090 5001
