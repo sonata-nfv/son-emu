@@ -26,10 +26,8 @@ acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
 from requests import get,put, delete
-from tabulate import tabulate
 import pprint
 import argparse
-import json
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -114,13 +112,12 @@ parser.add_argument(
     help="vnf name of the destination of the chain")
 parser.add_argument(
     "--weight", "-w", dest="weight",
-    help="weight metric to calculate the path")
+    help="weight edge attribute to calculate the path")
 parser.add_argument(
     "--match", "-m", dest="match",
     help="string holding extra matches for the flow entries")
 parser.add_argument(
     "--bidirectional", "-b", dest="bidirectional",
-    action='store_true',
     help="add/remove the flow entries from src to dst and back")
 parser.add_argument(
     "--cookie", "-c", dest="cookie",
