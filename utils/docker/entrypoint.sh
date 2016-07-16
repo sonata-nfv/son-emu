@@ -6,7 +6,7 @@ set -x
 
 # this cannot be done from the Dockerfile since we have the socket not mounted during build
 # this image is needed for the monitoring in son-emu
-echo 'Pulling the "google/cadvisor" image ... please wait'
-docker pull 'google/cadvisor'
+#echo 'Pulling the "google/cadvisor" image ... please wait'
+#docker pull 'google/cadvisor'
 
 exec /containernet/util/docker/entrypoint.sh $*
