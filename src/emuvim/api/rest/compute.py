@@ -78,7 +78,8 @@ class ComputeStart(Resource):
         '''
         nw_list = list()
 
-        if network_str is None or '),(' not in network_str :
+        # TODO make this more robust with regex check
+        if network_str is None :
             return nw_list
 
         networks = network_str[1:-1].split('),(')
