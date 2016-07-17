@@ -53,7 +53,7 @@ class MonitorInterfaceAction(Resource):
     """
     global net
 
-    def put(self, vnf_name, vnf_interface, metric):
+    def put(self, vnf_name, vnf_interface=None, metric='tx_packets'):
         logging.debug("REST CALL: start monitor VNF interface")
         try:
             c = net.monitor_agent.setup_metric(vnf_name, vnf_interface, metric)
@@ -63,7 +63,7 @@ class MonitorInterfaceAction(Resource):
             logging.exception("API error.")
             return ex.message, 500
 
-    def delete(self, vnf_name, vnf_interface, metric):
+    def delete(self, vnf_name, vnf_interface=None, metric='tx_packets'):
         logging.debug("REST CALL: stop monitor VNF interface")
         try:
             c = net.monitor_agent.stop_metric(vnf_name, vnf_interface, metric)
@@ -85,7 +85,7 @@ class MonitorFlowAction(Resource):
     """
     global net
 
-    def put(self, vnf_name, vnf_interface, metric, cookie):
+    def put(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
         logging.debug("REST CALL: start monitor VNF interface")
         try:
             c = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
@@ -95,7 +95,7 @@ class MonitorFlowAction(Resource):
             logging.exception("API error.")
             return ex.message, 500
 
-    def delete(self, vnf_name, vnf_interface, metric, cookie):
+    def delete(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
         logging.debug("REST CALL: stop monitor VNF interface")
         try:
             c = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)

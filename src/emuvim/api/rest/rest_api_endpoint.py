@@ -69,10 +69,14 @@ class RestApiEndpoint(object):
         self.api.add_resource(DatacenterList, "/restapi/datacenter")
         self.api.add_resource(DatacenterStatus, "/restapi/datacenter/<dc_label>")
 
-        self.api.add_resource(NetworkAction, "/restapi/network/<vnf_src_name>/<vnf_dst_name>")
+        self.api.add_resource(NetworkAction, "/restapi/network/<vnf_src_name>/<vnf_dst_name>",)
 
-        self.api.add_resource(MonitorInterfaceAction, "/restapi/monitor/<vnf_name>/<vnf_interface>/<metric>")
-        self.api.add_resource(MonitorFlowAction, "/restapi/monitor/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+        self.api.add_resource(MonitorInterfaceAction,
+                              "/restapi/monitor/<vnf_name>/<metric>",
+                              "/restapi/monitor/<vnf_name>/<vnf_interface>/<metric>")
+        self.api.add_resource(MonitorFlowAction,
+                              "/restapi/flowmon/<vnf_name>/<metric>/<cookie>",
+                              "/restapi/flowmon/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 

@@ -25,11 +25,10 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
+
 from requests import get, put, delete
-from tabulate import tabulate
 import pprint
 import argparse
-import json
 from emuvim.cli import prometheus
 
 pp = pprint.PrettyPrinter(indent=4)

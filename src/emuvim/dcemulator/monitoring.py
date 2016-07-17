@@ -107,7 +107,7 @@ class DCNetworkMonitor():
         # Prometheus pushgateway and DB are started as external contianer, outside of son-emu
         #self.pushgateway_process = self.start_PushGateway()
         #self.prometheus_process = self.start_Prometheus()
-        self.cadvisor_process = self.start_cadvisor()
+        #self.cadvisor_process = self.start_cadvisor()
 
     # first set some parameters, before measurement can start
     def setup_flow(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
@@ -167,7 +167,15 @@ class DCNetworkMonitor():
             logging.exception("setup_metric error.")
             return ex.message
 
-    def stop_flow(self, vnf_name, vnf_interface=None, metric=None, cookie=0):
+    def stop_flow(self, vnf_name, vnf_interface=None, metric=None, cookie=0,):
+
+        # check if port is specified (vnf:port)
+        if vnf_interface is None and metric is not None:
+            # take first interface by default
+            connected_sw = self.net.DCNetwork_graph.neighbors(vnf_name)[0]
+            link_dict = self.net.DCNetwork_graph[vnf_name][connected_sw]
+            vnf_interface = link_dict[0]['src_port_id']
+
         for flow_dict in self.flow_metrics:
             if flow_dict['vnf_name'] == vnf_name and flow_dict['vnf_interface'] == vnf_interface \
                     and flow_dict['metric_key'] == metric and flow_dict['cookie'] == cookie:
@@ -186,6 +194,8 @@ class DCNetworkMonitor():
 
                 logging.info('Stopped monitoring flow {3}: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie))
                 return 'Stopped monitoring flow {3}: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie)
+
+        return 'Error stopping monitoring flow: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
 
 
     # first set some parameters, before measurement can start
@@ -258,6 +268,13 @@ class DCNetworkMonitor():
 
     def stop_metric(self, vnf_name, vnf_interface=None, metric=None):
 
+        # check if port is specified (vnf:port)
+        if vnf_interface is None and metric is not None:
+            # take first interface by default
+            connected_sw = self.net.DCNetwork_graph.neighbors(vnf_name)[0]
+            link_dict = self.net.DCNetwork_graph[vnf_name][connected_sw]
+            vnf_interface = link_dict[0]['src_port_id']
+
         for metric_dict in self.network_metrics:
             if metric_dict['vnf_name'] == vnf_name and metric_dict['vnf_interface'] == vnf_interface \
                     and metric_dict['metric_key'] == metric:
@@ -319,8 +336,13 @@ class DCNetworkMonitor():
                 logging.info('Stopped monitoring vnf: {0}'.format(vnf_name))
                 return 'Stopped monitoring: {0}'.format(vnf_name)
 
+        return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
 
-    # get all metrics defined in the list and export it to Prometheus
+
+
+
+
+# get all metrics defined in the list and export it to Prometheus
     def get_flow_metrics(self):
         while self.start_monitoring:
 
@@ -429,12 +451,20 @@ class DCNetworkMonitor():
         cookie = metric_dict['cookie']
 
         # TODO aggregate all found flow stats
-        flow_stat = flow_stat_dict[str(switch_dpid)][0]
-        if 'bytes' in  metric_key:
-            counter = flow_stat['byte_count']
-        elif 'packet' in metric_key:
-            counter = flow_stat['packet_count']
+        #flow_stat = flow_stat_dict[str(switch_dpid)][0]
+        #if 'bytes' in metric_key:
+        #    counter = flow_stat['byte_count']
+        #elif 'packet' in metric_key:
+        #    counter = flow_stat['packet_count']
 
+        counter = 0
+        for flow_stat in flow_stat_dict[str(switch_dpid)]:
+            if 'bytes' in metric_key:
+                counter += flow_stat['byte_count']
+            elif 'packet' in metric_key:
+                counter += flow_stat['packet_count']
+
+        flow_stat = flow_stat_dict[str(switch_dpid)][0]
         flow_uptime = flow_stat['duration_sec'] + flow_stat['duration_nsec'] * 10 ** (-9)
 
         self.prom_metrics[metric_dict['metric_key']]. \
@@ -490,6 +520,7 @@ class DCNetworkMonitor():
         self.monitor_thread.join()
         self.monitor_flow_thread.join()
 
+        # these containers are used for monitoring but are started now outside of son-emu
         '''
         if self.prometheus_process is not None:
             logging.info('stopping prometheus container')
@@ -502,13 +533,13 @@ class DCNetworkMonitor():
             self.pushgateway_process.terminate()
             self.pushgateway_process.kill()
             self._stop_container('pushgateway')
-        '''
 
         if self.cadvisor_process is not None:
             logging.info('stopping cadvisor container')
             self.cadvisor_process.terminate()
             self.cadvisor_process.kill()
             self._stop_container('cadvisor')
+        '''
 
     def switch_tx_rx(self,metric=''):
         # when monitoring vnfs, the tx of the datacenter switch is actually the rx of the vnf
