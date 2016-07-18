@@ -32,7 +32,7 @@ import logging
 import time
 import json
 
-LOG = logging.getLogger("dcemulator")
+LOG = logging.getLogger("dcemulator.node")
 LOG.setLevel(logging.DEBUG)
 
 
