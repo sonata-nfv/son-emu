@@ -277,6 +277,14 @@ class DCNetwork(Containernet):
 
     def _chainAddFlow(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, **kwargs):
 
+        src_sw = None
+        dst_sw = None
+        src_sw_inport_nr = 0
+        dst_sw_outport_nr = 0
+
+        LOG.debug("call chainAddFlow vnf_src_name=%r, vnf_src_interface=%r, vnf_dst_name=%r, vnf_dst_interface=%r",
+                  vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface)
+
         #check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
@@ -287,10 +295,10 @@ class DCNetwork(Containernet):
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
-                if link_dict[link]['src_port_id'] == vnf_src_interface:
+                if (link_dict[link]['src_port_id'] == vnf_src_interface or
+                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     src_sw = connected_sw
-
                     src_sw_inport_nr = link_dict[link]['dst_port_nr']
                     break
 
@@ -304,7 +312,8 @@ class DCNetwork(Containernet):
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             for link in link_dict:
-                if link_dict[link]['dst_port_id'] == vnf_dst_interface:
+                if link_dict[link]['dst_port_id'] == vnf_dst_interface or \
+                        link_dict[link]['dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     dst_sw = connected_sw
                     dst_sw_outport_nr = link_dict[link]['src_port_nr']
@@ -317,9 +326,12 @@ class DCNetwork(Containernet):
             # if all shortest paths are wanted, use: all_shortest_paths
             path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=kwargs.get('weight'))
         except:
-            LOG.exception("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
+            LOG.exception("No path could be found between {0} and {1} using src_sw={2} and dst_sw={3}".format(
+                vnf_src_name, vnf_dst_name, src_sw, dst_sw))
             LOG.debug("Graph nodes: %r" % self.DCNetwork_graph.nodes())
             LOG.debug("Graph edges: %r" % self.DCNetwork_graph.edges())
+            for e, v in self.DCNetwork_graph.edges():
+                LOG.debug("%r" % self.DCNetwork_graph[e][v])
             return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
 
         LOG.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
