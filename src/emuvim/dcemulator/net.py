@@ -314,7 +314,9 @@ class DCNetwork(Containernet):
             # if all shortest paths are wanted, use: all_shortest_paths
             path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=kwargs.get('weight'))
         except:
-            logging.info("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
+            logging.exception("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
+            logging.debug("Graph nodes: %r" % self.DCNetwork_graph.nodes())
+            logging.debug("Graph edges: %r" % self.DCNetwork_graph.edges())
             return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
 
         logging.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
