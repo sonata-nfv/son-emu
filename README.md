@@ -140,8 +140,9 @@ This example shows how to deploy a SONATA example package in the emulator using 
 Note: The [son-push](https://github.com/mpeuster/son-cli) tool can be used instead of CURL.
 
 
-### CLI Commands
+### Further Documentation
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
+* [Requirements for Docker containers executed by the emulator](https://github.com/sonata-nfv/son-emu/wiki/Container-Requirements)
 
 ## License
 
