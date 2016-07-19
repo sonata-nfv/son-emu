@@ -60,8 +60,6 @@ class DCNetworkMonitor():
         self.pushgateway = 'localhost:9091'
         # when sdk is started with docker-compose, we could use
         # self.pushgateway = 'pushgateway:9091'
-        # Start up the server to expose the metrics to Prometheus
-        #start_http_server(8000)
 
         # supported Prometheus metrics
         self.registry = CollectorRegistry()
@@ -104,10 +102,8 @@ class DCNetworkMonitor():
         self.monitor_flow_thread.start()
 
         # helper tools
-        # Prometheus pushgateway and DB are started as external contianer, outside of son-emu
-        #self.pushgateway_process = self.start_PushGateway()
-        #self.prometheus_process = self.start_Prometheus()
-        #self.cadvisor_process = self.start_cadvisor()
+        # cAdvisor, Prometheus pushgateway and DB are started as external container, outside of son-emu
+
 
     # first set some parameters, before measurement can start
     def setup_flow(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):

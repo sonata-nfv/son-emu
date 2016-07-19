@@ -1,4 +1,7 @@
 #!/bin/bash
+set -e
+set -x
+
 # test if a vnf can be deployed and monitored
 
 #start test emulator topology
