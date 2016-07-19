@@ -157,6 +157,8 @@ class testEmulatorNetworking( SimpleTestTopology ):
         self.assertTrue(s2["network"][0]['intf_name'] == 'intf2')
         self.assertTrue(s2["network"][0]['ip'] == '10.0.10.2')
 
+        # should be not not yet connected
+        self.assertTrue(self.net.ping([vnf1, vnf2]) > 0.0)
         # setup links
         self.net.setChain('vnf1', 'vnf2', 'intf1', 'intf2', bidirectional=True, cmd='add-flow')
         # check connectivity by using ping
