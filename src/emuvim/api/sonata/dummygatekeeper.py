@@ -208,7 +208,8 @@ class Service(object):
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
             self.vnfname2num[vnf_name] = GK.get_next_vnf_name()
-            LOG.info("VNF "+vnf_name+" mapped to "+self.vnfname2num[vnf_name]+" on dc "+str(vnfd.get("dc")))
+            LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnfname2num[vnf_name], vnfd.get("dc")))
+            LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
             vnfi = target_dc.startCompute(self.vnfname2num[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             return vnfi
 
