@@ -39,6 +39,7 @@ from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
 from mininet.link import TCLink
+from mininet.clean import cleanup
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
@@ -66,20 +67,19 @@ class DCNetwork(Containernet):
         :param kwargs: path through for Mininet parameters
         :return:
         """
+        # members
         self.dcs = {}
+        self.ryu_process = None
 
-        # make sure any remaining Ryu processes are killed
+        # always cleanup environment before we start the emulator
         self.killRyu()
-        # make sure no containers are left over from a previous emulator run.
-        self.removeLeftoverContainers()
+        cleanup()
 
         # call original Docker.__init__ and setup default controller
         Containernet.__init__(
             self, switch=OVSKernelSwitch, controller=controller, **kwargs)
 
-
         # Ryu management
-        self.ryu_process = None
         if controller == RemoteController:
             # start Ryu controller
             self.startRyu(learning_switch=enable_learning)
@@ -255,7 +255,7 @@ class DCNetwork(Containernet):
         Containernet.stop(self)
 
         # stop Ryu controller
-        self.stopRyu()
+        self.killRyu()
 
 
     def CLI(self):
@@ -518,19 +518,16 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
-    def stopRyu(self):
+    def killRyu(self):
+        """
+        Stop the Ryu controller that might be started by son-emu.
+        :return:
+        """
+        # try it nicely
         if self.ryu_process is not None:
             self.ryu_process.terminate()
             self.ryu_process.kill()
-        self.killRyu()
-
-    @staticmethod
-    def removeLeftoverContainers():
-        # TODO can be more python-based using eg. docker-py?
-        Popen('docker ps -a -q --filter="name=mn.*" | xargs -r docker rm -f', shell=True)
-
-    @staticmethod
-    def killRyu():
+        # ensure its death ;-)
         Popen(['pkill', '-f', 'ryu-manager'])
 
     def ryu_REST(self, prefix, dpid=None, data=None):
