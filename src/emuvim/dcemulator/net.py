@@ -68,6 +68,11 @@ class DCNetwork(Containernet):
         """
         self.dcs = {}
 
+        # make sure any remaining Ryu processes are killed
+        self.killRyu()
+        # make sure no containers are left over from a previous emulator run.
+        self.removeLeftoverContainers()
+
         # call original Docker.__init__ and setup default controller
         Containernet.__init__(
             self, switch=OVSKernelSwitch, controller=controller, **kwargs)
@@ -517,6 +522,16 @@ class DCNetwork(Containernet):
         if self.ryu_process is not None:
             self.ryu_process.terminate()
             self.ryu_process.kill()
+        self.killRyu()
+
+    @staticmethod
+    def removeLeftoverContainers():
+        # TODO can be more python-based using eg. docker-py?
+        Popen('docker ps -a -q --filter="name=mn.*" | xargs -r docker rm -f', shell=True)
+
+    @staticmethod
+    def killRyu():
+        Popen(['pkill', '-f', 'ryu-manager'])
 
     def ryu_REST(self, prefix, dpid=None, data=None):
         try:
