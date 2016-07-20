@@ -105,7 +105,10 @@ class Service(object):
         self.local_docker_files = dict()
         self.remote_docker_image_urls = dict()
         self.instances = dict()
-        self.vnfname2num = dict()
+        self.vnf_name2docker_name = dict()
+        # lets generate a set of subnet configurations used for e-line chaining setup
+        self.eline_subnets_src = generate_subnet_strings(50, start=200, subnet_size=24, ip=1)
+        self.eline_subnets_dst = generate_subnet_strings(50, start=200, subnet_size=24, ip=2)
 
     def onboard(self):
         """
@@ -154,30 +157,45 @@ class Service(object):
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
 
         # 3. Configure the chaining of the network functions (currently only E-Line links supported)
-        nfid2name = defaultdict(lambda :"NotExistingNode", 
-                                reduce(lambda x,y: dict(x, **y),
-                                       map(lambda d:{d["vnf_id"]:d["vnf_name"]},
+        vnf_id2vnf_name = defaultdict(lambda: "NotExistingNode",
+                                reduce(lambda x, y: dict(x, **y),
+                                       map(lambda d: {d["vnf_id"]: d["vnf_name"]},
                                            self.nsd["network_functions"])))
         
         vlinks = self.nsd["virtual_links"]
         fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
 
-        cookie = 1 # not clear why this is needed - to check with Steven
+        cookie = 1  # not clear why this is needed - to check with Steven
         for link in eline_fwd_links:
-            src_node, src_port = link["connection_points_reference"][0].split(":")
-            dst_node, dst_port = link["connection_points_reference"][1].split(":")
+            src_id, src_if_name = link["connection_points_reference"][0].split(":")
+            dst_id, dst_if_name = link["connection_points_reference"][1].split(":")
 
-            srcname = nfid2name[src_node]
-            dstname = nfid2name[dst_node]
-            LOG.debug("src name: "+srcname+" dst name: "+dstname)
+            src_name = vnf_id2vnf_name[src_id]
+            dst_name = vnf_id2vnf_name[dst_id]
 
-            if (srcname in self.vnfds) and (dstname in self.vnfds) :
-                network = self.vnfds[srcname].get("dc").net  # there should be a cleaner way to find the DCNetwork
-                src_vnf = self.vnfname2num[srcname]
-                dst_vnf = self.vnfname2num[dstname]
-                ret = network.setChain(src_vnf, dst_vnf, vnf_src_interface=src_port, vnf_dst_interface=dst_port, bidirectional = True, cmd="add-flow", cookie = cookie)
+            LOG.debug(
+                "Setting up E-Line link. %s(%s:%s) -> %s(%s:%s)" % (
+                    src_name, src_id, src_if_name, dst_name, dst_id, dst_if_name))
+
+            if (src_name in self.vnfds) and (dst_name in self.vnfds):
+                network = self.vnfds[src_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
+                src_docker_name = self.vnf_name2docker_name[src_name]
+                dst_docker_name = self.vnf_name2docker_name[dst_name]
+                LOG.debug(src_docker_name)
+                ret = network.setChain(
+                    src_docker_name, dst_docker_name,
+                    vnf_src_interface=src_if_name, vnf_dst_interface=dst_if_name,
+                    bidirectional=True, cmd="add-flow", cookie=cookie)
                 cookie += 1
+
+                # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
+                src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
+                if src_vnfi is not None:
+                    self._vnf_reconfigure_network(src_vnfi, src_if_name, self.eline_subnets_src.pop(0))
+                dst_vnfi = self._get_vnf_instance(instance_uuid, dst_name)
+                if dst_vnfi is not None:
+                    self._vnf_reconfigure_network(dst_vnfi, dst_if_name, self.eline_subnets_dst.pop(0))
 
         # 4. run the emulator specific entrypoint scripts in the VNFIs of this service instance
         self._trigger_emulator_start_scripts_in_vnfis(self.instances[instance_uuid]["vnf_instances"])
@@ -207,11 +225,45 @@ class Service(object):
             # 3. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
-            self.vnfname2num[vnf_name] = GK.get_next_vnf_name()
-            LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnfname2num[vnf_name], vnfd.get("dc")))
+            self.vnf_name2docker_name[vnf_name] = GK.get_next_vnf_name()
+            LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
-            vnfi = target_dc.startCompute(self.vnfname2num[vnf_name], network=intfs, image=docker_name, flavor_name="small")
+            vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             return vnfi
+
+    def _get_vnf_instance(self, instance_uuid, name):
+        """
+        Returns the Docker object for the given VNF name (or Docker name).
+        :param instance_uuid: UUID of the service instance to search in.
+        :param name: VNF name or Docker name. We are fuzzy here.
+        :return:
+        """
+        dn = name
+        if name in self.vnf_name2docker_name:
+            dn = self.vnf_name2docker_name[name]
+        for vnfi in self.instances[instance_uuid]["vnf_instances"]:
+            if vnfi.name == dn:
+                return vnfi
+        LOG.warning("No container with name: %r found.")
+        return None
+
+    @staticmethod
+    def _vnf_reconfigure_network(vnfi, if_name, net_str):
+        """
+        Reconfigure the network configuration of a specific interface
+        of a running container.
+        :param vnfi: container instacne
+        :param if_name: interface name
+        :param net_str: network configuration string, e.g., 1.2.3.4/24
+        :return:
+        """
+        intf = vnfi.intf(intf=if_name)
+        if intf is not None:
+            intf.setIP(net_str)
+            LOG.debug("Reconfigured network of %s:%s to %r" % (vnfi.name, if_name, net_str))
+        else:
+            LOG.warning("Interface not found: %s:%s. Network reconfiguration skipped." % (vnfi.name, if_name))
+
 
     def _trigger_emulator_start_scripts_in_vnfis(self, vnfi_list):
         for vnfi in vnfi_list:
@@ -487,6 +539,16 @@ def make_relative_path(path):
     if path.startswith("/"):
         path = path.replace("/", "", 1)
     return path
+
+
+def generate_subnet_strings(n, start=1, subnet_size=24, ip=0):
+    """
+    Helper to generate different network configuration strings.
+    """
+    r = list()
+    for i in range(start, start + n):
+        r.append("%d.0.0.%d/%d" % (i, ip, subnet_size))
+    return r
 
 
 if __name__ == '__main__':
