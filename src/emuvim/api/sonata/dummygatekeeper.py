@@ -462,6 +462,7 @@ class Packages(fr.Resource):
         Return a list of UUID's of uploaded service packages.
         :return: dict/list
         """
+        LOG.info("GET /packages")
         return {"service_uuid_list": list(GK.services.iterkeys())}
 
 
@@ -493,7 +494,8 @@ class Instantiations(fr.Resource):
         Returns a list of UUIDs containing all running services.
         :return: dict / list
         """
-        return {"service_instance_list": [
+        LOG.info("GET /instantiations")
+        return {"service_instantiations_list": [
             list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
 
 
