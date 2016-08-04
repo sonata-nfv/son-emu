@@ -39,10 +39,14 @@ from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
 from mininet.link import TCLink
+from mininet.clean import cleanup
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
+
+LOG = logging.getLogger("dcemulator.net")
+LOG.setLevel(logging.DEBUG)
 
 class DCNetwork(Containernet):
     """
@@ -63,20 +67,19 @@ class DCNetwork(Containernet):
         :param kwargs: path through for Mininet parameters
         :return:
         """
+        # members
         self.dcs = {}
+        self.ryu_process = None
 
-        # make sure any remaining Ryu processes are killed
+        # always cleanup environment before we start the emulator
         self.killRyu()
-        # make sure no containers are left over from a previous emulator run.
-        self.removeLeftoverContainers()
+        cleanup()
 
         # call original Docker.__init__ and setup default controller
         Containernet.__init__(
             self, switch=OVSKernelSwitch, controller=controller, **kwargs)
 
-
         # Ryu management
-        self.ryu_process = None
         if controller == RemoteController:
             # start Ryu controller
             self.startRyu(learning_switch=enable_learning)
@@ -115,7 +118,7 @@ class DCNetwork(Containernet):
         dc.net = self  # set reference to network
         self.dcs[label] = dc
         dc.create()  # finally create the data center in our Mininet instance
-        logging.info("added data center: %s" % label)
+        LOG.info("added data center: %s" % label)
         return dc
 
     def addLink(self, node1, node2, **params):
@@ -125,7 +128,7 @@ class DCNetwork(Containernet):
         """
         assert node1 is not None
         assert node2 is not None
-        logging.debug("addLink: n1=%s n2=%s" % (str(node1), str(node2)))
+        LOG.debug("addLink: n1=%s n2=%s" % (str(node1), str(node2)))
         # ensure type of node1
         if isinstance( node1, basestring ):
             if node1 in self.dcs:
@@ -252,7 +255,7 @@ class DCNetwork(Containernet):
         Containernet.stop(self)
 
         # stop Ryu controller
-        self.stopRyu()
+        self.killRyu()
 
 
     def CLI(self):
@@ -279,6 +282,14 @@ class DCNetwork(Containernet):
 
     def _chainAddFlow(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, **kwargs):
 
+        src_sw = None
+        dst_sw = None
+        src_sw_inport_nr = 0
+        dst_sw_outport_nr = 0
+
+        LOG.debug("call chainAddFlow vnf_src_name=%r, vnf_src_interface=%r, vnf_dst_name=%r, vnf_dst_interface=%r",
+                  vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface)
+
         #check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
@@ -289,10 +300,10 @@ class DCNetwork(Containernet):
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
-                if link_dict[link]['src_port_id'] == vnf_src_interface:
+                if (link_dict[link]['src_port_id'] == vnf_src_interface or
+                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     src_sw = connected_sw
-
                     src_sw_inport_nr = link_dict[link]['dst_port_nr']
                     break
 
@@ -306,7 +317,8 @@ class DCNetwork(Containernet):
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             for link in link_dict:
-                if link_dict[link]['dst_port_id'] == vnf_dst_interface:
+                if link_dict[link]['dst_port_id'] == vnf_dst_interface or \
+                        link_dict[link]['dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     dst_sw = connected_sw
                     dst_sw_outport_nr = link_dict[link]['src_port_nr']
@@ -319,10 +331,15 @@ class DCNetwork(Containernet):
             # if all shortest paths are wanted, use: all_shortest_paths
             path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=kwargs.get('weight'))
         except:
-            logging.info("No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name))
+            LOG.exception("No path could be found between {0} and {1} using src_sw={2} and dst_sw={3}".format(
+                vnf_src_name, vnf_dst_name, src_sw, dst_sw))
+            LOG.debug("Graph nodes: %r" % self.DCNetwork_graph.nodes())
+            LOG.debug("Graph edges: %r" % self.DCNetwork_graph.edges())
+            for e, v in self.DCNetwork_graph.edges():
+                LOG.debug("%r" % self.DCNetwork_graph[e][v])
             return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
 
-        logging.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
+        LOG.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
 
         current_hop = src_sw
         switch_inport_nr = src_sw_inport_nr
@@ -347,9 +364,9 @@ class DCNetwork(Containernet):
 
             if next_hop == vnf_dst_name:
                 switch_outport_nr = dst_sw_outport_nr
-                logging.info("end node reached: {0}".format(vnf_dst_name))
+                LOG.info("end node reached: {0}".format(vnf_dst_name))
             elif not isinstance( next_node, OVSSwitch ):
-                logging.info("Next node: {0} is not a switch".format(next_hop))
+                LOG.info("Next node: {0} is not a switch".format(next_hop))
                 return "Next node: {0} is not a switch".format(next_hop)
             else:
                 # take first link between switches by default
@@ -479,7 +496,7 @@ class DCNetwork(Containernet):
             ofcmd = ''
 
         node.dpctl(cmd, ofcmd)
-        logging.info("{3} in switch: {0} in_port: {1} out_port: {2}".format(node.name, switch_inport_nr,
+        LOG.info("{3} in switch: {0} in_port: {1} out_port: {2}".format(node.name, switch_inport_nr,
                                                                                  switch_outport_nr, cmd))
 
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
@@ -501,19 +518,16 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen([ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
         time.sleep(1)
 
-    def stopRyu(self):
+    def killRyu(self):
+        """
+        Stop the Ryu controller that might be started by son-emu.
+        :return:
+        """
+        # try it nicely
         if self.ryu_process is not None:
             self.ryu_process.terminate()
             self.ryu_process.kill()
-        self.killRyu()
-
-    @staticmethod
-    def removeLeftoverContainers():
-        # TODO can be more python-based using eg. docker-py?
-        Popen('docker ps -a -q --filter="name=mn.*" | xargs -r docker rm -f', shell=True)
-
-    @staticmethod
-    def killRyu():
+        # ensure its death ;-)
         Popen(['pkill', '-f', 'ryu-manager'])
 
     def ryu_REST(self, prefix, dpid=None, data=None):
@@ -523,7 +537,7 @@ class DCNetwork(Containernet):
             else:
                 url = self.ryu_REST_api + '/' + str(prefix)
             if data:
-                #logging.info('POST: {0}'.format(str(data)))
+                #LOG.info('POST: {0}'.format(str(data)))
                 req = urllib2.Request(url, str(data))
             else:
                 req = urllib2.Request(url)
@@ -531,8 +545,8 @@ class DCNetwork(Containernet):
             ret = urllib2.urlopen(req).read()
             return ret
         except:
-            logging.info('error url: {0}'.format(str(url)))
-            if data: logging.info('error POST: {0}'.format(str(data)))
+            LOG.info('error url: {0}'.format(str(url)))
+            if data: LOG.info('error POST: {0}'.format(str(data)))
 
     # need to respect that some match fields must be integers
     # http://ryu.readthedocs.io/en/latest/app/ofctl_rest.html#description-of-match-and-actions
