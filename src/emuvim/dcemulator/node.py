@@ -32,7 +32,7 @@ import logging
 import time
 import json
 
-LOG = logging.getLogger("dcemulator")
+LOG = logging.getLogger("dcemulator.node")
 LOG.setLevel(logging.DEBUG)
 
 
@@ -191,6 +191,9 @@ class Datacenter(object):
         # if no --net option is given, network = [{}], so 1 empty dict in the list
         # this results in 1 default interface with a default ip address
         for nw in network:
+            # clean up network configuration (e.g. RTNETLINK does not allow ':' in intf names
+            if nw.get("id") is not None:
+                nw["id"] = self._clean_ifname(nw["id"])
             # TODO we cannot use TCLink here (see: https://github.com/mpeuster/containernet/issues/3)
             self.net.addLink(d, self.switch, params1=nw, cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
@@ -255,4 +258,20 @@ class Datacenter(object):
         self._resource_model = rm
         self.net.rm_registrar.register(self, rm)
         LOG.info("Assigned RM: %r to DC: %r" % (rm, self))
+
+    @staticmethod
+    def _clean_ifname(name):
+        """
+        Cleans up given string to be a
+        RTNETLINK compatible interface name.
+        :param name: string
+        :return: string
+        """
+        if name is None:
+            return "if0"
+        name = name.replace(":", "-")
+        name = name.replace(" ", "-")
+        name = name.replace(".", "-")
+        name = name.replace("_", "-")
+        return name
 

@@ -43,7 +43,7 @@ logging.basicConfig(level=logging.INFO)
 
 def create_topology1():
     # create topology
-    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning = False)
+    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=False)
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
     s1 = net.addSwitch("s1")
@@ -52,6 +52,7 @@ def create_topology1():
 
     # add the command line interface endpoint to each DC (REST API)
     rapi1 = RestApiEndpoint("0.0.0.0", 5001)
+    rapi1.connectDCNetwork(net)
     rapi1.connectDatacenter(dc1)
     rapi1.connectDatacenter(dc2)
     # run API endpoint server (in another thread, don't block)
