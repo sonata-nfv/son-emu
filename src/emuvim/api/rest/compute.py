@@ -106,10 +106,10 @@ class ComputeList(Resource):
 
     global dcs
 
-    def get(self, dc_label):
+    def get(self, dc_label=None):
         logging.debug("API CALL: compute list")
         try:
-            if dc_label == 'None':
+            if dc_label is None:
                 # return list with all compute nodes in all DCs
                 all_containers = []
                 for dc in dcs.itervalues():
