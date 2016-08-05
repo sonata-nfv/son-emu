@@ -85,6 +85,7 @@ class NetworkAction(Resource):
             match = data.get("match")
             bidirectional = data.get("bidirectional")
             cookie = data.get("cookie")
+            priority = data.get("priority")
             c = net.setChain(
                 vnf_src_name, vnf_dst_name,
                 vnf_src_interface=vnf_src_interface,
@@ -93,7 +94,8 @@ class NetworkAction(Resource):
                 weight=weight,
                 match=match,
                 bidirectional=bidirectional,
-                cookie=cookie)
+                cookie=cookie,
+                priority=priority)
             # return setChain response
             return str(c), 200
         except Exception as ex:
