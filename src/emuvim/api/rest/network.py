@@ -53,6 +53,7 @@ class NetworkAction(Resource):
     :param match: OpenFlow match format of the flow entry
     :param bidirectional: boolean value if the link needs to be implemented from src to dst and back
     :param cookie: cookie value, identifier of the flow entry to be installed.
+    :param priority: integer indicating the priority of the flow entry
     :return: message string indicating if the chain action is succesful or not
     """
 
