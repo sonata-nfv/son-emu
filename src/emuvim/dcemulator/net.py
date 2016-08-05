@@ -405,6 +405,7 @@ class DCNetwork(Containernet):
         path = kwargs.get('path')
         current_hop = kwargs.get('current_hop')
         vlan = kwargs.get('vlan')
+        priority = kwargs.get('priority')
 
         s = ','
         if match_input:
@@ -415,7 +416,8 @@ class DCNetwork(Containernet):
 
         if cookie:
             flow['cookie'] = int(cookie)
-
+        if priority:
+            flow['priority'] = int(priority)
 
         flow['actions'] = []
 
