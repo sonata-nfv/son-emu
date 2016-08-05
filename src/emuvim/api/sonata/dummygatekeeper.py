@@ -225,7 +225,16 @@ class Service(object):
             # 3. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
-            self.vnf_name2docker_name[vnf_name] = GK.get_next_vnf_name()
+
+            # use the vnf_id in the nsd as docker name
+            # so deployed containers can be easily mapped back to the nsd
+            vnf_name2id = defaultdict(lambda: "NotExistingNode",
+                                          reduce(lambda x, y: dict(x, **y),
+                                                 map(lambda d: {d["vnf_name"]: d["vnf_id"]},
+                                                     self.nsd["network_functions"])))
+            self.vnf_name2docker_name[vnf_name] = vnf_name2id[vnf_name]
+            # self.vnf_name2docker_name[vnf_name] = GK.get_next_vnf_name()
+
             LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
