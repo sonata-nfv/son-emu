@@ -225,9 +225,7 @@ class Service(object):
             # 3. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
-            # mgmt connection points can be skipped, this is considered to be the connection the default docker0 bridge
-            intfs = [intf for intf in intfs if 'mgmt' not in intf['id']]
-            
+
             # use the vnf_id in the nsd as docker name
             # so deployed containers can be easily mapped back to the nsd
             vnf_name2id = defaultdict(lambda: "NotExistingNode",
