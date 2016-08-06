@@ -348,6 +348,7 @@ class DCNetworkMonitor():
                 data = {}
 
                 data['cookie'] = flow_dict['cookie']
+                data['cookie_mask'] = flow_dict['cookie']
 
                 if 'tx' in flow_dict['metric_key']:
                     data['match'] = {'in_port':flow_dict['mon_port']}
