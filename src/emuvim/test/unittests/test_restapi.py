@@ -37,13 +37,13 @@ import subprocess
 from emuvim.dcemulator.node import EmulatorCompute
 import ast
 
-class testRestApi( SimpleTestTopology ):
+
+class testRestApi(SimpleTestTopology):
     """
     Tests to check the REST API endpoints of the emulator.
     """
 
     def testRestApi(self):
-
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)
 
@@ -121,7 +121,7 @@ class testRestApi( SimpleTestTopology ):
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         subprocess.call("son-emu-cli compute status -d datacenter0 -n vnf1", shell=True)
         output = subprocess.check_output("son-emu-cli compute status -d datacenter0 -n vnf1", shell=True)
-        output= ast.literal_eval(output)
+        output = ast.literal_eval(output)
 
         # check compute status result
         self.assertTrue(output["name"] == "vnf1")
