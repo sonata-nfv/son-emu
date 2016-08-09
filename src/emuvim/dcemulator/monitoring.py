@@ -359,8 +359,8 @@ class DCNetworkMonitor():
                 # query Ryu
                 ret = self.net.ryu_REST('stats/flow', dpid=flow_dict['switch_dpid'], data=data)
                 flow_stat_dict = ast.literal_eval(ret)
-
                 logging.debug('received flow stat:{0} '.format(flow_stat_dict))
+
                 self.set_flow_metric(flow_dict, flow_stat_dict)
 
             self.monitor_flow_lock.release()
