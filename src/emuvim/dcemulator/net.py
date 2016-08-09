@@ -32,8 +32,7 @@ import time
 from subprocess import Popen
 import os
 import re
-import urllib2
-from functools import partial
+import requests
 
 from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
@@ -540,11 +539,14 @@ class DCNetwork(Containernet):
                 url = self.ryu_REST_api + '/' + str(prefix)
             if data:
                 #LOG.info('POST: {0}'.format(str(data)))
-                req = urllib2.Request(url, str(data))
+                #req = urllib2.Request(url, str(data))
+                req = requests.post(url, data=str(data))
             else:
-                req = urllib2.Request(url)
+                #req = urllib2.Request(url)
+                req = requests.get(url)
 
-            ret = urllib2.urlopen(req).read()
+            #ret = urllib2.urlopen(req).read()
+            ret = req.text
             return ret
         except:
             LOG.info('error url: {0}'.format(str(url)))
