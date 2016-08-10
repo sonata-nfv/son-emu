@@ -30,10 +30,8 @@ import logging
 import site
 import time
 from subprocess import Popen
-import os
 import re
-import urllib2
-from functools import partial
+import requests
 
 from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
@@ -94,9 +92,10 @@ class DCNetwork(Containernet):
         self.vlans = range(4096)[::-1]
 
         # link to Ryu REST_API
-        ryu_ip = '0.0.0.0'
+        ryu_ip = 'localhost'
         ryu_port = '8080'
         self.ryu_REST_api = 'http://{0}:{1}'.format(ryu_ip, ryu_port)
+        self.RyuSession = requests.Session()
 
         # monitoring agent
         if monitor:
@@ -261,8 +260,22 @@ class DCNetwork(Containernet):
     def CLI(self):
         CLI(self)
 
-    # to remove chain do setChain( src, dst, cmd='del-flows')
     def setChain(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None, **kwargs):
+        """
+        Chain 2 vnf interfaces together by installing the flowrules in the switches along their path.
+        Currently the path is found using the default networkx shortest path function.
+        Each chain gets a unique vlan id , so different chains wil not interfere.
+
+        :param vnf_src_name: vnf name (string)
+        :param vnf_dst_name: vnf name (string)
+        :param vnf_src_interface: source interface name  (string)
+        :param vnf_dst_interface: destination interface name  (string)
+        :param cmd: 'add-flow' (default) to add a chain, 'del-flows' to remove a chain
+        :param cookie: cookie for the installed flowrules (can be used later as identifier for a set of installed chains)
+        :param match: custom match entry to be added to the flowrules (default: only in_port and vlan tag)
+        :param priority: custom flowrule priority
+        :return: output log string
+        """
         cmd = kwargs.get('cmd')
         if cmd == 'add-flow':
             ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
@@ -533,22 +546,35 @@ class DCNetwork(Containernet):
         Popen(['pkill', '-f', 'ryu-manager'])
 
     def ryu_REST(self, prefix, dpid=None, data=None):
-        try:
-            if dpid:
-                url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
-            else:
-                url = self.ryu_REST_api + '/' + str(prefix)
-            if data:
-                #LOG.info('POST: {0}'.format(str(data)))
-                req = urllib2.Request(url, str(data))
-            else:
-                req = urllib2.Request(url)
 
-            ret = urllib2.urlopen(req).read()
+        if dpid:
+            url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
+        else:
+            url = self.ryu_REST_api + '/' + str(prefix)
+        if data:
+            req = self.RyuSession.post(url, json=data)
+        else:
+            req = self.RyuSession.get(url)
+
+
+        # do extra logging if status code is not 200 (OK)
+        if req.status_code is not requests.codes.ok:
+            logging.info(
+                'type {0}  encoding: {1} text: {2} headers: {3} history: {4}'.format(req.headers['content-type'],
+                                                                                     req.encoding, req.text,
+                                                                                     req.headers, req.history))
+            LOG.info('url: {0}'.format(str(url)))
+            if data: LOG.info('POST: {0}'.format(str(data)))
+            LOG.info('status: {0} reason: {1}'.format(req.status_code, req.reason))
+
+
+        if 'json' in req.headers['content-type']:
+            ret = req.json()
             return ret
-        except:
-            LOG.info('error url: {0}'.format(str(url)))
-            if data: LOG.info('error POST: {0}'.format(str(data)))
+
+        ret = req.text.rstrip()
+        return ret
+
 
     # need to respect that some match fields must be integers
     # http://ryu.readthedocs.io/en/latest/app/ofctl_rest.html#description-of-match-and-actions

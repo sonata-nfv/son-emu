@@ -60,8 +60,11 @@ class RestApiEndpoint(object):
         self.api = Api(self.app)
 
         # setup endpoints
+
         self.api.add_resource(Compute, "/restapi/compute/<dc_label>/<compute_name>")
-        self.api.add_resource(ComputeList, "/restapi/compute/<dc_label>")
+        self.api.add_resource(ComputeList,
+                      "/restapi/compute",
+                      "/restapi/compute/<dc_label>")
 
         self.api.add_resource(DatacenterStatus, "/restapi/datacenter/<dc_label>")
         self.api.add_resource(DatacenterList, "/restapi/datacenter")
