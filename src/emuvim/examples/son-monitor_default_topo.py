@@ -79,7 +79,9 @@ def exit_gracefully(signum, frame):
     """
     7. At shutdown, we should receive th SIGTERM signal here and shutdown gracefully
     """
-    # TODO: investigate why this is not called by the sigterm handler
+    # TODO: investigate why this is not called by the sigterm handler, 
+    # probably because son-emu container is started with pid=host, so the started python script has not pid=0
+    # and docker stop only sends sigterm to pid=0
 
     global net
     global cli
