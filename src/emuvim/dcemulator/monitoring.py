@@ -27,6 +27,7 @@ partner consortium (www.sonata-nfv.eu).
 """
 
 import logging
+import sys
 from mininet.node import  OVSSwitch
 import ast
 import time
@@ -358,7 +359,13 @@ class DCNetworkMonitor():
 
                 # query Ryu
                 ret = self.net.ryu_REST('stats/flow', dpid=flow_dict['switch_dpid'], data=data)
-                flow_stat_dict = ast.literal_eval(ret)
+                if isinstance(ret, dict):
+                    flow_stat_dict = ret
+                elif isinstance(ret, basestring):
+                    flow_stat_dict = ast.literal_eval(ret.rstrip())
+                else:
+                    flow_stat_dict = None
+
                 logging.debug('received flow stat:{0} '.format(flow_stat_dict))
 
                 self.set_flow_metric(flow_dict, flow_stat_dict)
@@ -447,13 +454,6 @@ class DCNetworkMonitor():
         previous_monitor_time = metric_dict['previous_monitor_time']
         cookie = metric_dict['cookie']
 
-        # TODO aggregate all found flow stats
-        #flow_stat = flow_stat_dict[str(switch_dpid)][0]
-        #if 'bytes' in metric_key:
-        #    counter = flow_stat['byte_count']
-        #elif 'packet' in metric_key:
-        #    counter = flow_stat['packet_count']
-
         counter = 0
         for flow_stat in flow_stat_dict[str(switch_dpid)]:
             if 'bytes' in metric_key:
@@ -467,7 +467,10 @@ class DCNetworkMonitor():
         self.prom_metrics[metric_dict['metric_key']]. \
             labels({'vnf_name': vnf_name, 'vnf_interface': vnf_interface, 'flow_id': cookie}). \
             set(counter)
-        pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
+        try:
+            pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
+        except Exception, e:
+            logging.warning("Pushgateway not reachable: {0} {1}".format(Exception, e))
 
 
     def start_Prometheus(self, port=9090):
