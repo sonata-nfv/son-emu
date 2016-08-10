@@ -25,7 +25,7 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
-from requests import get,put
+from requests import get, put, delete
 from tabulate import tabulate
 import pprint
 import argparse
@@ -33,8 +33,8 @@ import json
 
 pp = pprint.PrettyPrinter(indent=4)
 
-class RestApiClient():
 
+class RestApiClient():
     def __init__(self):
         self.cmds = {}
 
@@ -47,29 +47,29 @@ class RestApiClient():
 
     def start(self, args):
 
-        req = {'image':args.get("image"),
-               'command':args.get("docker_command"),
-               'network':args.get("network")}
+        req = {'image': args.get("image"),
+               'command': args.get("docker_command"),
+               'network': args.get("network")}
 
-        response = put("%s/restapi/compute/%s/%s/start" %
+        response = put("%s/restapi/compute/%s/%s" %
                        (args.get("endpoint"),
                         args.get("datacenter"),
                         args.get("name")),
-                        json = req)
+                       json=req)
 
         pp.pprint(response.json())
 
     def stop(self, args):
 
-        response = get("%s/restapi/compute/%s/%s/stop" %
-                       (args.get("endpoint"),
-                        args.get("datacenter"),
-                        args.get("name")))
+        response = delete("%s/restapi/compute/%s/%s" %
+                          (args.get("endpoint"),
+                           args.get("datacenter"),
+                           args.get("name")))
         pp.pprint(response.json())
 
-    def list(self,args):
+    def list(self, args):
 
-        list = get('%s/restapi/compute/%s' % (args.get("endpoint"),args.get('datacenter'))).json()
+        list = get('%s/restapi/compute/%s' % (args.get("endpoint"), args.get('datacenter'))).json()
 
         table = []
         for c in list:
@@ -98,16 +98,17 @@ class RestApiClient():
                    "Status"]
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
-    def status(self,args):
+    def status(self, args):
 
         list = get("%s/restapi/compute/%s/%s" %
                    (args.get("endpoint"),
                     args.get("datacenter"),
                     args.get("name"))).json()
+
         pp.pprint(list)
 
 
-parser = argparse.ArgumentParser(description='son-emu datacenter')
+parser = argparse.ArgumentParser(description='son-emu compute')
 parser.add_argument(
     "command",
     choices=['start', 'stop', 'list', 'status'],
@@ -119,7 +120,7 @@ parser.add_argument(
     "--name", "-n", dest="name",
     help="Name of compute instance e.g. 'vnf1'.")
 parser.add_argument(
-    "--image","-i", dest="image",
+    "--image", "-i", dest="image",
     help="Name of container image to be used e.g. 'ubuntu:trusty'")
 parser.add_argument(
     "--dcmd", "-c", dest="docker_command",
@@ -132,6 +133,7 @@ parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",
     help="UUID of the plugin to be manipulated.")
+
 
 def main(argv):
     args = vars(parser.parse_args(argv))
