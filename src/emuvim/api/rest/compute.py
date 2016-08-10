@@ -34,7 +34,8 @@ logging.basicConfig(level=logging.INFO)
 
 dcs = {}
 
-class ComputeStart(Resource):
+
+class Compute(Resource):
     """
     Start a new compute instance: A docker container (note: zerorpc does not support keyword arguments)
     :param dc_label: name of the DC
@@ -48,24 +49,43 @@ class ComputeStart(Resource):
     global dcs
 
     def put(self, dc_label, compute_name):
-        logging.debug("API CALL: compute start")
+
+        # check if json data is a dict
+        data = request.json
+        if data is None:
+            data = {}
+        elif type(data) is not dict:
+            data = json.loads(request.json)
+
+        network = data.get("network")
+        nw_list = self._parse_network(network)
+        image = data.get("image")
+        command = data.get("docker_command")
+
         try:
-            #check if json data is a dict
-            data = request.json
-            if data is None:
-                data = {}
-            elif type(data) is not dict:
-                data = json.loads(request.json)
-
-            network = data.get("network")
-            nw_list = self._parse_network(network)
-            image = data.get("image")
-            command = data.get("docker_command")
-
+            logging.debug("API CALL: compute start")
             c = dcs.get(dc_label).startCompute(
-                compute_name, image= image, command= command, network= nw_list)
+                compute_name, image=image, command=command, network=nw_list)
             # return docker inspect dict
             return c.getStatus(), 200
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500
+
+    def get(self, dc_label, compute_name):
+
+        logging.debug("API CALL: compute status")
+
+        try:
+            return dcs.get(dc_label).containers.get(compute_name).getStatus(), 200
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500
+
+    def delete(self, dc_label, compute_name):
+        logging.debug("API CALL: compute stop")
+        try:
+            return dcs.get(dc_label).stopCompute(compute_name), 200
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
@@ -79,7 +99,7 @@ class ComputeStart(Resource):
         nw_list = list()
 
         # TODO make this more robust with regex check
-        if network_str is None :
+        if network_str is None:
             return nw_list
 
         networks = network_str[1:-1].split('),(')
@@ -89,21 +109,8 @@ class ComputeStart(Resource):
 
         return nw_list
 
-class ComputeStop(Resource):
-
-    global dcs
-
-    def get(self, dc_label, compute_name):
-        logging.debug("API CALL: compute stop")
-        try:
-            return dcs.get(dc_label).stopCompute(compute_name), 200
-        except Exception as ex:
-            logging.exception("API error.")
-            return ex.message,500
-
 
 class ComputeList(Resource):
-
     global dcs
 
     def get(self, dc_label=None):
@@ -118,28 +125,13 @@ class ComputeList(Resource):
             else:
                 # return list of compute nodes for specified DC
                 return [(c.name, c.getStatus())
-                    for c in dcs.get(dc_label).listCompute()], 200
+                        for c in dcs.get(dc_label).listCompute()], 200
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
 
-
-class ComputeStatus(Resource):
-
-    global dcs
-
-    def get(self, dc_label, compute_name):
-
-        logging.debug("API CALL: compute list")
-
-        try:
-            return dcs.get(dc_label).containers.get(compute_name).getStatus(), 200
-        except Exception as ex:
-            logging.exception("API error.")
-            return ex.message, 500
 
 class DatacenterList(Resource):
-
     global dcs
 
     def get(self):
@@ -150,8 +142,8 @@ class DatacenterList(Resource):
             logging.exception("API error.")
             return ex.message, 500
 
-class DatacenterStatus(Resource):
 
+class DatacenterStatus(Resource):
     global dcs
 
     def get(self, dc_label):
@@ -161,5 +153,3 @@ class DatacenterStatus(Resource):
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
-
-
