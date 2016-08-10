@@ -166,7 +166,9 @@ class Service(object):
         fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
 
-        cookie = 1  # not clear why this is needed - to check with Steven
+        # cookie is used as identifier for the flowrules installed by the dummygatekeeper
+        # eg. different services get a unique cookie for their flowrules
+        cookie = 1
         for link in eline_fwd_links:
             src_id, src_if_name = link["connection_points_reference"][0].split(":")
             dst_id, dst_if_name = link["connection_points_reference"][1].split(":")
@@ -187,7 +189,6 @@ class Service(object):
                     src_docker_name, dst_docker_name,
                     vnf_src_interface=src_if_name, vnf_dst_interface=dst_if_name,
                     bidirectional=True, cmd="add-flow", cookie=cookie)
-                cookie += 1
 
                 # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
                 src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
