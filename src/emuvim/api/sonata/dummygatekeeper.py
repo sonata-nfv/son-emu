@@ -110,6 +110,7 @@ class Service(object):
         self.eline_subnets_src = generate_subnet_strings(50, start=200, subnet_size=24, ip=1)
         self.eline_subnets_dst = generate_subnet_strings(50, start=200, subnet_size=24, ip=2)
 
+
     def onboard(self):
         """
         Do all steps to prepare this service to be instantiated
@@ -165,7 +166,9 @@ class Service(object):
         vlinks = self.nsd["virtual_links"]
         fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
+        elan_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-LAN")]
 
+        # 3a. deploy E-Line links
         # cookie is used as identifier for the flowrules installed by the dummygatekeeper
         # eg. different services get a unique cookie for their flowrules
         cookie = 1
@@ -188,7 +191,7 @@ class Service(object):
                 ret = network.setChain(
                     src_docker_name, dst_docker_name,
                     vnf_src_interface=src_if_name, vnf_dst_interface=dst_if_name,
-                    bidirectional=True, cmd="add-flow", cookie=cookie)
+                    bidirectional=True, cmd="add-flow", cookie=cookie, priority=10)
 
                 # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
                 src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
@@ -197,6 +200,33 @@ class Service(object):
                 dst_vnfi = self._get_vnf_instance(instance_uuid, dst_name)
                 if dst_vnfi is not None:
                     self._vnf_reconfigure_network(dst_vnfi, dst_if_name, self.eline_subnets_dst.pop(0))
+
+        # 3b. deploy E-LAN links
+        base = 10
+        for link in elan_fwd_links:
+            # generate lan ip address
+            ip = 1
+            for intf in link["connection_points_reference"]:
+                ip_address = generate_lan_string("10.0", base, subnet_size=24, ip=ip)
+                vnf_id, intf_name = intf.split(":")
+                vnf_name = vnf_id2vnf_name[vnf_id]
+                LOG.debug(
+                    "Setting up E-LAN link. %s(%s:%s) -> %s" % (
+                        vnf_name, vnf_id, intf_name, ip_address))
+
+                if vnf_name in self.vnfds:
+                    # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
+                    # E-LAN relies on the learning switch capability of the infrastructure switch in dockernet,
+                    # so no explicit chaining is necessary
+                    vnfi = self._get_vnf_instance(instance_uuid, vnf_name)
+                    if vnfi is not None:
+                        self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
+                        # increase for the next ip address on this E-LAN
+                        ip += 1
+            # increase the base ip address for the next E-LAN
+            base += 1
+
+
 
         # 4. run the emulator specific entrypoint scripts in the VNFIs of this service instance
         self._trigger_emulator_start_scripts_in_vnfis(self.instances[instance_uuid]["vnf_instances"])
@@ -551,6 +581,14 @@ def make_relative_path(path):
     if path.startswith("/"):
         path = path.replace("/", "", 1)
     return path
+
+
+def generate_lan_string(prefix, base, subnet_size=24, ip=0):
+    """
+    Helper to generate different network configuration strings.
+    """
+    r = "%s.%d.%d/%d" % (prefix, base, ip, subnet_size)
+    return r
 
 
 def generate_subnet_strings(n, start=1, subnet_size=24, ip=0):
