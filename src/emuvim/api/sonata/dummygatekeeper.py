@@ -129,7 +129,7 @@ class Service(object):
         else:
             self._load_docker_urls()
             self._pull_predefined_dockerimages()
-        LOG.info("On-boarded service: %r" % self.manifest.get("package_name"))
+        LOG.info("On-boarded service: %r" % self.manifest.get("name"))
 
     def start_service(self):
         """
