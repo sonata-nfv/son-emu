@@ -25,30 +25,23 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
+"""
+Additional setup that installs 'son-emu-cli' in standalone mode.
+"""
 from setuptools import setup, find_packages
 
-setup(name='emuvim',
+setup(name='sonemucli',
       version='0.9',
       license='Apache 2.0',
-      description='emuvim is a VIM for the SONATA platform',
+      description='CLI client for son-emu',
       url='http://github.com/sonata-emu',
       author_email='sonata-dev@sonata-nfv.eu',
       package_dir={'': 'src'},
-      # packages=find_packages('emuvim', exclude=['*.test', '*.test.*', 'test.*', 'test']),
       packages=find_packages('src'),
       install_requires=[
-          'pyaml',
-          'zerorpc',
           'tabulate',
           'argparse',
-          'networkx',
-          'six>=1.9',
-          'ryu',
-          'oslo.config',
           'pytest',
-          'Flask',
-          'flask_restful',
-          'docker-py==1.7.1',
           'requests',
           'prometheus_client',
           'urllib3'
