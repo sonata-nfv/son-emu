@@ -6,6 +6,9 @@ __pycache__/
 #IDE
 .idea/
 
+# virtualenv
+venv
+
 # vagrant
 .vagrant/
 
