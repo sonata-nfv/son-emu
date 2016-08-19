@@ -77,24 +77,17 @@ class RestApiClient():
             if len(c) > 1:
                 name = c[0]
                 status = c[1]
-                eth0ip = None
-                eth0status = "down"
-                if len(status.get("network")) > 0:
-                    eth0ip = status.get("network")[0].get("ip")
-                    eth0status = "up" if status.get(
-                        "network")[0].get("up") else "down"
+                eth0ip = status.get("docker_network", "-")
                 table.append([status.get("datacenter"),
                               name,
                               status.get("image"),
                               eth0ip,
-                              eth0status,
                               status.get("state").get("Status")])
 
         headers = ["Datacenter",
                    "Container",
                    "Image",
-                   "eth0 IP",
-                   "eth0 status",
+                   "docker0",
                    "Status"]
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
@@ -108,7 +101,13 @@ class RestApiClient():
         pp.pprint(list)
 
 
-parser = argparse.ArgumentParser(description='son-emu compute')
+parser = argparse.ArgumentParser(description="""son-emu compute
+    
+    Examples:
+    - son-emu-cli compute start -d dc2 -n client -i sonatanfv/sonata-iperf3-vnf
+    - son-emu-cli list
+    - son-emu-cli compute status -d dc2 -n client
+    """, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument(
     "command",
     choices=['start', 'stop', 'list', 'status'],
