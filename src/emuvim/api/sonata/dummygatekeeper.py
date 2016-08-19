@@ -42,6 +42,7 @@ from docker import Client as DockerClient
 from flask import Flask, request
 import flask_restful as fr
 from collections import defaultdict
+import pkg_resources
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -60,6 +61,9 @@ GK_STANDALONE_MODE = False
 
 # should a new version of an image be pulled even if its available
 FORCE_PULL = False
+
+# Automatically deploy SAPs (endpoints) of the service as new containers
+DEPLOY_SAP = False
 
 class Gatekeeper(object):
 
@@ -106,6 +110,7 @@ class Service(object):
         self.remote_docker_image_urls = dict()
         self.instances = dict()
         self.vnf_name2docker_name = dict()
+        self.sap_identifiers = set()
         # lets generate a set of subnet configurations used for e-line chaining setup
         self.eline_subnets_src = generate_subnet_strings(50, start=200, subnet_size=24, ip=1)
         self.eline_subnets_dst = generate_subnet_strings(50, start=200, subnet_size=24, ip=2)
@@ -122,6 +127,8 @@ class Service(object):
         self._load_package_descriptor()
         self._load_nsd()
         self._load_vnfd()
+        if DEPLOY_SAP:
+            self._load_saps()
         # 3. prepare container images (e.g. download or build Dockerfile)
         if BUILD_DOCKERFILE:
             self._load_docker_files()
@@ -147,7 +154,13 @@ class Service(object):
         self.instances[instance_uuid] = dict()
         self.instances[instance_uuid]["vnf_instances"] = list()
 
-        # 2. compute placement of this service instance (adds DC names to VNFDs)
+        # 2. Configure the chaining of the network functions (currently only E-Line and E-LAN links supported)
+        vnf_id2vnf_name = defaultdict(lambda: "NotExistingNode",
+                                      reduce(lambda x, y: dict(x, **y),
+                                             map(lambda d: {d["vnf_id"]: d["vnf_name"]},
+                                                 self.nsd["network_functions"])))
+
+        # 3. compute placement of this service instance (adds DC names to VNFDs)
         if not GK_STANDALONE_MODE:
             self._calculate_placement(FirstDcPlacement)
         # iterate over all vnfds that we have to start
@@ -157,24 +170,31 @@ class Service(object):
                 vnfi = self._start_vnfd(vnfd)
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
 
-        # 3. Configure the chaining of the network functions (currently only E-Line and E-LAN links supported)
-        vnf_id2vnf_name = defaultdict(lambda: "NotExistingNode",
-                                reduce(lambda x, y: dict(x, **y),
-                                       map(lambda d: {d["vnf_id"]: d["vnf_name"]},
-                                           self.nsd["network_functions"])))
-        
         vlinks = self.nsd["virtual_links"]
         fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
         elan_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-LAN")]
 
-        # 3a. deploy E-Line links
+        # 4a. deploy E-Line links
         # cookie is used as identifier for the flowrules installed by the dummygatekeeper
         # eg. different services get a unique cookie for their flowrules
         cookie = 1
         for link in eline_fwd_links:
             src_id, src_if_name = link["connection_points_reference"][0].split(":")
             dst_id, dst_if_name = link["connection_points_reference"][1].split(":")
+
+            # check if there is a SAP in the link
+            if src_id in self.sap_identifiers:
+                src_docker_name = "{0}_{1}".format(src_id, src_if_name)
+                src_id = src_docker_name
+            else:
+                src_docker_name = src_id
+
+            if dst_id in self.sap_identifiers:
+                dst_docker_name = "{0}_{1}".format(dst_id, dst_if_name)
+                dst_id = dst_docker_name
+            else:
+                dst_docker_name = dst_id
 
             src_name = vnf_id2vnf_name[src_id]
             dst_name = vnf_id2vnf_name[dst_id]
@@ -185,8 +205,6 @@ class Service(object):
 
             if (src_name in self.vnfds) and (dst_name in self.vnfds):
                 network = self.vnfds[src_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
-                src_docker_name = self.vnf_name2docker_name[src_name]
-                dst_docker_name = self.vnf_name2docker_name[dst_name]
                 LOG.debug(src_docker_name)
                 ret = network.setChain(
                     src_docker_name, dst_docker_name,
@@ -201,7 +219,7 @@ class Service(object):
                 if dst_vnfi is not None:
                     self._vnf_reconfigure_network(dst_vnfi, dst_if_name, self.eline_subnets_dst.pop(0))
 
-        # 3b. deploy E-LAN links
+        # 4b. deploy E-LAN links
         base = 10
         for link in elan_fwd_links:
             # generate lan ip address
@@ -209,6 +227,9 @@ class Service(object):
             for intf in link["connection_points_reference"]:
                 ip_address = generate_lan_string("10.0", base, subnet_size=24, ip=ip)
                 vnf_id, intf_name = intf.split(":")
+                if vnf_id in self.sap_identifiers:
+                    src_docker_name = "{0}_{1}".format(vnf_id, intf_name)
+                    vnf_id = src_docker_name
                 vnf_name = vnf_id2vnf_name[vnf_id]
                 LOG.debug(
                     "Setting up E-LAN link. %s(%s:%s) -> %s" % (
@@ -226,9 +247,7 @@ class Service(object):
             # increase the base ip address for the next E-LAN
             base += 1
 
-
-
-        # 4. run the emulator specific entrypoint scripts in the VNFIs of this service instance
+        # 5. run the emulator specific entrypoint scripts in the VNFIs of this service instance
         self._trigger_emulator_start_scripts_in_vnfis(self.instances[instance_uuid]["vnf_instances"])
 
         LOG.info("Service started. Instance id: %r" % instance_uuid)
@@ -257,6 +276,7 @@ class Service(object):
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
 
+            # TODO: get all vnf id's from the nsd for this vnfd and use those as dockername
             # use the vnf_id in the nsd as docker name
             # so deployed containers can be easily mapped back to the nsd
             vnf_name2id = defaultdict(lambda: "NotExistingNode",
@@ -359,6 +379,28 @@ class Service(object):
                     vnfd = load_yaml(vnfd_path)
                     self.vnfds[vnfd.get("name")] = vnfd
                     LOG.debug("Loaded VNFD: %r" % vnfd.get("name"))
+
+    def _load_saps(self):
+        # Each Service Access Point (connection_point) in the nsd is getting its own container
+        SAPs = [p["id"] for p in self.nsd["connection_points"] if p["type"] == "interface"]
+        for sap in SAPs:
+            # endpoints needed in this service
+            sap_vnf_id, sap_vnf_interface = sap.split(':')
+            # set of the connection_point ids found in the nsd (in the examples this is 'ns')
+            self.sap_identifiers.add(sap_vnf_id)
+
+            sap_docker_name = sap.replace(':', '_')
+
+            # add SAP to self.vnfds
+            sapfile = pkg_resources.resource_filename(__name__, "sap_vnfd.yml")
+            sap_vnfd = load_yaml(sapfile)
+            sap_vnfd["connection_points"][0]["id"] = sap_vnf_interface
+            sap_vnfd["name"] = sap_docker_name
+            self.vnfds[sap_docker_name] = sap_vnfd
+            # add SAP vnf to list in the NSD so it is deployed later on
+            # each SAP get a unique VNFD and vnf_id in the NSD
+            self.nsd["network_functions"].append({"vnf_id": sap_docker_name, "vnf_name": sap_docker_name})
+            LOG.debug("Loaded SAP: %r" % sap_vnfd.get("name"))
 
     def _load_docker_files(self):
         """
