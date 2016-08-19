@@ -1,0 +1,50 @@
+
+---
+##
+## Some general information regarding this
+## VNF descriptor.
+##
+descriptor_version: "vnfd-schema-01"
+vendor: "eu.sonata-nfv"
+name: "sap_vnf"
+version: "0.1"
+author: "Steven Van Rossem, Ghent University, steven.vanrossem@intec.ugent.be"
+description: "An empty ubuntu VNF; used as SAP"
+##
+## The virtual deployment unit.
+##
+virtual_deployment_units:
+  - id: "1"
+    vm_image: "registry.sonata-nfv.eu:5000/son-emu-sap"
+    vm_image_format: "docker"
+    resource_requirements:
+      cpu:
+        vcpus: 1
+      memory:
+        size: 1
+        size_unit: "GB"
+      storage:
+        size: 1
+        size_unit: "GB"
+    connection_points:
+      - id: "vdu01:cp01"
+        type: "interface"
+
+##
+## The virtual links that interconnect
+## the different connections points.
+##
+virtual_links:
+  - id: "port"
+    connectivity_type: "E-Line"
+    connection_points_reference:
+      - "vdu01:cp02"
+      - "port"
+
+##
+## The VNF connection points to the
+## outside world.
+##
+connection_points:
+  - id: "port"
+    type: "interface"

@@ -67,7 +67,7 @@ def create_topology1():
     rapi1.start()
 
     # add the SONATA dummy gatekeeper to each DC
-    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000)
+    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=True)
     sdkg1.connectDatacenter(dc1)
     sdkg1.connectDatacenter(dc2)
     # run the dummy gatekeeper (in another thread, don't block)
