@@ -44,23 +44,16 @@ logging.basicConfig(level=logging.INFO)
 class to read openflow stats from the Ryu controller of the DCNetwork
 """
 
+PUSHGATEWAY_PORT = 9091
+# we cannot use port 8080 because ryu-ofrest api  is already using that one
+CADVISOR_PORT = 8081
+
 class DCNetworkMonitor():
     def __init__(self, net):
         self.net = net
 
-        # TODO: these global variables should be part of a config file?
-        '''
-        # prometheus is started outside of son-emu
-        prometheus_ip = '127.0.0.1'
-        prometheus_port = '9090'
-        self.prometheus_REST_api = 'http://{0}:{1}'.format(prometheus_ip, prometheus_port)
-        '''
-        # helper variables to calculate the metrics
-        # pushgateway is started outside of son-emu and son-emu is started with net=host
-        # so localhost:9091 works
-        self.pushgateway = 'localhost:9091'
-        # when sdk is started with docker-compose, we could use
-        # self.pushgateway = 'pushgateway:9091'
+        # pushgateway address
+        self.pushgateway = 'localhost:{0}'.format(PUSHGATEWAY_PORT)
 
         # supported Prometheus metrics
         self.registry = CollectorRegistry()
@@ -103,7 +96,9 @@ class DCNetworkMonitor():
         self.monitor_flow_thread.start()
 
         # helper tools
-        # cAdvisor, Prometheus pushgateway and DB are started as external container, outside of son-emu
+        # cAdvisor, Prometheus pushgateway are started as external container, to gather monitoring metric in son-emu
+        self.pushgateway_process = self.start_PushGateway()
+        self.cadvisor_process = self.start_cAdvisor()
 
 
     # first set some parameters, before measurement can start
@@ -487,7 +482,7 @@ class DCNetworkMonitor():
         logging.info('Start Prometheus container {0}'.format(cmd))
         return Popen(cmd)
 
-    def start_PushGateway(self, port=9091):
+    def start_PushGateway(self, port=PUSHGATEWAY_PORT):
         cmd = ["docker",
                "run",
                "-d",
@@ -499,7 +494,7 @@ class DCNetworkMonitor():
         logging.info('Start Prometheus Push Gateway container {0}'.format(cmd))
         return Popen(cmd)
 
-    def start_cadvisor(self, port=8090):
+    def start_cAdvisor(self, port=CADVISOR_PORT):
         cmd = ["docker",
                "run",
                "--rm",
@@ -527,7 +522,7 @@ class DCNetworkMonitor():
             self.prometheus_process.terminate()
             self.prometheus_process.kill()
             self._stop_container('prometheus')
-
+        '''
         if self.pushgateway_process is not None:
             logging.info('stopping pushgateway container')
             self.pushgateway_process.terminate()
@@ -539,7 +534,6 @@ class DCNetworkMonitor():
             self.cadvisor_process.terminate()
             self.cadvisor_process.kill()
             self._stop_container('cadvisor')
-        '''
 
     def switch_tx_rx(self,metric=''):
         # when monitoring vnfs, the tx of the datacenter switch is actually the rx of the vnf
