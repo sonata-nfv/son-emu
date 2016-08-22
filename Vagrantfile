@@ -125,9 +125,35 @@ Vagrant.configure(2) do |config|
      echo "Running son-emu unit tests to validate installation"
      cd /home/vagrant/son-emu
      sudo python setup.py develop
-     sudo py.test -v
+     sudo py.test -v src/emuvim/test/unittests
+
+     # install son-cli
+     sudo apt-get install -y python-pip python-dev
+     sudo apt-get install -y python3.4 python3-dev libffi-dev libssl-dev libyaml-dev build-essential
+     sudo pip install virtualenv 
+     cd /home/vagrant
+     git clone https://github.com/sonata-nfv/son-cli.git
+     cd son-cli
+     virtualenv -p /usr/bin/python3.4 venv
+     source venv/bin/activate
+     python bootstrap.py
+     bin/buildout
+
+     # clone son-examples (disabled until repo goes public)
+     #cd /home/vagrant
+     #git clone https://github.com/sonata-nfv/son-examples.git
+
+     # pre-fetch sonata example vnfs from DockerHub
+     echo "Fetching SONATA example VNF container from DockerHub/sonatanfv"
+     sudo docker pull sonatanfv/sonata-empty-vnf 
+     sudo docker pull sonatanfv/sonata-iperf3-vnf 
+     sudo docker pull sonatanfv/sonata-snort-ids-vnf
+     sudo docker pull sonatanfv/sonata-ovs1-vnf
+     sudo docker pull sonatanfv/sonata-ryu-vnf
+     sudo docker pull sonatanfv/sonata-vtc-vnf
 
      # place motd
+     cd /home/vagrant/son-emu
      sudo cp utils/vagrant/motd /etc/motd
   SHELL
 
