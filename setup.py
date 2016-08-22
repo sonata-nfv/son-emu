@@ -36,6 +36,10 @@ setup(name='emuvim',
       package_dir={'': 'src'},
       # packages=find_packages('emuvim', exclude=['*.test', '*.test.*', 'test.*', 'test']),
       packages=find_packages('src'),
+      include_package_data=True,
+      package_data= {
+              'emuvim.api.sonata': ['*.yml']
+      },
       install_requires=[
           'pyaml',
           'zerorpc',
