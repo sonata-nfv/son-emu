@@ -38,6 +38,7 @@ import uuid
 import hashlib
 import zipfile
 import yaml
+import threading
 from docker import Client as DockerClient
 from flask import Flask, request
 import flask_restful as fr
@@ -332,8 +333,11 @@ class Service(object):
             for env_var in env:
                 if "SON_EMU_CMD=" in env_var:
                     cmd = str(env_var.split("=")[1])
-                    LOG.info("Executing entrypoint script in %r: %r" % (vnfi.name, cmd))
-                    vnfi.cmdPrint(cmd)
+                    LOG.info("Executing entry point script in %r: %r" % (vnfi.name, cmd))
+                    # execute command in new thread to ensure that GK is not blocked by VNF
+                    t = threading.Thread(target=vnfi.cmdPrint, args=(cmd,))
+                    t.daemon = True
+                    t.start()
 
     def _unpack_service_package(self):
         """
