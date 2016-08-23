@@ -29,6 +29,9 @@ partner consortium (www.sonata-nfv.eu).
 A simple topology with two PoPs for the y1 demo story board.
 
         (dc1) <<-->> s1 <<-->> (dc2)
+
+- SAP deployment enabled
+- learning switch enabled
 """
 
 import logging
@@ -43,7 +46,7 @@ logging.basicConfig(level=logging.INFO)
 
 def create_topology1():
     # create topology
-    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=False)
+    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=True)
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
     s1 = net.addSwitch("s1")
@@ -59,7 +62,7 @@ def create_topology1():
     rapi1.start()
 
     # add the SONATA dummy gatekeeper to each DC
-    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=False)
+    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=True)
     sdkg1.connectDatacenter(dc1)
     sdkg1.connectDatacenter(dc2)
     # run the dummy gatekeeper (in another thread, don't block)

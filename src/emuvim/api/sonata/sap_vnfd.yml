@@ -15,7 +15,7 @@ description: "An empty ubuntu VNF; used as SAP"
 ##
 virtual_deployment_units:
   - id: "1"
-    vm_image: "sonatanfv/sonata-iperf3-vnf"
+    vm_image: "sonatanfv/son-emu-sap"
     vm_image_format: "docker"
     resource_requirements:
       cpu:
