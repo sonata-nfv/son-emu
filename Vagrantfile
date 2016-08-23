@@ -160,6 +160,7 @@ Vagrant.configure(2) do |config|
      sudo docker pull sonatanfv/sonata-ovs1-vnf
      sudo docker pull sonatanfv/sonata-ryu-vnf
      sudo docker pull sonatanfv/sonata-vtc-vnf
+     sudo docker pull sonatanfv/son-emu-sap
   SHELL
 
   # TODO the native ansible provisioner does not work so we directly call the shell commands
