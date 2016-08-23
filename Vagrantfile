@@ -140,8 +140,17 @@ Vagrant.configure(2) do |config|
      bin/buildout
 
      # clone son-examples (disabled until repo goes public)
-     #cd /home/vagrant
-     #git clone https://github.com/sonata-nfv/son-examples.git
+     cd /home/vagrant
+     git clone https://github.com/sonata-nfv/son-examples.git
+
+     # prepare VM for some special containers (PF_RING)
+     cd /home/vagrant/son-examples/vnfs/sonata-vtc-vnf-docker/
+     chmod +x prepare_host.sh
+     sudo ./prepare_host.sh
+
+     # place motd
+     cd /home/vagrant/son-emu
+     sudo cp utils/vagrant/motd /etc/motd
 
      # pre-fetch sonata example vnfs from DockerHub
      echo "Fetching SONATA example VNF container from DockerHub/sonatanfv"
@@ -151,10 +160,7 @@ Vagrant.configure(2) do |config|
      sudo docker pull sonatanfv/sonata-ovs1-vnf
      sudo docker pull sonatanfv/sonata-ryu-vnf
      sudo docker pull sonatanfv/sonata-vtc-vnf
-
-     # place motd
-     cd /home/vagrant/son-emu
-     sudo cp utils/vagrant/motd /etc/motd
+     sudo docker pull sonatanfv/son-emu-sap
   SHELL
 
   # TODO the native ansible provisioner does not work so we directly call the shell commands
