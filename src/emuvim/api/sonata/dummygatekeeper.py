@@ -64,6 +64,7 @@ GK_STANDALONE_MODE = False
 FORCE_PULL = False
 
 # Automatically deploy SAPs (endpoints) of the service as new containers
+# Attention: This is not a configuration switch but a global variable! Don't change its default value.
 DEPLOY_SAP = False
 
 class Gatekeeper(object):
@@ -238,8 +239,8 @@ class Service(object):
 
                 if vnf_name in self.vnfds:
                     # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
-                    # E-LAN relies on the learning switch capability of the infrastructure switch in dockernet,
-                    # so no explicit chaining is necessary
+                    # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
+                    # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is necessary.
                     vnfi = self._get_vnf_instance(instance_uuid, vnf_name)
                     if vnfi is not None:
                         self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
