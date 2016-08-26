@@ -48,6 +48,8 @@ PUSHGATEWAY_PORT = 9091
 # we cannot use port 8080 because ryu-ofrest api  is already using that one
 CADVISOR_PORT = 8081
 
+COOKIE_MASK = 0xffffffff
+
 class DCNetworkMonitor():
     def __init__(self, net):
         self.net = net
@@ -344,7 +346,7 @@ class DCNetworkMonitor():
                 data = {}
 
                 data['cookie'] = flow_dict['cookie']
-                data['cookie_mask'] = flow_dict['cookie']
+                data['cookie_mask'] = COOKIE_MASK
 
                 if 'tx' in flow_dict['metric_key']:
                     data['match'] = {'in_port':flow_dict['mon_port']}
@@ -381,7 +383,12 @@ class DCNetworkMonitor():
 
                 # query Ryu
                 ret = self.net.ryu_REST('stats/port', dpid=dpid)
-                port_stat_dict = ast.literal_eval(ret)
+                if isinstance(ret, dict):
+                    port_stat_dict = ret
+                elif isinstance(ret, basestring):
+                    port_stat_dict = ast.literal_eval(ret.rstrip())
+                else:
+                    port_stat_dict = None
 
                 metric_list = [metric_dict for metric_dict in self.network_metrics
                                if int(metric_dict['switch_dpid'])==int(dpid)]
