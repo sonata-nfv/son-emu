@@ -248,7 +248,6 @@ class DCNetworkMonitor():
             network_metric['metric_key'] = metric
 
             self.monitor_lock.acquire()
-
             self.network_metrics.append(network_metric)
             self.monitor_lock.release()
 
@@ -331,9 +330,6 @@ class DCNetworkMonitor():
                 return 'Stopped monitoring: {0}'.format(vnf_name)
 
         return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
-
-
-
 
 
 # get all metrics defined in the list and export it to Prometheus
@@ -429,11 +425,10 @@ class DCNetworkMonitor():
                     metric_dict['previous_measurement'] = int(port_stat[metric_key])
                     metric_dict['previous_monitor_time'] = port_uptime
                     # do first measurement
-                    time.sleep(1)
-                    self.monitor_lock.release()
-
-                    metric_rate = self.get_network_metrics()
-                    return metric_rate
+                    #time.sleep(1)
+                    #self.monitor_lock.release()
+                    # rate cannot be calculated yet (need a first measurement)
+                    metric_rate = None
 
                 else:
                     time_delta = (port_uptime - metric_dict['previous_monitor_time'])
@@ -441,9 +436,11 @@ class DCNetworkMonitor():
 
                 metric_dict['previous_measurement'] = this_measurement
                 metric_dict['previous_monitor_time'] = port_uptime
-                return metric_rate
+                return
 
         logging.exception('metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface))
+        logging.exception('monport:{0}, dpid:{1}'.format(mon_port, switch_dpid))
+        logging.exception('port dict:{0}'.format(port_stat_dict))
         return 'metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface)
 
     def set_flow_metric(self, metric_dict, flow_stat_dict):
@@ -463,8 +460,9 @@ class DCNetworkMonitor():
             elif 'packet' in metric_key:
                 counter += flow_stat['packet_count']
 
-        flow_stat = flow_stat_dict[str(switch_dpid)][0]
-        flow_uptime = flow_stat['duration_sec'] + flow_stat['duration_nsec'] * 10 ** (-9)
+        # flow_uptime disabled for now (can give error)
+        #flow_stat = flow_stat_dict[str(switch_dpid)][0]
+        #flow_uptime = flow_stat['duration_sec'] + flow_stat['duration_nsec'] * 10 ** (-9)
 
         self.prom_metrics[metric_dict['metric_key']]. \
             labels({'vnf_name': vnf_name, 'vnf_interface': vnf_interface, 'flow_id': cookie}). \
@@ -495,6 +493,7 @@ class DCNetworkMonitor():
                "-d",
                "-p", "{0}:9091".format(port),
                "--name", "pushgateway",
+               "--label", 'com.containernet=""',
                "prom/pushgateway"
                ]
 
@@ -511,6 +510,7 @@ class DCNetworkMonitor():
                "--volume=/var/lib/docker/:/var/lib/docker:ro",
                "--publish={0}:8080".format(port),
                "--name=cadvisor",
+               "--label",'com.containernet=""',
                "google/cadvisor:latest"
                ]
         logging.info('Start cAdvisor container {0}'.format(cmd))
@@ -532,14 +532,14 @@ class DCNetworkMonitor():
         '''
         if self.pushgateway_process is not None:
             logging.info('stopping pushgateway container')
-            self.pushgateway_process.terminate()
-            self.pushgateway_process.kill()
+            #self.pushgateway_process.terminate()
+            #self.pushgateway_process.kill()
             self._stop_container('pushgateway')
 
         if self.cadvisor_process is not None:
             logging.info('stopping cadvisor container')
-            self.cadvisor_process.terminate()
-            self.cadvisor_process.kill()
+            #self.cadvisor_process.terminate()
+            #self.cadvisor_process.kill()
             self._stop_container('cadvisor')
 
     def switch_tx_rx(self,metric=''):
@@ -553,13 +553,10 @@ class DCNetworkMonitor():
         return metric
 
     def _stop_container(self, name):
-        cmd = ["docker",
-               "stop",
-               name]
-        Popen(cmd).wait()
 
         cmd = ["docker",
                "rm",
+               "-f",
                name]
         Popen(cmd).wait()
 
