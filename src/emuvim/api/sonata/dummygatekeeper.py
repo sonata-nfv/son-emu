@@ -507,7 +507,6 @@ class RoundRobinDcPlacement(object):
     """
     Placement: Distribute VNFs across all available DCs in a round robin fashion.
     """
-
     def place(self, nsd, vnfds, dcs):
         c = 0
         dcs_list = list(dcs.itervalues()) 
