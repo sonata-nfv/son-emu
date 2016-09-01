@@ -164,7 +164,8 @@ class Service(object):
 
         # 3. compute placement of this service instance (adds DC names to VNFDs)
         if not GK_STANDALONE_MODE:
-            self._calculate_placement(FirstDcPlacement)
+            #self._calculate_placement(FirstDcPlacement)
+            self._calculate_placement(RoundRobinDcPlacement)
         # iterate over all vnfds that we have to start
         for vnfd in self.vnfds.itervalues():
             vnfi = None
@@ -500,6 +501,20 @@ class FirstDcPlacement(object):
     def place(self, nsd, vnfds, dcs):
         for name, vnfd in vnfds.iteritems():
             vnfd["dc"] = list(dcs.itervalues())[0]
+
+
+class RoundRobinDcPlacement(object):
+    """
+    Placement: Distribute VNFs across all available DCs in a round robin fashion.
+    """
+    def place(self, nsd, vnfds, dcs):
+        c = 0
+        dcs_list = list(dcs.itervalues()) 
+        for name, vnfd in vnfds.iteritems():
+            vnfd["dc"] = dcs_list[c % len(dcs_list)]
+            c += 1  # inc. c to use next DC
+
+
 
 
 """
