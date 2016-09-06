@@ -67,6 +67,9 @@ FORCE_PULL = False
 # Attention: This is not a configuration switch but a global variable! Don't change its default value.
 DEPLOY_SAP = False
 
+# flag to indicate if we use bidirectional forwarding rules in the automatic chaining process
+BIDIRECTIONAL_CHAIN = False
+
 class Gatekeeper(object):
 
     def __init__(self):
@@ -212,7 +215,7 @@ class Service(object):
                 ret = network.setChain(
                     src_docker_name, dst_docker_name,
                     vnf_src_interface=src_if_name, vnf_dst_interface=dst_if_name,
-                    bidirectional=True, cmd="add-flow", cookie=cookie, priority=10)
+                    bidirectional=BIDIRECTIONAL_CHAIN, cmd="add-flow", cookie=cookie, priority=10)
 
                 # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
                 src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
@@ -395,7 +398,7 @@ class Service(object):
             # set of the connection_point ids found in the nsd (in the examples this is 'ns')
             self.sap_identifiers.add(sap_vnf_id)
 
-            sap_docker_name = sap.replace(':', '_')
+            sap_docker_name = "%s_%s" % (sap_vnf_id, sap_vnf_interface)
 
             # add SAP to self.vnfds
             sapfile = pkg_resources.resource_filename(__name__, "sap_vnfd.yml")
