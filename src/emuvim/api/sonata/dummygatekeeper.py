@@ -392,6 +392,8 @@ class Service(object):
         for sap in SAPs:
             # endpoints needed in this service
             sap_vnf_id, sap_vnf_interface = sap.split(':')
+            # Fix: lets fix the name of the SAP interface to "sap0"
+            sap_vnf_interface = "sap0"
             # set of the connection_point ids found in the nsd (in the examples this is 'ns')
             self.sap_identifiers.add(sap_vnf_id)
 
