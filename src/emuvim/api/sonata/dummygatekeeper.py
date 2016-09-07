@@ -120,7 +120,6 @@ class Service(object):
         self.eline_subnets_src = generate_subnet_strings(50, start=200, subnet_size=24, ip=1)
         self.eline_subnets_dst = generate_subnet_strings(50, start=200, subnet_size=24, ip=2)
 
-
     def onboard(self):
         """
         Do all steps to prepare this service to be instantiated
