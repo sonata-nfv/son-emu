@@ -53,7 +53,8 @@ class RestApiClient():
             weight=args.get("weight"),
             match=args.get("match"),
             bidirectional=args.get("bidirectional"),
-            cookie=args.get("cookie"))
+            cookie=args.get("cookie"),
+            priority=args.get("priority"))
 
         response = put("%s/restapi/network/%s/%s" %
                        (args.get("endpoint"),
@@ -72,7 +73,8 @@ class RestApiClient():
             weight=args.get("weight"),
             match=args.get("match"),
             bidirectional=args.get("bidirectional"),
-            cookie=args.get("cookie"))
+            cookie=args.get("cookie"),
+            priority=args.get("priority"))
 
         response = delete("%s/restapi/network/%s/%s" %
                        (args.get("endpoint"),
@@ -113,6 +115,9 @@ parser.add_argument(
 parser.add_argument(
     "--weight", "-w", dest="weight",
     help="weight edge attribute to calculate the path")
+parser.add_argument(
+    "--priority", "-p", dest="priority", default="0",
+    help="priority of flow rule")
 parser.add_argument(
     "--match", "-m", dest="match",
     help="string holding extra matches for the flow entries")
