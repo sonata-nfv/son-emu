@@ -120,7 +120,6 @@ class Service(object):
         self.eline_subnets_src = generate_subnet_strings(50, start=200, subnet_size=24, ip=1)
         self.eline_subnets_dst = generate_subnet_strings(50, start=200, subnet_size=24, ip=2)
 
-
     def onboard(self):
         """
         Do all steps to prepare this service to be instantiated
@@ -557,7 +556,7 @@ class Packages(fr.Resource):
             s = Service(service_uuid, file_hash, upload_path)
             GK.register_service_package(service_uuid, s)
             # generate the JSON result
-            return {"service_uuid": service_uuid, "size": size, "sha1": file_hash, "error": None}
+            return {"service_uuid": service_uuid, "size": size, "sha1": file_hash, "error": None}, 201
         except Exception as ex:
             LOG.exception("Service package upload failed:")
             return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed"}, 500
