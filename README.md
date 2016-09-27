@@ -5,11 +5,14 @@ This is the repository of [SONATA's](http://sonata-nfv.eu) emulation platform.
 
 This emulation platform was created to support network  service developers to locally prototype and test complete network service chains in realistic end-to-end multi-PoP scenarios. It allows the direct execution of real network functions, packaged as Docker containers, in emulated network topologies running locally on the network service developer's machine.
 
-More details about the the emulator's architecture and concepts can be found in the following publication(s):
+### Cite this work
 
-* Manuel Peuster, Holger Karl, and Steven van Rossem. ["MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments."](http://arxiv.org/abs/1606.05995) pre-print arXiv:1606.05995 (2016).
+If you use son-emu for your research and/or other publications, please cite the following paper to reference our work:
 
-A short demo that showcases son-emu together with its dummy gatekeeper is available [here](https://youtu.be/BgWDp5CM0io).
+* Manuel Peuster, Holger Karl, and Steven van Rossem. "**MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments.**" to appear in IEEE Conference on Network Function Virtualization and Software Defined Network (NFV-SDN), 2016.
+  * Pre-print online: http://arxiv.org/abs/1606.05995
+
+A short demo that showcases son-emu together with its dummy gatekeeper is available [here](https://www.youtube.com/watch?v=ZANz97pV9ao).
 
 ### Development
 
@@ -75,7 +78,7 @@ Contributing to the son-emu is really easy. You must:
 4. Follow/answer related [issues](https://github.com/sonata-nfv/son-emu/issues) (see Feedback-Chanel, below).
 
 ## Installation
-There are two ways to install and use son-emu. The simple one is to use Vagrant to create a VirtualBox-based VM on you machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 14.04 LTS or 16.04 LTS and is done by a ansible playbook.
+There are two ways to install and use son-emu. The simple one is to use Vagrant to create a VirtualBox-based VM on you machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 14.04 LTS and is done by a ansible playbook.
 
 ### Vagrant Installation
 
@@ -89,8 +92,8 @@ Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. 
 
 ### Ansible Installation
 
-* Requires: Ubuntu 14.04 LTS or 16.04 LTS
-* `sudo apt-get install ansible git`
+* Requires: Ubuntu 14.04 LTS
+* `sudo apt-get install ansible git aptitude`
 * `sudo vim /etc/ansible/hosts`
 * Add: `localhost ansible_connection=local`
 
