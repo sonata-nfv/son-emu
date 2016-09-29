@@ -258,6 +258,18 @@ class Service(object):
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
 
+    def stop_service(self):
+        """
+        This method stops a running service instance.
+        It iterates over all VNFDs, stopping them each
+        and removing them from their data center.
+
+        :return:
+        """
+
+
+
+
     def _start_vnfd(self, vnfd):
         """
         Start a single VNFD of this service
@@ -295,6 +307,20 @@ class Service(object):
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             return vnfi
+
+    def _stop_vnfd(self, vnf_name):
+        """
+        Stop a VNFD specified by its name.
+
+        :param vnf_name: Name of the vnf to be stopped
+        :return:
+        """
+        if vnf_name not in self.vnfds:
+            raise Exception("VNFD with name %s not found." % vnf_name)
+        vnfd = self.vnfds[vnf_name]
+        dc = vnfd.get("dc")
+        LOG.info("Stopping %r contained in %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], dc)
+        dc.stopCompute(self.vnf_name2docker_name[vnf_name])
 
     def _get_vnf_instance(self, instance_uuid, name):
         """
@@ -511,7 +537,7 @@ class RoundRobinDcPlacement(object):
     """
     def place(self, nsd, vnfds, dcs):
         c = 0
-        dcs_list = list(dcs.itervalues()) 
+        dcs_list = list(dcs.itervalues())
         for name, vnfd in vnfds.iteritems():
             vnfd["dc"] = dcs_list[c % len(dcs_list)]
             c += 1  # inc. c to use next DC
@@ -601,6 +627,22 @@ class Instantiations(fr.Resource):
         LOG.info("GET /instantiations")
         return {"service_instantiations_list": [
             list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
+
+    def delete(self):
+        """
+        Stops a running service specified by its UUID.
+
+        :return:
+        """
+        # try to extract the service UUID from the request
+        json_data = request.get_json(force=True)
+        service_uuid = json_data.get("service_uuid")
+
+        if service_uuid in GK.services:
+            # valid service UUID, stop service
+            GK.services.get(service_uuid).stop_service()
+            return "", 0
+        return "Service not found", 404
 
 
 # create a single, global GK object
