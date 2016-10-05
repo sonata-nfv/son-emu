@@ -261,10 +261,10 @@ class Service(object):
     def stop_service(self, instance_uuid):
         """
         This method stops a running service instance.
-        It iterates over all VNFDs, stopping them each
+        It iterates over all VNF instances, stopping them each
         and removing them from their data center.
 
-        :return:
+        :param instance_uuid: the uuid of the service instance to be stopped
         """
         LOG.info("Stopping service %r" % self.uuid)
         # get relevant information
@@ -272,7 +272,7 @@ class Service(object):
         vnf_instances = self.instances[instance_uuid]["vnf_instances"]
 
         for v in vnf_instances:
-            self._stop_vnfd(v)
+            self._stop_vnfi(v)
 
         if not GK_STANDALONE_MODE:
             # remove placement?
@@ -281,9 +281,6 @@ class Service(object):
 
         # last step: remove the instance from the list of all instances
         del self.instances[instance_uuid]
-
-
-
 
     def _start_vnfd(self, vnfd):
         """
@@ -323,20 +320,17 @@ class Service(object):
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             return vnfi
 
-    def _stop_vnfd(self, vnfi):
+    def _stop_vnfi(self, vnfi):
         """
-        Stop a VNFD specified by its name.
+        Stop a VNF instance.
 
-        :param vnf_name: Name of the vnf to be stopped
-        :return:
+        :param vnfi: vnf instance to be stopped
         """
-#        if vnf_name not in self.vnfds:
-#            raise Exception("VNFD with name %s not found." % vnf_name)
         # Find the correct datacenter
         status = vnfi.getStatus()
         dc = vnfi.datacenter
         # stop the vnfi
-        LOG.info("Stopping the vnf instance contained in %r ind DC %r" % (status["name"], dc))
+        LOG.info("Stopping the vnf instance contained in %r in DC %r" % (status["name"], dc))
         dc.stopCompute(status["name"])
 
     def _get_vnf_instance(self, instance_uuid, name):
@@ -647,11 +641,9 @@ class Instantiations(fr.Resource):
 
     def delete(self):
         """
-        Stops a running service specified by its UUID.
-
-        :return:
+        Stops a running service specified by its service and instance UUID.
         """
-        # try to extract the service UUID from the request
+        # try to extract the service  and instance UUID from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
         instance_uuid = json_data.get("instance_uuid")
@@ -663,24 +655,19 @@ class Instantiations(fr.Resource):
         if instance_uuid is None and len(GK.services[service_uuid].instances) > 0:
             instance_uuid = list(GK.services[service_uuid].instances.iterkeys())[0]
 
-        if service_uuid in GK.services:
-            # valid service UUID, stop service
+        if service_uuid in GK.services and instance_uuid in GK.services[service_uuid].instances:
+            # valid service and instance UUID, stop service
             GK.services.get(service_uuid).stop_service(instance_uuid)
             return "", 0
         return "Service not found", 404
 
-class Exit(fr.Resource):       # name not final
+class Exit(fr.Resource):
 
     def put(self):
         """
         Stop the running Containernet instance regardless of data transmitted
         """
-        # First, close the mininet CLI
-
-        # Second, stop the network
-        service = GK.services[GK.services.keys[0]]
-        network = service.vnfds[service.vnfds.keys[0]].get("dc").net  # there should be a cleaner way to find the DCNetwork
-        network.stop()
+        # exit the mininet CLI
 
 
 # create a single, global GK object
@@ -692,7 +679,7 @@ api = fr.Api(app)
 # define endpoints
 api.add_resource(Packages, '/packages')
 api.add_resource(Instantiations, '/instantiations')
-api.add_resource(Exit, '/emulator/exit') # name not final TODO change it or remove TODO
+api.add_resource(Exit, '/emulator/exit')
 
 
 def start_rest_api(host, port, datacenters=dict()):
