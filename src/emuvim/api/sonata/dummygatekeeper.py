@@ -258,7 +258,7 @@ class Service(object):
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
 
-    def stop_service(self):
+    def stop_service(self, instance_uuid):
         """
         This method stops a running service instance.
         It iterates over all VNFDs, stopping them each
@@ -266,6 +266,21 @@ class Service(object):
 
         :return:
         """
+        LOG.info("Stopping service %r" % self.uuid)
+        # get relevant information
+        # instance_uuid = str(self.uuid.uuid4())
+        vnf_instances = self.instances[instance_uuid]["vnf_instances"]
+
+        for v in vnf_instances:
+            self._stop_vnfd(v)
+
+        if not GK_STANDALONE_MODE:
+            # remove placement?
+            # self._remove_placement(RoundRobinPlacement)
+            None
+
+        # last step: remove the instance from the list of all instances
+        del self.instances[instance_uuid]
 
 
 
@@ -308,19 +323,21 @@ class Service(object):
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             return vnfi
 
-    def _stop_vnfd(self, vnf_name):
+    def _stop_vnfd(self, vnfi):
         """
         Stop a VNFD specified by its name.
 
         :param vnf_name: Name of the vnf to be stopped
         :return:
         """
-        if vnf_name not in self.vnfds:
-            raise Exception("VNFD with name %s not found." % vnf_name)
-        vnfd = self.vnfds[vnf_name]
-        dc = vnfd.get("dc")
-        LOG.info("Stopping %r contained in %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], dc)
-        dc.stopCompute(self.vnf_name2docker_name[vnf_name])
+#        if vnf_name not in self.vnfds:
+#            raise Exception("VNFD with name %s not found." % vnf_name)
+        # Find the correct datacenter
+        status = vnfi.getStatus()
+        dc = vnfi.datacenter
+        # stop the vnfi
+        LOG.info("Stopping the vnf instance contained in %r ind DC %r" % (status["name"], dc))
+        dc.stopCompute(status["name"])
 
     def _get_vnf_instance(self, instance_uuid, name):
         """
@@ -637,12 +654,33 @@ class Instantiations(fr.Resource):
         # try to extract the service UUID from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
+        instance_uuid = json_data.get("instance_uuid")
+
+        # try to be fuzzy
+        if service_uuid is None and len(GK.services) > 0:
+            #if we don't get a service uuid, we simply stop the last service in the list
+            service_uuid = list(GK.services.iterkeys())[0]
+        if instance_uuid is None and len(GK.services[service_uuid].instances) > 0:
+            instance_uuid = list(GK.services[service_uuid].instances.iterkeys())[0]
 
         if service_uuid in GK.services:
             # valid service UUID, stop service
-            GK.services.get(service_uuid).stop_service()
+            GK.services.get(service_uuid).stop_service(instance_uuid)
             return "", 0
         return "Service not found", 404
+
+class Exit(fr.Resource):       # name not final
+
+    def put(self):
+        """
+        Stop the running Containernet instance regardless of data transmitted
+        """
+        # First, close the mininet CLI
+
+        # Second, stop the network
+        service = GK.services[GK.services.keys[0]]
+        network = service.vnfds[service.vnfds.keys[0]].get("dc").net  # there should be a cleaner way to find the DCNetwork
+        network.stop()
 
 
 # create a single, global GK object
@@ -654,6 +692,7 @@ api = fr.Api(app)
 # define endpoints
 api.add_resource(Packages, '/packages')
 api.add_resource(Instantiations, '/instantiations')
+api.add_resource(Exit, '/emulator/exit') # name not final TODO change it or remove TODO
 
 
 def start_rest_api(host, port, datacenters=dict()):
