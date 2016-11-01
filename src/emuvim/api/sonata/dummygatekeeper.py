@@ -627,7 +627,7 @@ class Instantiations(fr.Resource):
         if service_uuid in GK.services:
             # ok, we have a service uuid, lets start the service
             service_instance_uuid = GK.services.get(service_uuid).start_service()
-            return {"service_instance_uuid": service_instance_uuid}
+            return {"service_instance_uuid": service_instance_uuid}, 201
         return "Service not found", 404
 
     def get(self):
@@ -646,7 +646,7 @@ class Instantiations(fr.Resource):
         # try to extract the service  and instance UUID from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
-        instance_uuid = json_data.get("instance_uuid")
+        instance_uuid = json_data.get("service_instance_uuid")
 
         # try to be fuzzy
         if service_uuid is None and len(GK.services) > 0:
@@ -658,7 +658,8 @@ class Instantiations(fr.Resource):
         if service_uuid in GK.services and instance_uuid in GK.services[service_uuid].instances:
             # valid service and instance UUID, stop service
             GK.services.get(service_uuid).stop_service(instance_uuid)
-            return "", 0
+            del GK.services.get(service_uuid).instances[instance_uuid]
+            return
         return "Service not found", 404
 
 class Exit(fr.Resource):
@@ -667,11 +668,18 @@ class Exit(fr.Resource):
         """
         Stop the running Containernet instance regardless of data transmitted
         """
-        # exit the mininet CLI
+        GK.net.stop()
+
+
+def initialize_GK():
+    global GK
+    GK = Gatekeeper()
+
 
 
 # create a single, global GK object
-GK = Gatekeeper()
+GK = None
+initialize_GK()
 # setup Flask
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
@@ -680,6 +688,11 @@ api = fr.Api(app)
 api.add_resource(Packages, '/packages')
 api.add_resource(Instantiations, '/instantiations')
 api.add_resource(Exit, '/emulator/exit')
+
+
+#def initialize_GK():
+#    global GK
+#    GK = Gatekeeper()
 
 
 def start_rest_api(host, port, datacenters=dict()):
