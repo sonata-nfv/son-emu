@@ -46,7 +46,7 @@ logging.basicConfig(level=logging.INFO)
 
 def create_topology1():
     # create topology
-    net = DCNetwork(controller=RemoteController, monitor=True, enable_learning=False)
+    net = DCNetwork(controller=RemoteController, monitor=True, enable_learning=True)
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
     s1 = net.addSwitch("s1")

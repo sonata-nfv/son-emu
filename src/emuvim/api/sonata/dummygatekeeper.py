@@ -227,6 +227,9 @@ class Service(object):
         # 4b. deploy E-LAN links
         base = 10
         for link in elan_fwd_links:
+
+            elan=[]
+
             # generate lan ip address
             ip = 1
             for intf in link["connection_points_reference"]:
@@ -235,6 +238,8 @@ class Service(object):
                 if vnf_id in self.sap_identifiers:
                     src_docker_name = "{0}_{1}".format(vnf_id, intf_name)
                     vnf_id = src_docker_name
+                else:
+                    src_docker_name = vnf_id
                 vnf_name = vnf_id2vnf_name[vnf_id]
                 LOG.debug(
                     "Setting up E-LAN link. %s(%s:%s) -> %s" % (
@@ -249,6 +254,15 @@ class Service(object):
                         self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
                         # increase for the next ip address on this E-LAN
                         ip += 1
+
+                        # add this vnf and interface to the E-LAN for tagging
+                        network = self.vnfds[vnf_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
+                        elan.append({'name':src_docker_name,'interface':intf_name})
+
+
+            # install the VLAN tags for this E-LAN
+            print(elan)
+            network.setLAN(elan)
             # increase the base ip address for the next E-LAN
             base += 1
 
