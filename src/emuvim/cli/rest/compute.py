@@ -78,17 +78,20 @@ class RestApiClient():
                 name = c[0]
                 status = c[1]
                 eth0ip = status.get("docker_network", "-")
+                netw_list = [netw_dict['intf_name'] for netw_dict in status.get("network")]
+                dc_if_list = [netw_dict['dc_portname'] for netw_dict in status.get("network")]
                 table.append([status.get("datacenter"),
                               name,
                               status.get("image"),
-                              eth0ip,
-                              status.get("state").get("Status")])
+                              ','.join(netw_list),
+                              ','.join(dc_if_list)])
+                #status.get("state").get("Status")]
 
         headers = ["Datacenter",
                    "Container",
                    "Image",
-                   "docker0",
-                   "Status"]
+                   "Interface list",
+                   "Datacenter interfaces"]
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
     def status(self, args):

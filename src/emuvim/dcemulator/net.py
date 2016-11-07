@@ -877,3 +877,14 @@ class DCNetwork(Containernet):
                 dict.update({match[0]:m2})
         return dict
 
+    def find_connected_dc_interface(self, vnf_src_name, vnf_src_interface):
+        for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
+            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
+            for link in link_dict:
+                if (link_dict[link]['src_port_id'] == vnf_src_interface or
+                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                    # found the right link and connected switch
+                    src_sw = connected_sw
+                    src_sw_inport_nr = link_dict[link]['dst_port_nr']
+                    src_sw_inport_name = link_dict[link]['dst_port_name']
+                    return src_sw_inport_name
