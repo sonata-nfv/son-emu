@@ -61,10 +61,17 @@ class EmulatorCompute(Docker):
         Helper method to receive information about the virtual networks
         this compute instance is connected to.
         """
-        
-        # format list of tuples (name, Ip, MAC, isUp, status)
-        return [{'intf_name':str(i), 'ip':i.IP(), 'mac':i.MAC(), 'up':i.isUp(), 'status':i.status()}
-                for i in self.intfList()]
+        # get all links and find dc switch interface
+        networkStatusList = []
+        for i in self.intfList():
+            vnf_name = self.name
+            vnf_interface = str(i)
+            dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
+            # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
+            intf_dict = {'intf_name': str(i), 'ip': i.IP(), 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            networkStatusList.append(intf_dict)
+
+        return networkStatusList
 
     def getStatus(self):
         """
