@@ -258,6 +258,30 @@ class Service(object):
         LOG.info("Service started. Instance id: %r" % instance_uuid)
         return instance_uuid
 
+    def stop_service(self, instance_uuid):
+        """
+        This method stops a running service instance.
+        It iterates over all VNF instances, stopping them each
+        and removing them from their data center.
+
+        :param instance_uuid: the uuid of the service instance to be stopped
+        """
+        LOG.info("Stopping service %r" % self.uuid)
+        # get relevant information
+        # instance_uuid = str(self.uuid.uuid4())
+        vnf_instances = self.instances[instance_uuid]["vnf_instances"]
+
+        for v in vnf_instances:
+            self._stop_vnfi(v)
+
+        if not GK_STANDALONE_MODE:
+            # remove placement?
+            # self._remove_placement(RoundRobinPlacement)
+            None
+
+        # last step: remove the instance from the list of all instances
+        del self.instances[instance_uuid]
+
     def _start_vnfd(self, vnfd):
         """
         Start a single VNFD of this service
@@ -295,6 +319,19 @@ class Service(object):
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
             return vnfi
+
+    def _stop_vnfi(self, vnfi):
+        """
+        Stop a VNF instance.
+
+        :param vnfi: vnf instance to be stopped
+        """
+        # Find the correct datacenter
+        status = vnfi.getStatus()
+        dc = vnfi.datacenter
+        # stop the vnfi
+        LOG.info("Stopping the vnf instance contained in %r in DC %r" % (status["name"], dc))
+        dc.stopCompute(status["name"])
 
     def _get_vnf_instance(self, instance_uuid, name):
         """
@@ -511,7 +548,7 @@ class RoundRobinDcPlacement(object):
     """
     def place(self, nsd, vnfds, dcs):
         c = 0
-        dcs_list = list(dcs.itervalues()) 
+        dcs_list = list(dcs.itervalues())
         for name, vnfd in vnfds.iteritems():
             vnfd["dc"] = dcs_list[c % len(dcs_list)]
             c += 1  # inc. c to use next DC
@@ -590,7 +627,7 @@ class Instantiations(fr.Resource):
         if service_uuid in GK.services:
             # ok, we have a service uuid, lets start the service
             service_instance_uuid = GK.services.get(service_uuid).start_service()
-            return {"service_instance_uuid": service_instance_uuid}
+            return {"service_instance_uuid": service_instance_uuid}, 201
         return "Service not found", 404
 
     def get(self):
@@ -602,9 +639,47 @@ class Instantiations(fr.Resource):
         return {"service_instantiations_list": [
             list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
 
+    def delete(self):
+        """
+        Stops a running service specified by its service and instance UUID.
+        """
+        # try to extract the service  and instance UUID from the request
+        json_data = request.get_json(force=True)
+        service_uuid = json_data.get("service_uuid")
+        instance_uuid = json_data.get("service_instance_uuid")
+
+        # try to be fuzzy
+        if service_uuid is None and len(GK.services) > 0:
+            #if we don't get a service uuid, we simply stop the last service in the list
+            service_uuid = list(GK.services.iterkeys())[0]
+        if instance_uuid is None and len(GK.services[service_uuid].instances) > 0:
+            instance_uuid = list(GK.services[service_uuid].instances.iterkeys())[0]
+
+        if service_uuid in GK.services and instance_uuid in GK.services[service_uuid].instances:
+            # valid service and instance UUID, stop service
+            GK.services.get(service_uuid).stop_service(instance_uuid)
+            del GK.services.get(service_uuid).instances[instance_uuid]
+            return
+        return "Service not found", 404
+
+class Exit(fr.Resource):
+
+    def put(self):
+        """
+        Stop the running Containernet instance regardless of data transmitted
+        """
+        GK.net.stop()
+
+
+def initialize_GK():
+    global GK
+    GK = Gatekeeper()
+
+
 
 # create a single, global GK object
-GK = Gatekeeper()
+GK = None
+initialize_GK()
 # setup Flask
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
@@ -612,6 +687,12 @@ api = fr.Api(app)
 # define endpoints
 api.add_resource(Packages, '/packages')
 api.add_resource(Instantiations, '/instantiations')
+api.add_resource(Exit, '/emulator/exit')
+
+
+#def initialize_GK():
+#    global GK
+#    GK = Gatekeeper()
 
 
 def start_rest_api(host, port, datacenters=dict()):
