@@ -61,6 +61,7 @@ class EmulatorCompute(Docker):
         Helper method to receive information about the virtual networks
         this compute instance is connected to.
         """
+        
         # format list of tuples (name, Ip, MAC, isUp, status)
         return [{'intf_name':str(i), 'ip':i.IP(), 'mac':i.MAC(), 'up':i.isUp(), 'status':i.status()}
                 for i in self.intfList()]

@@ -44,11 +44,12 @@ class SimpleSwitch13(app_manager.RyuApp):
         # truncated packet data. In that case, we cannot output packets
         # correctly.  The bug has been fixed in OVS v2.1.0.
         match = parser.OFPMatch()
-        actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
-                                          ofproto.OFPCML_NO_BUFFER)]
+        #actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
+        #                                  ofproto.OFPCML_NO_BUFFER)]
+        actions = [parser.OFPActionOutput(ofproto.OFPCML_NO_BUFFER)]
         self.add_flow(datapath, 0, match, actions)
 
-    def add_flow(self, datapath, priority, match, actions, buffer_id=None):
+    def add_flow(self, datapath, priority, match, actions, buffer_id=None, table_id=0):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -57,10 +58,10 @@ class SimpleSwitch13(app_manager.RyuApp):
         if buffer_id:
             mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
                                     priority=priority, match=match,
-                                    instructions=inst)
+                                    instructions=inst, table_id=table_id)
         else:
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
-                                    match=match, instructions=inst)
+                                    match=match, instructions=inst, table_id=table_id)
         datapath.send_msg(mod)
 
         # new switch detected
@@ -74,7 +75,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         # send NORMAL action for all undefined flows
         ofp_parser = datapath.ofproto_parser
         actions = [ofp_parser.OFPActionOutput(ofproto_v1_3.OFPP_NORMAL)]
-        self.add_flow(datapath, 0, None, actions)
+        self.add_flow(datapath, 0, None, actions, table_id=0)
 
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)

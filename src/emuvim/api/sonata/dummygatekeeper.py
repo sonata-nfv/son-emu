@@ -75,6 +75,7 @@ class Gatekeeper(object):
     def __init__(self):
         self.services = dict()
         self.dcs = dict()
+        self.net = None
         self.vnf_counter = 0  # used to generate short names for VNFs (Mininet limitation)
         LOG.info("Create SONATA dummy gatekeeper.")
 
@@ -180,6 +181,9 @@ class Service(object):
         eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
         elan_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-LAN")]
 
+        GK.net.deployed_elines.extend(eline_fwd_links)
+        GK.net.deployed_elans.extend(elan_fwd_links)
+
         # 4a. deploy E-Line links
         # cookie is used as identifier for the flowrules installed by the dummygatekeeper
         # eg. different services get a unique cookie for their flowrules
@@ -228,7 +232,7 @@ class Service(object):
         base = 10
         for link in elan_fwd_links:
 
-            elan=[]
+            elan_vnf_list=[]
 
             # generate lan ip address
             ip = 1
@@ -257,12 +261,11 @@ class Service(object):
 
                         # add this vnf and interface to the E-LAN for tagging
                         network = self.vnfds[vnf_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
-                        elan.append({'name':src_docker_name,'interface':intf_name})
+                        elan_vnf_list.append({'name':src_docker_name,'interface':intf_name})
 
 
             # install the VLAN tags for this E-LAN
-            print(elan)
-            network.setLAN(elan)
+            network.setLAN(elan_vnf_list)
             # increase the base ip address for the next E-LAN
             base += 1
 
@@ -385,6 +388,7 @@ class Service(object):
                 self.package_content_path,
                 make_relative_path(self.manifest.get("entry_service_template")))
             self.nsd = load_yaml(nsd_path)
+            GK.net.deployed_nsds.append(self.nsd)
             LOG.debug("Loaded NSD: %r" % self.nsd.get("name"))
 
     def _load_vnfd(self):
@@ -630,6 +634,7 @@ api.add_resource(Instantiations, '/instantiations')
 
 def start_rest_api(host, port, datacenters=dict()):
     GK.dcs = datacenters
+    GK.net = get_dc_network()
     # start the Flask server (not the best performance but ok for our use case)
     app.run(host=host,
             port=port,
@@ -678,6 +683,14 @@ def generate_subnet_strings(n, start=1, subnet_size=24, ip=0):
         r.append("%d.0.0.%d/%d" % (i, ip, subnet_size))
     return r
 
+def get_dc_network():
+    """
+    retrieve the DCnetwork where this dummygatekeeper (GK) connects to.
+    Assume at least 1 datacenter is connected to this GK, and that all datacenters belong to the same DCNetwork
+    :return:
+    """
+    assert (len(GK.dcs) > 0)
+    return GK.dcs.values()[0].net
 
 if __name__ == '__main__':
     """
