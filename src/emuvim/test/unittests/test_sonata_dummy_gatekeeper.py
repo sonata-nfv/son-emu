@@ -89,13 +89,12 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         # check connectivity by using ping
         for vnf in self.dc[0].listCompute():
             p = self.net.ping([self.h[0], vnf])
-            print p
-#            self.assertTrue(p <= 50.0)
+            self.assertTrue(p <= 50.0)
         # stop Mininet network
         self.stopNet()
         initialize_GK()
 
-
+#    @unittest.skip("disabled")
     def test_GK_Api_stop_service(self):
         # create network
         self.createNet(ndatacenter=2, nhosts=2)
