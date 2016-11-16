@@ -38,7 +38,6 @@ LOG.setLevel(logging.DEBUG)
 
 DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
 
-
 class EmulatorCompute(Docker):
     """
     Emulator specific compute node class.
@@ -148,7 +147,7 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny"):
+    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny", **kwargs):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -174,14 +173,27 @@ class Datacenter(object):
             if len(network) < 1:
                 network.append({})
 
+        # apply hard-set resource limits=0
+        cpu_percentage = kwargs.get('cpu_percent')
+        if cpu_percentage:
+            cpu_period = self.net.cpu_period
+            cpu_quota = self.net.cpu_period * float(cpu_percentage)
+        else:
+            cpu_quota = None
+            cpu_period = None
+
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
             dimage=image,
             dcmd=command,
             datacenter=self,
-            flavor_name=flavor_name
+            flavor_name=flavor_name,
+            cpu_period = cpu_period,
+            cpu_quota = cpu_quota
         )
+
+
 
         # apply resource limits to container if a resource model is defined
         if self._resource_model is not None:
