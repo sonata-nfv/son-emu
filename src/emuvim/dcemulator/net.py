@@ -47,6 +47,9 @@ from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 LOG = logging.getLogger("dcemulator.net")
 LOG.setLevel(logging.DEBUG)
 
+# default CPU period used for cpu percentage-based cfs values (microseconds)
+CPU_PERIOD = 1000000
+
 class DCNetwork(Containernet):
     """
     Wraps the original Mininet/Containernet class and provides
@@ -56,7 +59,7 @@ class DCNetwork(Containernet):
     """
 
     def __init__(self, controller=RemoteController, monitor=False,
-                 enable_learning=False, # learning switch behavior of the default ovs switches icw Ryu controller can be turned off/on, neede for E-LAN functionality
+                 enable_learning=False, # learning switch behavior of the default ovs switches icw Ryu controller can be turned off/on, needed for E-LAN functionality
                  dc_emulation_max_cpu=1.0,  # fraction of overall CPU time for emulation
                  dc_emulation_max_mem=512,  # emulation max mem in MB
                  **kwargs):
@@ -121,6 +124,7 @@ class DCNetwork(Containernet):
         # initialize resource model registrar
         self.rm_registrar = ResourceModelRegistrar(
             dc_emulation_max_cpu, dc_emulation_max_mem)
+        self.cpu_period = CPU_PERIOD
 
     def addDatacenter(self, label, metadata={}, resource_log_path=None):
         """
