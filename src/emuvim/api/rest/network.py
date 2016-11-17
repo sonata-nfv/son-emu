@@ -54,6 +54,9 @@ class NetworkAction(Resource):
     :param bidirectional: boolean value if the link needs to be implemented from src to dst and back
     :param cookie: cookie value, identifier of the flow entry to be installed.
     :param priority: integer indicating the priority of the flow entry
+    :param skip_vlan_tag: boolean to indicate whether a new vlan tag should be created for this chain
+    :param monitor: boolean to indicate whether a new vlan tag should be created for this chain
+    :param monitor_placement: 'tx'=place the monitoring flowrule at the beginning of the chain, 'rx'=place at the end of the chain
     :return: message string indicating if the chain action is succesful or not
     """
 
