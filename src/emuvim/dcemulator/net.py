@@ -342,6 +342,17 @@ class DCNetwork(Containernet):
 
     def _addMonitorFlow(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None,
                        tag=None, **kwargs):
+        """
+        Add a monitoring flow entry that adds a special flowentry/counter at the begin or end of a chain.
+        So this monitoring flowrule exists on top of a previously defined chain rule and uses the same vlan tag/routing.
+        :param vnf_src_name:
+        :param vnf_dst_name:
+        :param vnf_src_interface:
+        :param vnf_dst_interface:
+        :param tag: vlan tag to be used for this chain (same tag as existing chain)
+        :param monitor_placement: 'tx' or 'rx' indicating to place the extra flowentry resp. at the beginning or end of the chain
+        :return:
+        """
 
         src_sw = None
         src_sw_inport_nr = 0
@@ -489,6 +500,8 @@ class DCNetwork(Containernet):
         :param cookie: cookie for the installed flowrules (can be used later as identifier for a set of installed chains)
         :param match: custom match entry to be added to the flowrules (default: only in_port and vlan tag)
         :param priority: custom flowrule priority
+        :param monitor: boolean to indicate whether this chain is a monitoring chain
+        :param tag: vlan tag to be used for this chain (pre-defined or new one if none is specified)
         :return: output log string
         """
 
