@@ -105,7 +105,7 @@ class Datacenter(object):
         self.name = "dc%d" % Datacenter.DC_COUNTER
         Datacenter.DC_COUNTER += 1
         # use this for user defined names that can be longer than self.name
-        self.label = label  
+        self.label = label
         # dict to store arbitrary metadata (e.g. latitude and longitude)
         self.metadata = metadata
         # path to which resource information should be logged (e.g. for experiments). None = no logging
@@ -140,7 +140,7 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny"):
+    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny", **params):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -172,7 +172,8 @@ class Datacenter(object):
             dimage=image,
             dcmd=command,
             datacenter=self,
-            flavor_name=flavor_name
+            flavor_name=flavor_name,
+            **params
         )
 
         # apply resource limits to container if a resource model is defined
