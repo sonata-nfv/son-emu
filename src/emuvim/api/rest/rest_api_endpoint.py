@@ -61,6 +61,7 @@ class RestApiEndpoint(object):
 
         # setup endpoints
 
+        # compute related actions (start/stop VNFs, get info)
         self.api.add_resource(Compute,
                               "/restapi/compute/<dc_label>/<compute_name>",
                               "/restapi/compute/<dc_label>/<compute_name>/<resource>/<value>")
@@ -71,16 +72,24 @@ class RestApiEndpoint(object):
         self.api.add_resource(DatacenterStatus, "/restapi/datacenter/<dc_label>")
         self.api.add_resource(DatacenterList, "/restapi/datacenter")
 
+
+        # network related actions (setup chaining between VNFs)
         self.api.add_resource(NetworkAction,
                               "/restapi/network/<vnf_src_name>/<vnf_dst_name>")
 
+
+        # monitoring related actions
+        # export a network interface traffic rate counter
         self.api.add_resource(MonitorInterfaceAction,
                               "/restapi/monitor/vnf/<vnf_name>/<metric>",
                               "/restapi/monitor/vnf/<vnf_name>/<vnf_interface>/<metric>",
                               "/restapi/monitor/vnf/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+        # export flow traffic counter, of a manually pre-installed flow entry, specified by its cookie
         self.api.add_resource(MonitorFlowAction,
                               "/restapi/monitor/flow/<vnf_name>/<metric>/<cookie>",
                               "/restapi/monitor/flow/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+        # install monitoring of a specific flow on a pre-existing link in the service.
+        # the traffic counters of the newly installed monitor flow are exported
         self.api.add_resource(MonitorLinkAction,
                               "/restapi/monitor/link/<vnf_src_name>/<vnf_dst_name>")
 

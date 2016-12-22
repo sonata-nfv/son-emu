@@ -113,7 +113,10 @@ class MonitorFlowAction(Resource):
 
 class MonitorLinkAction(Resource):
     """
-    Add or remove chains between VNFs. These chain links are implemented as flow entries in the networks' SDN switches.
+    Add or remove flow monitoring on chains between VNFs.
+    These chain links are implemented as flow entries in the networks' SDN switches.
+    The monitoring is an extra flow entry on top of the existing chain, with a specific match. (preserving the chaining)
+    The counters of this new monitoring flow are exported
     :param vnf_src_name: VNF name of the source of the link
     :param vnf_dst_name: VNF name of the destination of the link
     :param vnf_src_interface: VNF interface name of the source of the link
