@@ -39,6 +39,7 @@ import json
 
 logging.basicConfig(level=logging.INFO)
 
+# the global net is set from the topology file, and connected via connectDCNetwork function in rest_api_endpoint.py
 net = None
 
 

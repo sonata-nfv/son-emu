@@ -457,7 +457,7 @@ class DCNetwork(Containernet):
                 kwargs['switch_outport_name'] = dst_sw_outport_name
                 kwargs['skip_vlan_tag'] = True
 
-                monitor_placement = kwargs.get('monitor_placement')
+                monitor_placement = kwargs.get('monitor_placement').strip()
                 # put monitor flow at the dst switch
                 insert_flow = False
                 if monitor_placement == 'tx' and path.index(current_hop) == 0:  # first node:
@@ -465,7 +465,7 @@ class DCNetwork(Containernet):
                 # put monitoring flow at the src switch
                 elif monitor_placement == 'rx' and path.index(current_hop) == len(path) - 1:  # last node:
                     insert_flow = True
-                else:
+                elif monitor_placement not in ['rx', 'tx']:
                     LOG.exception('invalid monitor command: {0}'.format(monitor_placement))
 
 
@@ -524,7 +524,7 @@ class DCNetwork(Containernet):
                 return ret
             else:
                 # no chain existing (or E-LAN) -> install normal chain
-                LOG.warning('*** installing monitoring chain without pre-defined chain from {0}:{1} -> {2}:{3}'.
+                LOG.warning('*** installing monitoring chain without pre-defined NSD chain from {0}:{1} -> {2}:{3}'.
                             format(vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface))
                 pass
 
