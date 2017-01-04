@@ -111,7 +111,7 @@ Vagrant.configure(2) do |config|
      sudo apt-get install -y git ansible aptitude
      sudo echo "localhost ansible_connection=local" >> /etc/ansible/hosts
      # install containernet
-     git clone https://github.com/mpeuster/containernet.git
+     git clone https://github.com/containernet/containernet.git
      echo "Installing containernet (will take some time ~30 minutes) ..."
      cd /home/vagrant/containernet/ansible
      sudo ansible-playbook install.yml
