@@ -175,82 +175,83 @@ class Service(object):
                 vnfi = self._start_vnfd(vnfd)
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
 
-        vlinks = self.nsd["virtual_links"]
-        fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
-        eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
-        elan_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-LAN")]
+        if "virtual_links" in self.nsd:
+            vlinks = self.nsd["virtual_links"]
+            fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
+            eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
+            elan_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-LAN")]
 
-        # 4a. deploy E-Line links
-        # cookie is used as identifier for the flowrules installed by the dummygatekeeper
-        # eg. different services get a unique cookie for their flowrules
-        cookie = 1
-        for link in eline_fwd_links:
-            src_id, src_if_name = link["connection_points_reference"][0].split(":")
-            dst_id, dst_if_name = link["connection_points_reference"][1].split(":")
+            # 4a. deploy E-Line links
+            # cookie is used as identifier for the flowrules installed by the dummygatekeeper
+            # eg. different services get a unique cookie for their flowrules
+            cookie = 1
+            for link in eline_fwd_links:
+                src_id, src_if_name = link["connection_points_reference"][0].split(":")
+                dst_id, dst_if_name = link["connection_points_reference"][1].split(":")
 
-            # check if there is a SAP in the link
-            if src_id in self.sap_identifiers:
-                src_docker_name = "{0}_{1}".format(src_id, src_if_name)
-                src_id = src_docker_name
-            else:
-                src_docker_name = src_id
+                # check if there is a SAP in the link
+                if src_id in self.sap_identifiers:
+                    src_docker_name = "{0}_{1}".format(src_id, src_if_name)
+                    src_id = src_docker_name
+                else:
+                    src_docker_name = src_id
 
-            if dst_id in self.sap_identifiers:
-                dst_docker_name = "{0}_{1}".format(dst_id, dst_if_name)
-                dst_id = dst_docker_name
-            else:
-                dst_docker_name = dst_id
+                if dst_id in self.sap_identifiers:
+                    dst_docker_name = "{0}_{1}".format(dst_id, dst_if_name)
+                    dst_id = dst_docker_name
+                else:
+                    dst_docker_name = dst_id
 
-            src_name = vnf_id2vnf_name[src_id]
-            dst_name = vnf_id2vnf_name[dst_id]
+                src_name = vnf_id2vnf_name[src_id]
+                dst_name = vnf_id2vnf_name[dst_id]
 
-            LOG.debug(
-                "Setting up E-Line link. %s(%s:%s) -> %s(%s:%s)" % (
-                    src_name, src_id, src_if_name, dst_name, dst_id, dst_if_name))
-
-            if (src_name in self.vnfds) and (dst_name in self.vnfds):
-                network = self.vnfds[src_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
-                LOG.debug(src_docker_name)
-                ret = network.setChain(
-                    src_docker_name, dst_docker_name,
-                    vnf_src_interface=src_if_name, vnf_dst_interface=dst_if_name,
-                    bidirectional=BIDIRECTIONAL_CHAIN, cmd="add-flow", cookie=cookie, priority=10)
-
-                # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
-                src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
-                if src_vnfi is not None:
-                    self._vnf_reconfigure_network(src_vnfi, src_if_name, self.eline_subnets_src.pop(0))
-                dst_vnfi = self._get_vnf_instance(instance_uuid, dst_name)
-                if dst_vnfi is not None:
-                    self._vnf_reconfigure_network(dst_vnfi, dst_if_name, self.eline_subnets_dst.pop(0))
-
-        # 4b. deploy E-LAN links
-        base = 10
-        for link in elan_fwd_links:
-            # generate lan ip address
-            ip = 1
-            for intf in link["connection_points_reference"]:
-                ip_address = generate_lan_string("10.0", base, subnet_size=24, ip=ip)
-                vnf_id, intf_name = intf.split(":")
-                if vnf_id in self.sap_identifiers:
-                    src_docker_name = "{0}_{1}".format(vnf_id, intf_name)
-                    vnf_id = src_docker_name
-                vnf_name = vnf_id2vnf_name[vnf_id]
                 LOG.debug(
-                    "Setting up E-LAN link. %s(%s:%s) -> %s" % (
-                        vnf_name, vnf_id, intf_name, ip_address))
+                    "Setting up E-Line link. %s(%s:%s) -> %s(%s:%s)" % (
+                        src_name, src_id, src_if_name, dst_name, dst_id, dst_if_name))
 
-                if vnf_name in self.vnfds:
-                    # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
-                    # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
-                    # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is necessary.
-                    vnfi = self._get_vnf_instance(instance_uuid, vnf_name)
-                    if vnfi is not None:
-                        self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
-                        # increase for the next ip address on this E-LAN
-                        ip += 1
-            # increase the base ip address for the next E-LAN
-            base += 1
+                if (src_name in self.vnfds) and (dst_name in self.vnfds):
+                    network = self.vnfds[src_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
+                    LOG.debug(src_docker_name)
+                    ret = network.setChain(
+                        src_docker_name, dst_docker_name,
+                        vnf_src_interface=src_if_name, vnf_dst_interface=dst_if_name,
+                        bidirectional=BIDIRECTIONAL_CHAIN, cmd="add-flow", cookie=cookie, priority=10)
+
+                    # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
+                    src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
+                    if src_vnfi is not None:
+                        self._vnf_reconfigure_network(src_vnfi, src_if_name, self.eline_subnets_src.pop(0))
+                    dst_vnfi = self._get_vnf_instance(instance_uuid, dst_name)
+                    if dst_vnfi is not None:
+                        self._vnf_reconfigure_network(dst_vnfi, dst_if_name, self.eline_subnets_dst.pop(0))
+
+            # 4b. deploy E-LAN links
+            base = 10
+            for link in elan_fwd_links:
+                # generate lan ip address
+                ip = 1
+                for intf in link["connection_points_reference"]:
+                    ip_address = generate_lan_string("10.0", base, subnet_size=24, ip=ip)
+                    vnf_id, intf_name = intf.split(":")
+                    if vnf_id in self.sap_identifiers:
+                        src_docker_name = "{0}_{1}".format(vnf_id, intf_name)
+                        vnf_id = src_docker_name
+                    vnf_name = vnf_id2vnf_name[vnf_id]
+                    LOG.debug(
+                        "Setting up E-LAN link. %s(%s:%s) -> %s" % (
+                            vnf_name, vnf_id, intf_name, ip_address))
+
+                    if vnf_name in self.vnfds:
+                        # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
+                        # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
+                        # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is necessary.
+                        vnfi = self._get_vnf_instance(instance_uuid, vnf_name)
+                        if vnfi is not None:
+                            self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
+                            # increase for the next ip address on this E-LAN
+                            ip += 1
+                # increase the base ip address for the next E-LAN
+                base += 1
 
         # 5. run the emulator specific entrypoint scripts in the VNFIs of this service instance
         self._trigger_emulator_start_scripts_in_vnfis(self.instances[instance_uuid]["vnf_instances"])
@@ -301,7 +302,32 @@ class Service(object):
             assert(target_dc is not None)
             if not self._check_docker_image_exists(docker_name):
                 raise Exception("Docker image %r not found. Abort." % docker_name)
-            # 3. do the dc.startCompute(name="foobar") call to run the container
+
+            # 3. get the resource limits
+            res_req = u.get("resource_requirements")
+            cpu_list = res_req.get("cpu").get("cores")
+            if not cpu_list or len(cpu_list)==0:
+                cpu_list="1"
+            cpu_bw = res_req.get("cpu").get("cpu_bw")
+            if not cpu_bw:
+                cpu_bw=1
+            mem_num = str(res_req.get("memory").get("size"))
+            if len(mem_num)==0:
+                mem_num="2"
+            mem_unit = str(res_req.get("memory").get("size_unit"))
+            if str(mem_unit)==0:
+                mem_unit="GB"
+            mem_limit = float(mem_num)
+            if mem_unit=="GB":
+                mem_limit=mem_limit*1024*1024*1024
+            elif mem_unit=="MB":
+                mem_limit=mem_limit*1024*1024
+            elif mem_unit=="KB":
+                mem_limit=mem_limit*1024
+            mem_lim = int(mem_limit)
+            cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(cpu_bw))
+
+            # 4. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
 
@@ -317,7 +343,8 @@ class Service(object):
 
             LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
-            vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small")
+            vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small",
+                    cpu_quota=cpu_quota, cpu_period=cpu_period, cpuset=cpu_list, mem_limit=mem_lim)
             return vnfi
 
     def _stop_vnfi(self, vnfi):
@@ -372,8 +399,9 @@ class Service(object):
             config = vnfi.dcinfo.get("Config", dict())
             env = config.get("Env", list())
             for env_var in env:
-                if "SON_EMU_CMD=" in env_var:
-                    cmd = str(env_var.split("=")[1])
+                var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
+                LOG.debug("%r = %r" % (var , cmd))
+                if var=="SON_EMU_CMD":
                     LOG.info("Executing entry point script in %r: %r" % (vnfi.name, cmd))
                     # execute command in new thread to ensure that GK is not blocked by VNF
                     t = threading.Thread(target=vnfi.cmdPrint, args=(cmd,))
@@ -527,6 +555,29 @@ class Service(object):
         for name, vnfd in self.vnfds.iteritems():
             LOG.info("Placed VNF %r on DC %r" % (name, str(vnfd.get("dc"))))
 
+    def _calculate_cpu_cfs_values(self, cpu_time_percentage):
+        """
+        Calculate cpu period and quota for CFS
+        :param cpu_time_percentage: percentage of overall CPU to be used
+        :return: cpu_period, cpu_quota
+        """
+        if cpu_time_percentage is None:
+            return -1, -1
+        if cpu_time_percentage < 0:
+            return -1, -1
+        # (see: https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
+        # Attention minimum cpu_quota is 1ms (micro)
+        cpu_period = 1000000  # lets consider a fixed period of 1000000 microseconds for now
+        LOG.debug("cpu_period is %r, cpu_percentage is %r" % (cpu_period, cpu_time_percentage))
+        cpu_quota = cpu_period * cpu_time_percentage  # calculate the fraction of cpu time for this container
+        # ATTENTION >= 1000 to avoid a invalid argument system error ... no idea why
+        if cpu_quota < 1000:
+            LOG.debug("cpu_quota before correcting: %r" % cpu_quota)
+            cpu_quota = 1000
+            LOG.warning("Increased CPU quota to avoid system error.")
+        LOG.debug("Calculated: cpu_period=%f / cpu_quota=%f" % (cpu_period, cpu_quota))
+        return int(cpu_period), int(cpu_quota)
+
 
 """
 Some (simple) placement algorithms
@@ -658,8 +709,7 @@ class Instantiations(fr.Resource):
         if service_uuid in GK.services and instance_uuid in GK.services[service_uuid].instances:
             # valid service and instance UUID, stop service
             GK.services.get(service_uuid).stop_service(instance_uuid)
-            del GK.services.get(service_uuid).instances[instance_uuid]
-            return
+            return "service instance with uuid %r stopped." % instance_uuid,200
         return "Service not found", 404
 
 class Exit(fr.Resource):
@@ -668,7 +718,7 @@ class Exit(fr.Resource):
         """
         Stop the running Containernet instance regardless of data transmitted
         """
-        GK.net.stop()
+        list(GK.dcs.values())[0].net.stop()
 
 
 def initialize_GK():
