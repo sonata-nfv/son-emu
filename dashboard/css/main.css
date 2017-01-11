@@ -1,0 +1,40 @@
+body {
+	margin: 16px;
+	height: 100%;
+}
+
+#logo {
+    height: 90px;
+    text-align: right;
+}
+
+#content {
+}
+
+#input_filter {
+	width: 100px;
+}
+
+
+.tbl-timestamp {
+	font-size: 10px;
+    color: #2b669a;
+}
+
+.tbl-message {
+	font-size: 14px;
+}
+
+.tbl-address {
+	font-size: 14px;
+    vertical-align: middle;
+}
+
+.tbl-cat {
+	font-size: 14px;
+    vertical-align: middle;
+}
+
+.unitbutton {
+	cursor: pointer;
+}
