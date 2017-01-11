@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,7 +8,8 @@
     <title>MeDICINE Dashboard</title>
 
     <!-- Bootstrap -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!--<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">-->
+    <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" integrity="sha384-+ENW/yibaokMnme+vBLnHMphUYxHs34h9lpdbSLuAwGkOKFRl4C34WkjazBtb7eT" crossorigin="anonymous">
 
     <link href="css/main.css" rel="stylesheet">
 
@@ -28,8 +30,12 @@
 
 <body>
 
-<div id="page-top">
-<div id="logo"><img src="img/SONATA_new.png" alt="SONATA Logo" width="252" height="70"></div>    
+  <div id="page-top">
+    <div class="row">
+      <div class="col-sm-8"><h1>MeDICINE Dashboard</h1></div>
+      <div class="col-sm-4" id="logo"><img src="img/SONATA_new.png" alt="SONATA Logo" width="252" height="70"></div>
+    </div>
+
 <nav class="navbar navbar-default">
   <div class="container-fluid">
     <!-- Brand and toggle get grouped for better mobile display -->
@@ -40,19 +46,18 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#">MeDICINE Dashboard</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <div class="navbar-form navbar- navbar-btn btn-group" role="group" aria-label="category">
-          <button type="button" class="btn btn-default active" id="btn_tab_pop">PoP List</button>
+          <button type="button" class="btn btn-default active" id="btn_tab_pop">Datacenter List</button>
           <button type="button" class="btn btn-default" id="btn_tab_container">Container List</button>
           <!--<button type="button" class="btn btn-default" id="btn_tab_other">Other</button> -->
       </div>
-      <div class="navbar-form navbar- navbar-btn btn-group" role="group" aria-label="category">
-         <button type="button" class="btn btn-default active" id="btn_autorefresh">Auto-refresh</button>
-      </div>
+      <form class="navbar-form navbar-right">
+        <button type="button" class="btn btn-default active" id="btn_autorefresh">Auto-refresh</button>
+      </form>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
@@ -60,15 +65,53 @@
 <div id="content">
 <div class="panel panel-primary">
   <!-- Default panel contents -->
-  <div class="panel-heading"><span>Messages</span> <span class="badge" id="lbl_msg_count">0</span><span class="pull-right" id="lbl_lateness">Lateness: -</span></div>
+  <div class="panel-heading"><span>Running Containers</span> <span class="badge" id="lbl_msg_count">0</span><span class="pull-right" id="lbl_lateness">Lateness: -</span></div>
   <!-- Table -->
   <table class="table table-striped table-hover" id="table_messages">
+    <tr class="tbl-head">
+      <td>Datacenter</td>
+      <td>Container</td>
+      <td>Image</td>
+      <td>docker0</td>
+      <td>Status</td>
+    </tr>
+    <tr>
+      <td>sonata-pop1</td>
+      <td>vnf1</td>
+      <td>mpeuster/firewall</td>
+      <td><code>172.10.4.12</code></td>
+      <td><span class="label label-success">running</span></td>
+    </tr>
+     <tr>
+      <td>sonata-pop2</td>
+      <td>vnf3</td>
+      <td>mpeuster/l4_fw</td>
+      <td><code>172.10.4.13</code></td>
+      <td><span class="label label-success">running</span></td>
+    </tr>
+  </table>
+
+  <table class="table table-striped table-hover" id="table_messages">
+    <tr class="tbl-head">
+      <td>Label</td>
+      <td>Int. Name</td>
+      <td>Switch</td>
+      <td>Num. Containers</td>
+      <td>Metadata Items</td>
+    </tr>
+    <tr>
+      <td>sonata-pop1</td>
+      <td>dc1</td>
+      <td>dc1.s1</td>
+      <td><span class="badge">2</span></td>
+      <td><span class="badge">0</span></td>
+    </tr>
   </table>
 </div>
 
 </div>
 
-<footer class="footer text-center small">(c) 2017 by Manuel Peuster (manuel.peuster [at] upb.de)</footer>
+<footer class="footer text-center small">(c) 2017 by Paderborn University and Manuel Peuster (manuel.peuster [at] upb.de)</footer>
 
 
 </body>
