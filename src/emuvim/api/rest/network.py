@@ -39,6 +39,8 @@ import json
 
 logging.basicConfig(level=logging.INFO)
 
+CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
+
 net = None
 
 
@@ -98,7 +100,7 @@ class NetworkAction(Resource):
                 cookie=cookie,
                 priority=priority)
             # return setChain response
-            return str(c), 200
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
