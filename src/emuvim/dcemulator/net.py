@@ -183,7 +183,7 @@ class DCNetwork(Containernet):
         edge_attributes = [p for p in params if p in weight_metrics]
         for attr in edge_attributes:
             # if delay: strip ms (need number as weight in graph)
-            match = re.search('([0-9]*\.?[0-9]+)', params[attr])
+            match = re.search('([0-9]*\.?[0-9]+)', str(params[attr]))
             if match:
                 attr_number = match.group(1)
             else:
