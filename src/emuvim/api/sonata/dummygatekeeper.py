@@ -39,7 +39,7 @@ import hashlib
 import zipfile
 import yaml
 import threading
-from docker import Client as DockerClient
+from docker import DockerClient
 from flask import Flask, request
 import flask_restful as fr
 from collections import defaultdict
@@ -514,7 +514,7 @@ class Service(object):
         dc = DockerClient()
         for url in self.remote_docker_image_urls.itervalues():
             if not FORCE_PULL:  # only pull if not present (speedup for development)
-                if len(dc.images(name=url)) > 0:
+                if len(dc.images.list(name=url)) > 0:
                     LOG.debug("Image %r present. Skipping pull." % url)
                     continue
             LOG.info("Pulling image: %r" % url)
@@ -527,7 +527,7 @@ class Service(object):
         :param image_name: name of the docker image
         :return:
         """
-        return len(DockerClient().images(image_name)) > 0
+        return len(DockerClient().images.list(name=image_name)) > 0
 
     def _calculate_placement(self, algorithm):
         """
