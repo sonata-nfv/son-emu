@@ -100,7 +100,7 @@ Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. 
 #### 1. Containernet
 
 * `cd`
-* `git clone https://github.com/mpeuster/containernet.git`
+* `git clone https://github.com/containernet/containernet.git`
 * `cd ~/containernet/ansible`
 * `sudo ansible-playbook install.yml`
 * Wait (and have a coffee) ...

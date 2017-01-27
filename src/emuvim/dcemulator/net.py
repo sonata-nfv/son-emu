@@ -500,8 +500,12 @@ class DCNetwork(Containernet):
         :param cookie: cookie for the installed flowrules (can be used later as identifier for a set of installed chains)
         :param match: custom match entry to be added to the flowrules (default: only in_port and vlan tag)
         :param priority: custom flowrule priority
+<<<<<<< HEAD
         :param monitor: boolean to indicate whether this chain is a monitoring chain
         :param tag: vlan tag to be used for this chain (pre-defined or new one if none is specified)
+=======
+        :param path: custom path between the two VNFs (list of switches)
+>>>>>>> upstream/master
         :return: output log string
         """
 
@@ -533,6 +537,8 @@ class DCNetwork(Containernet):
         if cmd == 'add-flow' or cmd == 'del-flows':
             ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
             if kwargs.get('bidirectional'):
+                if kwargs.get('path') is not None:
+                    kwargs['path'] = list(reversed(kwargs.get('path')))
                 ret = ret +'\n' + self._chainAddFlow(vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
 
         else:
@@ -589,20 +595,21 @@ class DCNetwork(Containernet):
                     dst_sw_outport_name = link_dict[link]['src_port_name']
                     break
 
-
-        # get shortest path
-        try:
-            # returns the first found shortest path
-            # if all shortest paths are wanted, use: all_shortest_paths
-            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=kwargs.get('weight'))
-        except:
-            LOG.exception("No path could be found between {0} and {1} using src_sw={2} and dst_sw={3}".format(
-                vnf_src_name, vnf_dst_name, src_sw, dst_sw))
-            LOG.debug("Graph nodes: %r" % self.DCNetwork_graph.nodes())
-            LOG.debug("Graph edges: %r" % self.DCNetwork_graph.edges())
-            for e, v in self.DCNetwork_graph.edges():
-                LOG.debug("%r" % self.DCNetwork_graph[e][v])
-            return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
+        path = kwargs.get('path')
+        if path is None:
+            # get shortest path
+            try:
+                # returns the first found shortest path
+                # if all shortest paths are wanted, use: all_shortest_paths
+                path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw, weight=kwargs.get('weight'))
+            except:
+                LOG.exception("No path could be found between {0} and {1} using src_sw={2} and dst_sw={3}".format(
+                    vnf_src_name, vnf_dst_name, src_sw, dst_sw))
+                LOG.debug("Graph nodes: %r" % self.DCNetwork_graph.nodes())
+                LOG.debug("Graph edges: %r" % self.DCNetwork_graph.edges())
+                for e, v in self.DCNetwork_graph.edges():
+                    LOG.debug("%r" % self.DCNetwork_graph[e][v])
+                return "No path could be found between {0} and {1}".format(vnf_src_name, vnf_dst_name)
 
         LOG.info("Path between {0} and {1}: {2}".format(vnf_src_name, vnf_dst_name, path))
 
@@ -634,10 +641,10 @@ class DCNetwork(Containernet):
         for i in range(0,len(path)):
             current_node = self.getNodeByName(current_hop)
 
-            if path.index(current_hop) < len(path)-1:
-                next_hop = path[path.index(current_hop)+1]
+            if i < len(path) - 1:
+                next_hop = path[i + 1]
             else:
-                #last switch reached
+                # last switch reached
                 next_hop = vnf_dst_name
 
             next_node = self.getNodeByName(next_hop)
@@ -661,6 +668,7 @@ class DCNetwork(Containernet):
                 kwargs['current_hop'] = current_hop
                 kwargs['switch_inport_name'] = src_sw_inport_name
                 kwargs['switch_outport_name'] = dst_sw_outport_name
+                kwargs['pathindex'] = i
 
                 if self.controller == RemoteController:
                     ## set flow entry via ryu rest api
@@ -683,7 +691,8 @@ class DCNetwork(Containernet):
         match_input = kwargs.get('match')
         cmd = kwargs.get('cmd')
         path = kwargs.get('path')
-        current_hop = kwargs.get('current_hop')
+        index = kwargs.get('pathindex')
+
         vlan = kwargs.get('vlan')
         priority = kwargs.get('priority')
         # flag to not set the ovs port vlan tag
@@ -714,7 +723,7 @@ class DCNetwork(Containernet):
         if cmd == 'add-flow':
             prefix = 'stats/flowentry/add'
             if vlan != None:
-                if path.index(current_hop) == 0:  # first node
+                if index == 0:  # first node
                     # set vlan tag in ovs instance (to isolate E-LANs)
                     if not skip_vlan_tag:
                         in_port_name = kwargs.get('switch_inport_name')
@@ -728,10 +737,11 @@ class DCNetwork(Containernet):
                         action = {}
                         action['type'] = 'SET_FIELD'
                         action['field'] = 'vlan_vid'
-                        action['value'] = vlan
+                        # ryu expects the field to be masked
+                        action['value'] = vlan | 0x1000
                         flow['actions'].append(action)
 
-                if path.index(current_hop) == len(path) - 1:  # last node
+                elif index == len(path) - 1:  # last node
                     # set vlan tag in ovs instance (to isolate E-LANs)
                     if not skip_vlan_tag:
                         out_port_name = kwargs.get('switch_outport_name')
@@ -743,7 +753,7 @@ class DCNetwork(Containernet):
                         action['type'] = 'POP_VLAN'
                         flow['actions'].append(action)
 
-                if 0 < path.index(current_hop) < (len(path) - 1):  # middle nodes
+                else:  # middle nodes
                     match += ',dl_vlan=%s' % vlan
 
             # output action must come last
@@ -779,7 +789,7 @@ class DCNetwork(Containernet):
         match_input = kwargs.get('match')
         cmd = kwargs.get('cmd')
         path = kwargs.get('path')
-        current_hop = kwargs.get('current_hop')
+        index = kwargs.get('pathindex')
         vlan = kwargs.get('vlan')
 
         s = ','
@@ -791,10 +801,10 @@ class DCNetwork(Containernet):
         if cmd == 'add-flow':
             action = 'action=%s' % switch_outport_nr
             if vlan != None:
-                if path.index(current_hop) == 0:  # first node
+                if index == 0: # first node
                     action = ('action=mod_vlan_vid:%s' % vlan) + (',output=%s' % switch_outport_nr)
                     match = '-O OpenFlow13 ' + match
-                elif path.index(current_hop) == len(path) - 1:  # last node
+                elif index == len(path) - 1:  # last node
                     match += ',dl_vlan=%s' % vlan
                     action = 'action=strip_vlan,output=%s' % switch_outport_nr
                 else:  # middle nodes
