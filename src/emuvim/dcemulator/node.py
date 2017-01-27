@@ -90,6 +90,7 @@ class EmulatorCompute(Docker):
         status["memswap_limit"] = self.memswap_limit
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
+        status["short_id"] = self.dcli.inspect_container(self.dc)["Id"][:12]
         status["datacenter"] = (None if self.datacenter is None
                                 else self.datacenter.label)
         return status
@@ -190,7 +191,8 @@ class Datacenter(object):
             datacenter=self,
             flavor_name=flavor_name,
             cpu_period = cpu_period,
-            cpu_quota = cpu_quota
+            cpu_quota = cpu_quota,
+            environment = {'VNF_NAME':name}
         )
 
 
