@@ -175,13 +175,10 @@ class Datacenter(object):
                 network.append({})
 
         # apply hard-set resource limits=0
-        cpu_percentage = kwargs.get('cpu_percent')
+        cpu_percentage = params.get('cpu_percent')
         if cpu_percentage:
-            cpu_period = self.net.cpu_period
-            cpu_quota = self.net.cpu_period * float(cpu_percentage)
-        else:
-            cpu_quota = None
-            cpu_period = None
+            params['cpu_period'] = self.net.cpu_period
+            params['cpu_quota'] = self.net.cpu_period * float(cpu_percentage)
 
         # create the container
         d = self.net.addDocker(
@@ -190,9 +187,7 @@ class Datacenter(object):
             dcmd=command,
             datacenter=self,
             flavor_name=flavor_name,
-            cpu_period = cpu_period,
-            cpu_quota = cpu_quota,
-            environment = {'VNF_NAME':name}
+            environment = {'VNF_NAME':name},
             **params
         )
 

@@ -39,11 +39,12 @@ import hashlib
 import zipfile
 import yaml
 import threading
-from docker import DockerClient
+from docker import DockerClient, APIClient
 from flask import Flask, request
 import flask_restful as fr
 from collections import defaultdict
 import pkg_resources
+from subprocess import Popen
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -546,8 +547,18 @@ class Service(object):
                     LOG.debug("Image %r present. Skipping pull." % url)
                     continue
             LOG.info("Pulling image: %r" % url)
-            dc.pull(url,
-                    insecure_registry=True)
+            # this seems to fail with latest docker api version 2.0.2
+            # dc.images.pull(url,
+            #        insecure_registry=True)
+            #using docker cli instead
+            cmd = ["docker",
+                   "pull",
+                   url,
+                   ]
+            Popen(cmd).wait()
+
+
+
 
     def _check_docker_image_exists(self, image_name):
         """
