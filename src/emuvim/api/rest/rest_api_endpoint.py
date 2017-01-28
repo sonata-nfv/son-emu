@@ -81,9 +81,9 @@ class RestApiEndpoint(object):
         # monitoring related actions
         # export a network interface traffic rate counter
         self.api.add_resource(MonitorInterfaceAction,
-                              "/restapi/monitor/vnf/<vnf_name>/<metric>",
-                              "/restapi/monitor/vnf/<vnf_name>/<vnf_interface>/<metric>",
-                              "/restapi/monitor/vnf/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+                              "/restapi/monitor/interface/<vnf_name>/<metric>",
+                              "/restapi/monitor/interface/<vnf_name>/<vnf_interface>/<metric>",
+                              "/restapi/monitor/interface/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
         # export flow traffic counter, of a manually pre-installed flow entry, specified by its cookie
         self.api.add_resource(MonitorFlowAction,
                               "/restapi/monitor/flow/<vnf_name>/<metric>/<cookie>",
