@@ -39,7 +39,7 @@ import network
 from network import NetworkAction
 
 import monitor
-from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction
+from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction
 
 logging.basicConfig(level=logging.INFO)
 
@@ -92,6 +92,10 @@ class RestApiEndpoint(object):
         # the traffic counters of the newly installed monitor flow are exported
         self.api.add_resource(MonitorLinkAction,
                               "/restapi/monitor/link/<vnf_src_name>/<vnf_dst_name>")
+        # install skewness monitor of resource usage disribution
+        # the skewness metric is exported
+        self.api.add_resource(MonitorSkewAction,
+                              "/restapi/monitor/skewness/<vnf_name>/<resource_name>")
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 
