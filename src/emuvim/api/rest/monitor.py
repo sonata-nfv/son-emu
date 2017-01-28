@@ -202,7 +202,11 @@ class MonitorLinkAction(Resource):
                 vnf_name = vnf_src_name
                 vnf_interface = vnf_src_interface
 
-            c2 = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+            c2 = 'command unknown'
+            if command == 'add-flow':
+                c2 = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+            elif command == 'del-flows':
+                c2 = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
 
             # return setChain response
             return (str(c1) + " " + str(c2)), 200
