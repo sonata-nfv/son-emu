@@ -213,3 +213,36 @@ class MonitorLinkAction(Resource):
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
+
+class MonitorSkewAction(Resource):
+    """
+    Monitor the counters of a VNF interface
+    :param vnf_name: name of the VNF to be monitored
+    :param resource: the resource to be monitored (cpu, mem, ...)
+    :return: message string indicating if the monitor action is succesful or not
+    """
+    global net
+
+    def put(self, vnf_name, resource_name='cpu'):
+        logging.debug("REST CALL: start monitor skewness")
+        try:
+            # configure skewmon
+            c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='start')
+
+            # return monitor message response
+            return  str(c), 200
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500
+
+    def delete(self, vnf_name, resource_name='cpu'):
+        logging.debug("REST CALL: stop monitor skewness")
+        try:
+            # configure skewmon
+            c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='stop')
+
+            # return monitor message response
+            return str(c), 200
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500
