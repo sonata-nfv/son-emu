@@ -37,6 +37,7 @@ import threading
 from subprocess import Popen
 import os
 import docker
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -89,6 +90,7 @@ class DCNetworkMonitor():
         self.monitor_flow_lock = threading.Lock()
         self.network_metrics = []
         self.flow_metrics = []
+        self.skewmon_metrics = {}
 
         # start monitoring thread
         self.start_monitoring = True
@@ -535,5 +537,72 @@ class DCNetworkMonitor():
 
         container = self.dockercli.containers.get(name)
         container.remove(force=True)
+
+    def update_skewmon(self, vnf_name, resource_name, action):
+
+        ret = ''
+
+        config_file_path = '/tmp/skewmon.cfg'
+        configfile = open(config_file_path, 'a+')
+        try:
+            config = json.load(configfile)
+        except:
+            #not a valid json file or empty
+            config = {}
+
+        #initialize config file
+        if len(self.skewmon_metrics) == 0:
+            config = {}
+        json.dump(config, configfile)
+        configfile.close()
+
+        docker_name = 'mn.' + vnf_name
+        vnf_container = self.dockercli.containers.get(docker_name)
+        key = resource_name + '_' + vnf_container.short_id
+        vnf_id = vnf_container.id
+
+        if action == 'start':
+            # add a new vnf to monitor
+            config[key] = dict(VNF_NAME=vnf_name,
+                                VNF_ID=vnf_id,
+                                VNF_METRIC=resource_name)
+            ret = 'adding to skewness monitor: {0} {1} '.format(vnf_name, resource_name)
+            logging.info(ret)
+        elif action == 'stop':
+            # remove vnf to monitor
+            config.pop(key)
+            ret = 'removing from skewness monitor: {0} {1} '.format(vnf_name, resource_name)
+            logging.info(ret)
+
+        self.skewmon_metrics = config
+        configfile = open(config_file_path, 'w')
+        json.dump(config, configfile)
+        configfile.close()
+
+        try:
+            skewmon_container = self.dockercli.containers.get('skewmon')
+
+            # remove container if config is empty
+            if len(config) == 0:
+                ret += 'stopping skewness monitor'
+                logging.info('stopping skewness monitor')
+                skewmon_container.remove(force=True)
+
+        except docker.errors.NotFound:
+            # start container if not running
+            ret += 'starting skewness monitor'
+            logging.info('starting skewness monitor')
+            volumes = {'/sys/fs/cgroup':{'bind':'/sys/fs/cgroup', 'mode':'ro'},
+                       '/tmp/skewmon.cfg':{'bind':'/config.txt', 'mode':'ro'}}
+            self.dockercli.containers.run('skewmon',
+                                          detach=True,
+                                          volumes=volumes,
+                                          labels=['com.containernet'],
+                                          name='skewmon'
+                                          )
+        return ret
+
+
+
 
 
