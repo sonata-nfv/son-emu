@@ -1,0 +1,34 @@
+body {
+	margin: 16px;
+	height: 100%;
+}
+
+#logo {
+    height: 90px;
+    text-align: right;
+}
+
+#content {
+}
+
+
+.tbl-head {
+    font-weight: bold;
+    border-bottom: 1px solid #2c3e50;
+    background-color: #c9ced3;
+}
+
+.tbl-head > td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.tbl-row > td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+
+}
+
+.spacer {
+    height: 20px;
+}
