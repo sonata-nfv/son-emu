@@ -38,6 +38,7 @@ from flask import request
 import json
 
 logging.basicConfig(level=logging.INFO)
+CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 
 # the global net is set from the topology file, and connected via connectDCNetwork function in rest_api_endpoint.py
 net = None
@@ -109,7 +110,7 @@ class NetworkAction(Resource):
                 monitor=monitor,
                 monitor_placement=monitor_placement)
             # return setChain response
-            return str(c), 200
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
