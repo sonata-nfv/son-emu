@@ -39,6 +39,8 @@ import json
 
 logging.basicConfig(level=logging.INFO)
 
+CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
+
 net = None
 
 
@@ -61,10 +63,10 @@ class MonitorInterfaceAction(Resource):
             else:
                 c = net.monitor_agent.setup_metric(vnf_name, vnf_interface, metric)
             # return monitor message response
-            return  str(c), 200
+            return  str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def delete(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=None):
         logging.debug("REST CALL: stop monitor VNF interface")
@@ -74,10 +76,10 @@ class MonitorInterfaceAction(Resource):
             else:
                 c = net.monitor_agent.stop_metric(vnf_name, vnf_interface, metric)
             # return monitor message response
-            return str(c), 200
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
 
 class MonitorFlowAction(Resource):
@@ -96,20 +98,20 @@ class MonitorFlowAction(Resource):
         try:
             c = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
             # return monitor message response
-            return str(c), 200
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def delete(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
         logging.debug("REST CALL: stop monitor VNF interface")
         try:
             c = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
             # return monitor message response
-            return str(c), 200
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
 class MonitorLinkAction(Resource):
     """
@@ -144,7 +146,7 @@ class MonitorLinkAction(Resource):
             return self._MonitorLinkAction(vnf_src_name, vnf_dst_name, command=command)
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def delete(self, vnf_src_name, vnf_dst_name):
         logging.debug("REST CALL: monitor link flow remove")
@@ -154,7 +156,7 @@ class MonitorLinkAction(Resource):
             return self._MonitorLinkAction(vnf_src_name, vnf_dst_name, command=command)
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def _MonitorLinkAction(self, vnf_src_name, vnf_dst_name, command=None):
         # call DCNetwork method, not really datacenter specific API for now...
@@ -209,7 +211,7 @@ class MonitorLinkAction(Resource):
                 c2 = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
 
             # return setChain response
-            return (str(c1) + " " + str(c2)), 200
+            return (str(c1) + " " + str(c2)), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500
@@ -242,7 +244,8 @@ class MonitorSkewAction(Resource):
             c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='stop')
 
             # return monitor message response
-            return str(c), 200
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
+

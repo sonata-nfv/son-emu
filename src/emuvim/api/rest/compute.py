@@ -32,6 +32,8 @@ import json
 
 logging.basicConfig(level=logging.INFO)
 
+CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
+
 dcs = {}
 
 
@@ -72,10 +74,10 @@ class Compute(Resource):
             c = dcs.get(dc_label).startCompute(
                 compute_name, image=image, command=command, network=nw_list)
             # return docker inspect dict
-            return c.getStatus(), 200
+            return c.getStatus(), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def _update_resource(self, dc_label, compute_name, resource, value):
         #check if container exists
@@ -96,18 +98,18 @@ class Compute(Resource):
         logging.debug("API CALL: compute status")
 
         try:
-            return dcs.get(dc_label).containers.get(compute_name).getStatus(), 200
+            return dcs.get(dc_label).containers.get(compute_name).getStatus(), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def delete(self, dc_label, compute_name):
         logging.debug("API CALL: compute stop")
         try:
-            return dcs.get(dc_label).stopCompute(compute_name), 200
+            return dcs.get(dc_label).stopCompute(compute_name), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def _parse_network(self, network_str):
         '''
@@ -140,14 +142,14 @@ class ComputeList(Resource):
                 all_containers = []
                 for dc in dcs.itervalues():
                     all_containers += dc.listCompute()
-                return [(c.name, c.getStatus()) for c in all_containers], 200
+                return [(c.name, c.getStatus()) for c in all_containers], 200, CORS_HEADER
             else:
                 # return list of compute nodes for specified DC
                 return [(c.name, c.getStatus())
-                        for c in dcs.get(dc_label).listCompute()], 200
+                        for c in dcs.get(dc_label).listCompute()], 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
 
 class DatacenterList(Resource):
@@ -156,10 +158,10 @@ class DatacenterList(Resource):
     def get(self):
         logging.debug("API CALL: datacenter list")
         try:
-            return [d.getStatus() for d in dcs.itervalues()], 200
+            return [d.getStatus() for d in dcs.itervalues()], 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
 
 class DatacenterStatus(Resource):
@@ -168,7 +170,7 @@ class DatacenterStatus(Resource):
     def get(self, dc_label):
         logging.debug("API CALL: datacenter status")
         try:
-            return dcs.get(dc_label).getStatus(), 200
+            return dcs.get(dc_label).getStatus(), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
