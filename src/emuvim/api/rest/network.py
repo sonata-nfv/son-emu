@@ -41,6 +41,7 @@ logging.basicConfig(level=logging.INFO)
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 
+# the global net is set from the topology file, and connected via connectDCNetwork function in rest_api_endpoint.py
 net = None
 
 
@@ -56,6 +57,9 @@ class NetworkAction(Resource):
     :param bidirectional: boolean value if the link needs to be implemented from src to dst and back
     :param cookie: cookie value, identifier of the flow entry to be installed.
     :param priority: integer indicating the priority of the flow entry
+    :param skip_vlan_tag: boolean to indicate whether a new vlan tag should be created for this chain
+    :param monitor: boolean to indicate whether a new vlan tag should be created for this chain
+    :param monitor_placement: 'tx'=place the monitoring flowrule at the beginning of the chain, 'rx'=place at the end of the chain
     :return: message string indicating if the chain action is succesful or not
     """
 
@@ -89,6 +93,10 @@ class NetworkAction(Resource):
             bidirectional = data.get("bidirectional")
             cookie = data.get("cookie")
             priority = data.get("priority")
+            skip_vlan_tag = data.get("skip_vlan_tag")
+            monitor = data.get("monitor")
+            monitor_placement = data.get("monitor_placement")
+
             c = net.setChain(
                 vnf_src_name, vnf_dst_name,
                 vnf_src_interface=vnf_src_interface,
@@ -98,7 +106,10 @@ class NetworkAction(Resource):
                 match=match,
                 bidirectional=bidirectional,
                 cookie=cookie,
-                priority=priority)
+                priority=priority,
+                skip_vlan_tag=skip_vlan_tag,
+                monitor=monitor,
+                monitor_placement=monitor_placement)
             # return setChain response
             return str(c), 200, CORS_HEADER
         except Exception as ex:

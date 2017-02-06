@@ -48,23 +48,18 @@ def create_topology1():
     # create topology
     net = DCNetwork(controller=RemoteController, monitor=True, enable_learning=True)
     dc1 = net.addDatacenter("dc1")
-    dc2 = net.addDatacenter("dc2")
-    s1 = net.addSwitch("s1")
-    net.addLink(dc1, s1, delay="3ms")
-    net.addLink(dc2, s1, delay="5ms")
+
 
     # add the command line interface endpoint to each DC (REST API)
     rapi1 = RestApiEndpoint("0.0.0.0", 5001)
     rapi1.connectDCNetwork(net)
     rapi1.connectDatacenter(dc1)
-    rapi1.connectDatacenter(dc2)
     # run API endpoint server (in another thread, don't block)
     rapi1.start()
 
     # add the SONATA dummy gatekeeper to each DC
     sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=True)
     sdkg1.connectDatacenter(dc1)
-    sdkg1.connectDatacenter(dc2)
     # run the dummy gatekeeper (in another thread, don't block)
     sdkg1.start()
 
