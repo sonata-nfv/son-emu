@@ -15,7 +15,7 @@ cd $SON_EMU_DIR/../
 
 # prepare
 apt-get update
-apt-get install -y git ansible aptitude
+DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y git ansible aptitude
 echo "localhost ansible_connection=local" >> /etc/ansible/hosts
 
 # install containernet
