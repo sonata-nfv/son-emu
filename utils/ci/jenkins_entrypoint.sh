@@ -4,6 +4,9 @@
 # Script has do be called from "son-emu" root directory, like: sudo ./utils/ci/jenkins_entrypoint.sh
 export DOCKER_HOST="unix:///var/run/docker.sock"
 
+# don't rely on Debian/Ubuntu Docker engine
+apt-get remove docker-enigne
+
 set -e
 set -x
 
