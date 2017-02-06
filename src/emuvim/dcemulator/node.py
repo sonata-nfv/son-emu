@@ -38,7 +38,6 @@ LOG.setLevel(logging.DEBUG)
 
 DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
 
-
 class EmulatorCompute(Docker):
     """
     Emulator specific compute node class.
@@ -61,9 +60,17 @@ class EmulatorCompute(Docker):
         Helper method to receive information about the virtual networks
         this compute instance is connected to.
         """
-        # format list of tuples (name, Ip, MAC, isUp, status)
-        return [{'intf_name':str(i), 'ip':i.IP(), 'mac':i.MAC(), 'up':i.isUp(), 'status':i.status()}
-                for i in self.intfList()]
+        # get all links and find dc switch interface
+        networkStatusList = []
+        for i in self.intfList():
+            vnf_name = self.name
+            vnf_interface = str(i)
+            dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
+            # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
+            intf_dict = {'intf_name': str(i), 'ip': i.IP(), 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            networkStatusList.append(intf_dict)
+
+        return networkStatusList
 
     def getStatus(self):
         """
@@ -83,6 +90,7 @@ class EmulatorCompute(Docker):
         status["memswap_limit"] = self.memswap_limit
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
+        status["short_id"] = self.dcli.inspect_container(self.dc)["Id"][:12]
         status["datacenter"] = (None if self.datacenter is None
                                 else self.datacenter.label)
         return status
@@ -166,6 +174,12 @@ class Datacenter(object):
             if len(network) < 1:
                 network.append({})
 
+        # apply hard-set resource limits=0
+        cpu_percentage = params.get('cpu_percent')
+        if cpu_percentage:
+            params['cpu_period'] = self.net.cpu_period
+            params['cpu_quota'] = self.net.cpu_period * float(cpu_percentage)
+
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
@@ -173,8 +187,11 @@ class Datacenter(object):
             dcmd=command,
             datacenter=self,
             flavor_name=flavor_name,
+            environment = {'VNF_NAME':name},
             **params
         )
+
+
 
         # apply resource limits to container if a resource model is defined
         if self._resource_model is not None:

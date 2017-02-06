@@ -52,7 +52,7 @@ setup(name='emuvim',
           'pytest',
           'Flask',
           'flask_restful',
-          'docker-py==1.7.1',
+          'docker==2.0.2',
           'requests',
           'prometheus_client',
           'urllib3'

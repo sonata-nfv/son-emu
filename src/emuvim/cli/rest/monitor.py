@@ -49,7 +49,7 @@ class RestApiClient():
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
 
-        response = put("%s/restapi/monitor/%s/%s/%s" %
+        response = put("%s/restapi/monitor/interface/%s/%s/%s" %
                        (args.get("endpoint"),
                         vnf_name,
                         vnf_interface,
@@ -60,7 +60,7 @@ class RestApiClient():
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
 
-        response = delete("%s/restapi/monitor/%s/%s/%s" %
+        response = delete("%s/restapi/monitor/interface/%s/%s/%s" %
                        (args.get("endpoint"),
                         vnf_name,
                         vnf_interface,
@@ -71,7 +71,7 @@ class RestApiClient():
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
 
-        response = put("%s/restapi/monitor/%s/%s/%s/%s" %
+        response = put("%s/restapi/monitor/flow/%s/%s/%s/%s" %
                        (args.get("endpoint"),
                         vnf_name,
                         vnf_interface,
@@ -84,7 +84,7 @@ class RestApiClient():
         vnf_name = self._parse_vnf_name(args.get("vnf_name"))
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
 
-        response = delete("%s/restapi/monitor/%s/%s/%s/%s" %
+        response = delete("%s/restapi/monitor/flow/%s/%s/%s/%s" %
                        (args.get("endpoint"),
                         vnf_name,
                         vnf_interface,

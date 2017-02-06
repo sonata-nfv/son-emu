@@ -57,8 +57,8 @@
    - name: install requests
      pip: name=requests state=latest
 
-   - name: install docker-py
-     pip: name=docker-py version=1.7.1
+   - name: install docker
+     pip: name=docker version=2.0.2
 
    - name: install prometheus_client
      pip: name=prometheus_client state=latest

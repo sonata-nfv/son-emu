@@ -24,7 +24,7 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
 
-FROM mpeuster/containernet
+FROM containernet/containernet
 MAINTAINER manuel@peuster.de
 
 ENV SON_EMU_IN_DOCKER 1

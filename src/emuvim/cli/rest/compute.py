@@ -30,6 +30,7 @@ from tabulate import tabulate
 import pprint
 import argparse
 import json
+from subprocess import Popen
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -77,18 +78,21 @@ class RestApiClient():
             if len(c) > 1:
                 name = c[0]
                 status = c[1]
-                eth0ip = status.get("docker_network", "-")
+                #eth0ip = status.get("docker_network", "-")
+                netw_list = [netw_dict['intf_name'] for netw_dict in status.get("network")]
+                dc_if_list = [netw_dict['dc_portname'] for netw_dict in status.get("network")]
                 table.append([status.get("datacenter"),
                               name,
                               status.get("image"),
-                              eth0ip,
-                              status.get("state").get("Status")])
+                              ','.join(netw_list),
+                              ','.join(dc_if_list)])
+                #status.get("state").get("Status")]
 
         headers = ["Datacenter",
                    "Container",
                    "Image",
-                   "docker0",
-                   "Status"]
+                   "Interface list",
+                   "Datacenter interfaces"]
         print(tabulate(table, headers=headers, tablefmt="grid"))
 
     def status(self, args):
@@ -100,6 +104,11 @@ class RestApiClient():
 
         pp.pprint(list)
 
+    def xterm(self, args):
+        vnf_names = args.get("vnf_names")
+        for vnf_name in vnf_names:
+            Popen(['xterm', '-xrm', 'XTerm.vt100.allowTitleOps: false', '-T', vnf_name,
+                   '-e', "docker exec -it mn.{0} /bin/bash".format(vnf_name)])
 
 parser = argparse.ArgumentParser(description="""son-emu compute
     
@@ -110,8 +119,12 @@ parser = argparse.ArgumentParser(description="""son-emu compute
     """, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument(
     "command",
-    choices=['start', 'stop', 'list', 'status'],
+    choices=['start', 'stop', 'list', 'status', 'xterm'],
     help="Action to be executed.")
+parser.add_argument(
+    "vnf_names",
+    nargs='*',
+    help="vnf names to open an xterm for")
 parser.add_argument(
     "--datacenter", "-d", dest="datacenter",
     help="Data center to which the command should be applied.")
