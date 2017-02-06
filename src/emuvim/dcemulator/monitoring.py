@@ -36,7 +36,8 @@ from prometheus_client import start_http_server, Summary, Histogram, Gauge, Coun
 import threading
 from subprocess import Popen
 import os
-
+import docker
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -53,6 +54,7 @@ COOKIE_MASK = 0xffffffff
 class DCNetworkMonitor():
     def __init__(self, net):
         self.net = net
+        self.dockercli = docker.from_env()
 
         # pushgateway address
         self.pushgateway = 'localhost:{0}'.format(PUSHGATEWAY_PORT)
@@ -88,6 +90,7 @@ class DCNetworkMonitor():
         self.monitor_flow_lock = threading.Lock()
         self.network_metrics = []
         self.flow_metrics = []
+        self.skewmon_metrics = {}
 
         # start monitoring thread
         self.start_monitoring = True
@@ -178,9 +181,10 @@ class DCNetworkMonitor():
 
                 self.flow_metrics.remove(flow_dict)
 
-                for collector in self.registry._collectors:
-                    if (vnf_name, vnf_interface, cookie) in collector._metrics:
-                        collector.remove(vnf_name, vnf_interface, cookie)
+                # set metric to NaN
+                self.prom_metrics[flow_dict['metric_key']]. \
+                    labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=cookie). \
+                    set(float('nan'))
 
                 delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
 
@@ -276,29 +280,11 @@ class DCNetworkMonitor():
 
                 self.network_metrics.remove(metric_dict)
 
-                #this removes the complete metric, all labels...
-                #REGISTRY.unregister(self.prom_metrics[metric_dict['metric_key']])
-                #self.registry.unregister(self.prom_metrics[metric_dict['metric_key']])
-
-                for collector in self.registry._collectors :
-
-                    """
-                    INFO:root:name:sonemu_rx_count_packets
-                    labels:('vnf_name', 'vnf_interface')
-                    metrics:{(u'tsrc', u'output'): < prometheus_client.core.Gauge
-                    object
-                    at
-                    0x7f353447fd10 >}
-                    """
-                    logging.info('{0}'.format(collector._metrics.values()))
-
-                    if (vnf_name, vnf_interface, 'None') in collector._metrics:
-                        logging.info('2 name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames,
-                                                                              collector._metrics))
-                        collector.remove(vnf_name, vnf_interface, 'None')
-
                 # set values to NaN, prometheus api currently does not support removal of metrics
                 #self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(float('nan'))
+                self.prom_metrics[metric_dict['metric_key']]. \
+                    labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=None). \
+                    set(float('nan'))
 
                 # this removes the complete metric, all labels...
                 # 1 single monitor job for all metrics of the SDN controller
@@ -363,6 +349,13 @@ class DCNetworkMonitor():
 
                 self.set_flow_metric(flow_dict, flow_stat_dict)
 
+
+            try:
+                if len(self.flow_metrics) > 0:
+                    pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
+            except Exception, e:
+                logging.warning("Pushgateway not reachable: {0} {1}".format(Exception, e))
+
             self.monitor_flow_lock.release()
             time.sleep(1)
 
@@ -392,6 +385,12 @@ class DCNetworkMonitor():
                 for metric_dict in metric_list:
                     self.set_network_metric(metric_dict, port_stat_dict)
 
+            try:
+                if len(self.network_metrics) > 0:
+                    pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
+            except Exception, e:
+                logging.warning("Pushgateway not reachable: {0} {1}".format(Exception, e))
+
             self.monitor_lock.release()
             time.sleep(1)
 
@@ -413,11 +412,8 @@ class DCNetworkMonitor():
 
                 # set prometheus metric
                 self.prom_metrics[metric_dict['metric_key']].\
-                    labels({'vnf_name': vnf_name, 'vnf_interface': vnf_interface, 'flow_id': None}).\
+                    labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=None).\
                     set(this_measurement)
-
-                # 1 single monitor job for all metrics of the SDN controller
-                pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
 
                 # also the rate is calculated here, but not used for now
                 # (rate can be easily queried from prometheus also)
@@ -465,13 +461,8 @@ class DCNetworkMonitor():
         #flow_uptime = flow_stat['duration_sec'] + flow_stat['duration_nsec'] * 10 ** (-9)
 
         self.prom_metrics[metric_dict['metric_key']]. \
-            labels({'vnf_name': vnf_name, 'vnf_interface': vnf_interface, 'flow_id': cookie}). \
+            labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=cookie). \
             set(counter)
-        try:
-            pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
-        except Exception, e:
-            logging.warning("Pushgateway not reachable: {0} {1}".format(Exception, e))
-
 
     def start_Prometheus(self, port=9090):
         # prometheus.yml configuration file is located in the same directory as this file
@@ -523,23 +514,13 @@ class DCNetworkMonitor():
         self.monitor_flow_thread.join()
 
         # these containers are used for monitoring but are started now outside of son-emu
-        '''
-        if self.prometheus_process is not None:
-            logging.info('stopping prometheus container')
-            self.prometheus_process.terminate()
-            self.prometheus_process.kill()
-            self._stop_container('prometheus')
-        '''
+
         if self.pushgateway_process is not None:
             logging.info('stopping pushgateway container')
-            #self.pushgateway_process.terminate()
-            #self.pushgateway_process.kill()
             self._stop_container('pushgateway')
 
         if self.cadvisor_process is not None:
             logging.info('stopping cadvisor container')
-            #self.cadvisor_process.terminate()
-            #self.cadvisor_process.kill()
             self._stop_container('cadvisor')
 
     def switch_tx_rx(self,metric=''):
@@ -554,9 +535,74 @@ class DCNetworkMonitor():
 
     def _stop_container(self, name):
 
-        cmd = ["docker",
-               "rm",
-               "-f",
-               name]
-        Popen(cmd).wait()
+        container = self.dockercli.containers.get(name)
+        container.remove(force=True)
+
+    def update_skewmon(self, vnf_name, resource_name, action):
+
+        ret = ''
+
+        config_file_path = '/tmp/skewmon.cfg'
+        configfile = open(config_file_path, 'a+')
+        try:
+            config = json.load(configfile)
+        except:
+            #not a valid json file or empty
+            config = {}
+
+        #initialize config file
+        if len(self.skewmon_metrics) == 0:
+            config = {}
+        json.dump(config, configfile)
+        configfile.close()
+
+        docker_name = 'mn.' + vnf_name
+        vnf_container = self.dockercli.containers.get(docker_name)
+        key = resource_name + '_' + vnf_container.short_id
+        vnf_id = vnf_container.id
+
+        if action == 'start':
+            # add a new vnf to monitor
+            config[key] = dict(VNF_NAME=vnf_name,
+                                VNF_ID=vnf_id,
+                                VNF_METRIC=resource_name)
+            ret = 'adding to skewness monitor: {0} {1} '.format(vnf_name, resource_name)
+            logging.info(ret)
+        elif action == 'stop':
+            # remove vnf to monitor
+            config.pop(key)
+            ret = 'removing from skewness monitor: {0} {1} '.format(vnf_name, resource_name)
+            logging.info(ret)
+
+        self.skewmon_metrics = config
+        configfile = open(config_file_path, 'w')
+        json.dump(config, configfile)
+        configfile.close()
+
+        try:
+            skewmon_container = self.dockercli.containers.get('skewmon')
+
+            # remove container if config is empty
+            if len(config) == 0:
+                ret += 'stopping skewness monitor'
+                logging.info('stopping skewness monitor')
+                skewmon_container.remove(force=True)
+
+        except docker.errors.NotFound:
+            # start container if not running
+            ret += 'starting skewness monitor'
+            logging.info('starting skewness monitor')
+            volumes = {'/sys/fs/cgroup':{'bind':'/sys/fs/cgroup', 'mode':'ro'},
+                       '/tmp/skewmon.cfg':{'bind':'/config.txt', 'mode':'ro'}}
+            self.dockercli.containers.run('skewmon',
+                                          detach=True,
+                                          volumes=volumes,
+                                          labels=['com.containernet'],
+                                          name='skewmon'
+                                          )
+        return ret
+
+
+
+
 
