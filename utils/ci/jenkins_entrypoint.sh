@@ -6,6 +6,9 @@ export DOCKER_HOST="unix:///var/run/docker.sock"
 
 # don't rely on Debian/Ubuntu Docker engine
 apt-get remove docker-engine
+# make sure we start from scratch
+pip uninstall docker-py
+pip uninstall docker
 
 set -e
 set -x
