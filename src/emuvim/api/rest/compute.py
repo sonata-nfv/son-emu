@@ -50,8 +50,13 @@ class Compute(Resource):
     """
     global dcs
 
-    def put(self, dc_label, compute_name):
+    def put(self, dc_label, compute_name, resource=None, value=None):
+        # check if resource update
+        if resource and value:
+           c = self._update_resource(dc_label, compute_name, resource, value)
+           return c.getStatus(), 200
 
+        # deploy new container
         # check if json data is a dict
         data = request.json
         if data is None:
@@ -73,6 +78,20 @@ class Compute(Resource):
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
+
+    def _update_resource(self, dc_label, compute_name, resource, value):
+        #check if container exists
+        d = dcs.get(dc_label).net.getNodeByName(compute_name)
+        if resource == 'cpu':
+            cpu_period = int(dcs.get(dc_label).net.cpu_period)
+            cpu_quota = int(cpu_period * float(value))
+            #put default values back
+            if float(value) <= 0:
+                cpu_period = 100000
+                cpu_quota = -1
+            d.updateCpuLimit(cpu_period=cpu_period, cpu_quota=cpu_quota)
+        return d
+
 
     def get(self, dc_label, compute_name):
 

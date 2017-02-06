@@ -44,7 +44,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
 #    @unittest.skip("disabled")
     def test_GK_Api_start_service(self):
         # create network
-        self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0)
+        self.createNet(nswitches=0, ndatacenter=2, nhosts=2, ndockers=0, enable_learning=True)
         # setup links
         self.net.addLink(self.dc[0], self.h[0])
         self.net.addLink(self.dc[0], self.dc[1])
@@ -87,9 +87,37 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         # check compute list result
         self.assertEqual(len(self.dc[0].listCompute()), 2)
         # check connectivity by using ping
+        ELAN_list=[]
+        for i in [0]:
+            for vnf in self.dc[i].listCompute():
+                # check connection
+                p = self.net.ping([self.h[i], vnf])
+                print p
+                self.assertTrue(p <= 0.0)
+
+                # check E LAN connection
+                network_list = vnf.getNetworkStatus()
+                mgmt_ip = [intf['ip'] for intf in network_list if intf['intf_name'] == 'mgmt']
+                self.assertTrue(len(mgmt_ip) > 0)
+                ip_address = mgmt_ip[0]
+                ELAN_list.append(ip_address)
+                print ip_address
+
+        # check ELAN connection by ping over the mgmt network (needs to be configured as ELAN in the test service)
         for vnf in self.dc[0].listCompute():
-            p = self.net.ping([self.h[0], vnf])
-            self.assertTrue(p <= 50.0)
+            network_list = vnf.getNetworkStatus()
+            mgmt_ip = [intf['ip'] for intf in network_list if intf['intf_name'] == 'mgmt']
+            self.assertTrue(len(mgmt_ip) > 0)
+            ip_address = mgmt_ip[0]
+            print ELAN_list
+            print ip_address
+            test_ip_list = list(ELAN_list)
+            test_ip_list.remove(ip_address)
+            for ip in test_ip_list:
+                p = self.net.ping([vnf],manualdestip=ip)
+                print p
+                self.assertTrue(p <= 0.0)
+
         # stop Mininet network
         self.stopNet()
         initialize_GK()

@@ -39,11 +39,12 @@ import hashlib
 import zipfile
 import yaml
 import threading
-from docker import Client as DockerClient
+from docker import DockerClient, APIClient
 from flask import Flask, request
 import flask_restful as fr
 from collections import defaultdict
 import pkg_resources
+from subprocess import Popen
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -75,6 +76,7 @@ class Gatekeeper(object):
     def __init__(self):
         self.services = dict()
         self.dcs = dict()
+        self.net = None
         self.vnf_counter = 0  # used to generate short names for VNFs (Mininet limitation)
         LOG.info("Create SONATA dummy gatekeeper.")
 
@@ -181,6 +183,9 @@ class Service(object):
             eline_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-Line")]
             elan_fwd_links = [l for l in vlinks if (l["id"] in fwd_links) and (l["connectivity_type"] == "E-LAN")]
 
+            GK.net.deployed_elines.extend(eline_fwd_links)
+            GK.net.deployed_elans.extend(elan_fwd_links)
+
             # 4a. deploy E-Line links
             # cookie is used as identifier for the flowrules installed by the dummygatekeeper
             # eg. different services get a unique cookie for their flowrules
@@ -228,6 +233,9 @@ class Service(object):
             # 4b. deploy E-LAN links
             base = 10
             for link in elan_fwd_links:
+
+                elan_vnf_list=[]
+
                 # generate lan ip address
                 ip = 1
                 for intf in link["connection_points_reference"]:
@@ -236,6 +244,8 @@ class Service(object):
                     if vnf_id in self.sap_identifiers:
                         src_docker_name = "{0}_{1}".format(vnf_id, intf_name)
                         vnf_id = src_docker_name
+                    else:
+                        src_docker_name = vnf_id
                     vnf_name = vnf_id2vnf_name[vnf_id]
                     LOG.debug(
                         "Setting up E-LAN link. %s(%s:%s) -> %s" % (
@@ -250,6 +260,14 @@ class Service(object):
                             self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
                             # increase for the next ip address on this E-LAN
                             ip += 1
+
+                            # add this vnf and interface to the E-LAN for tagging
+                            network = self.vnfds[vnf_name].get("dc").net  # there should be a cleaner way to find the DCNetwork
+                            elan_vnf_list.append({'name':src_docker_name,'interface':intf_name})
+
+
+                # install the VLAN tags for this E-LAN
+                network.setLAN(elan_vnf_list)
                 # increase the base ip address for the next E-LAN
                 base += 1
 
@@ -436,6 +454,7 @@ class Service(object):
                 self.package_content_path,
                 make_relative_path(self.manifest.get("entry_service_template")))
             self.nsd = load_yaml(nsd_path)
+            GK.net.deployed_nsds.append(self.nsd)
             LOG.debug("Loaded NSD: %r" % self.nsd.get("name"))
 
     def _load_vnfd(self):
@@ -524,12 +543,22 @@ class Service(object):
         dc = DockerClient()
         for url in self.remote_docker_image_urls.itervalues():
             if not FORCE_PULL:  # only pull if not present (speedup for development)
-                if len(dc.images(name=url)) > 0:
+                if len(dc.images.list(name=url)) > 0:
                     LOG.debug("Image %r present. Skipping pull." % url)
                     continue
             LOG.info("Pulling image: %r" % url)
-            dc.pull(url,
-                    insecure_registry=True)
+            # this seems to fail with latest docker api version 2.0.2
+            # dc.images.pull(url,
+            #        insecure_registry=True)
+            #using docker cli instead
+            cmd = ["docker",
+                   "pull",
+                   url,
+                   ]
+            Popen(cmd).wait()
+
+
+
 
     def _check_docker_image_exists(self, image_name):
         """
@@ -537,7 +566,7 @@ class Service(object):
         :param image_name: name of the docker image
         :return:
         """
-        return len(DockerClient().images(image_name)) > 0
+        return len(DockerClient().images.list(name=image_name)) > 0
 
     def _calculate_placement(self, algorithm):
         """
@@ -747,6 +776,7 @@ api.add_resource(Exit, '/emulator/exit')
 
 def start_rest_api(host, port, datacenters=dict()):
     GK.dcs = datacenters
+    GK.net = get_dc_network()
     # start the Flask server (not the best performance but ok for our use case)
     app.run(host=host,
             port=port,
@@ -795,6 +825,14 @@ def generate_subnet_strings(n, start=1, subnet_size=24, ip=0):
         r.append("%d.0.0.%d/%d" % (i, ip, subnet_size))
     return r
 
+def get_dc_network():
+    """
+    retrieve the DCnetwork where this dummygatekeeper (GK) connects to.
+    Assume at least 1 datacenter is connected to this GK, and that all datacenters belong to the same DCNetwork
+    :return:
+    """
+    assert (len(GK.dcs) > 0)
+    return GK.dcs.values()[0].net
 
 if __name__ == '__main__':
     """

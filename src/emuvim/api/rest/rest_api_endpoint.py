@@ -39,7 +39,7 @@ import network
 from network import NetworkAction
 
 import monitor
-from monitor import MonitorInterfaceAction, MonitorFlowAction
+from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,7 +61,10 @@ class RestApiEndpoint(object):
 
         # setup endpoints
 
-        self.api.add_resource(Compute, "/restapi/compute/<dc_label>/<compute_name>")
+        # compute related actions (start/stop VNFs, get info)
+        self.api.add_resource(Compute,
+                              "/restapi/compute/<dc_label>/<compute_name>",
+                              "/restapi/compute/<dc_label>/<compute_name>/<resource>/<value>")
         self.api.add_resource(ComputeList,
                       "/restapi/compute",
                       "/restapi/compute/<dc_label>")
@@ -69,14 +72,30 @@ class RestApiEndpoint(object):
         self.api.add_resource(DatacenterStatus, "/restapi/datacenter/<dc_label>")
         self.api.add_resource(DatacenterList, "/restapi/datacenter")
 
-        self.api.add_resource(NetworkAction, "/restapi/network/<vnf_src_name>/<vnf_dst_name>", )
 
+        # network related actions (setup chaining between VNFs)
+        self.api.add_resource(NetworkAction,
+                              "/restapi/network/<vnf_src_name>/<vnf_dst_name>")
+
+
+        # monitoring related actions
+        # export a network interface traffic rate counter
         self.api.add_resource(MonitorInterfaceAction,
-                              "/restapi/monitor/<vnf_name>/<metric>",
-                              "/restapi/monitor/<vnf_name>/<vnf_interface>/<metric>")
+                              "/restapi/monitor/interface/<vnf_name>/<metric>",
+                              "/restapi/monitor/interface/<vnf_name>/<vnf_interface>/<metric>",
+                              "/restapi/monitor/interface/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+        # export flow traffic counter, of a manually pre-installed flow entry, specified by its cookie
         self.api.add_resource(MonitorFlowAction,
-                              "/restapi/flowmon/<vnf_name>/<metric>/<cookie>",
-                              "/restapi/flowmon/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+                              "/restapi/monitor/flow/<vnf_name>/<metric>/<cookie>",
+                              "/restapi/monitor/flow/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+        # install monitoring of a specific flow on a pre-existing link in the service.
+        # the traffic counters of the newly installed monitor flow are exported
+        self.api.add_resource(MonitorLinkAction,
+                              "/restapi/monitor/link/<vnf_src_name>/<vnf_dst_name>")
+        # install skewness monitor of resource usage disribution
+        # the skewness metric is exported
+        self.api.add_resource(MonitorSkewAction,
+                              "/restapi/monitor/skewness/<vnf_name>/<resource_name>")
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 
