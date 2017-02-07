@@ -500,12 +500,10 @@ class DCNetwork(Containernet):
         :param cookie: cookie for the installed flowrules (can be used later as identifier for a set of installed chains)
         :param match: custom match entry to be added to the flowrules (default: only in_port and vlan tag)
         :param priority: custom flowrule priority
-<<<<<<< HEAD
         :param monitor: boolean to indicate whether this chain is a monitoring chain
         :param tag: vlan tag to be used for this chain (pre-defined or new one if none is specified)
-=======
+        :param skip_vlan_tag: boolean to indicate if a vlan tag should be appointed to this flow or not
         :param path: custom path between the two VNFs (list of switches)
->>>>>>> upstream/master
         :return: output log string
         """
 
@@ -620,7 +618,7 @@ class DCNetwork(Containernet):
         ## if path contains more than 1 switch
         cmd = kwargs.get('cmd')
         vlan = None
-        if cmd == 'add-flow':
+        if cmd == 'add-flow' and len(path) > 1:
             if kwargs.get('tag'):
                 # use pre-defined tag
                 vlan = kwargs.get('tag')
@@ -661,7 +659,7 @@ class DCNetwork(Containernet):
                 switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
 
 
-           # set of entry via ovs-ofctl
+           # set OpenFlow entry
             if isinstance( current_node, OVSSwitch ):
                 kwargs['vlan'] = vlan
                 kwargs['path'] = path
