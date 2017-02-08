@@ -37,7 +37,7 @@ ansible-playbook install.yml
 echo "Running son-emu unit tests to validate installation"
 cd $SON_EMU_DIR
 python setup.py develop
-py.test -v src/emuvim/test/unittests
+
 
 
 
