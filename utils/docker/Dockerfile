@@ -24,29 +24,32 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
 
-FROM containernet/containernet
-MAINTAINER manuel@peuster.de
+FROM ubuntu:14.04
+MAINTAINER steven.vanrossem@intec.ugent.be
 
 ENV SON_EMU_IN_DOCKER 1
 
-WORKDIR /son-emu
-COPY . /son-emu/
+RUN apt-get update \
+    && apt-get install -y  ansible git aptitude
 
-RUN apt-get clean
 
+# install containernet
+WORKDIR /
+RUN git clone https://github.com/containernet/containernet.git
+WORKDIR containernet/ansible
+RUN echo 'localhost ansible_connection=local' >> /etc/ansible/hosts
+RUN ansible-playbook install.yml
+
+# install son-emu
+WORKDIR /
+RUN git clone https://github.com/sonata-nfv/son-emu.git
 WORKDIR /son-emu/ansible
 RUN ansible-playbook install.yml
 
-WORKDIR /son-emu
-# we need to reset the __pycache__ for correct test discovery
-RUN rm -rf src/emuvim/test/__pycache__ 
-RUN rm -rf src/emuvim/test/unittests/__pycache__ 
-RUN rm -rf src/emuvim/test/integrationtests/__pycache__ 
-RUN python setup.py install 
 RUN echo 'Done'
 
 
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 
-# dummy GK, zerorpc, DCNetwork zerorpc, cAdvisor, restAPI
-EXPOSE 5000 4242 5151 8090 5001
+# dummy GK, cAdvisor, Prometheus Push Gateway, son-emu REST API
+EXPOSE 5000 8081 9091 5001
