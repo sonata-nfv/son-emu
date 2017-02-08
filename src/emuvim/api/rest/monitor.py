@@ -33,7 +33,7 @@ Networking and monitoring functions
 """
 
 import logging
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 from flask import request
 import json
 
@@ -55,8 +55,17 @@ class MonitorInterfaceAction(Resource):
     """
     global net
 
-    def put(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=None):
+    def put(self):
         logging.debug("REST CALL: start monitor VNF interface")
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_name = data.get("vnf_name")
+        vnf_interface = data.get("vnf_interface", None)
+        metric = data.get("metric", 'tx_packets')
+        cookie = data.get("cookie")
+
         try:
             if cookie:
                 c = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
@@ -68,8 +77,17 @@ class MonitorInterfaceAction(Resource):
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
-    def delete(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=None):
+    def delete(self):
         logging.debug("REST CALL: stop monitor VNF interface")
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_name = data.get("vnf_name")
+        vnf_interface = data.get("vnf_interface", None)
+        metric = data.get("metric", 'tx_packets')
+        cookie = data.get("cookie")
+
         try:
             if cookie:
                 c = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
@@ -93,8 +111,17 @@ class MonitorFlowAction(Resource):
     """
     global net
 
-    def put(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
+    def put(self):
         logging.debug("REST CALL: start monitor VNF interface")
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_name = data.get("vnf_name")
+        vnf_interface = data.get("vnf_interface", None)
+        metric = data.get("metric", 'tx_packets')
+        cookie = data.get("cookie", 0)
+
         try:
             c = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
             # return monitor message response
@@ -103,8 +130,17 @@ class MonitorFlowAction(Resource):
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
-    def delete(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
+    def delete(self):
         logging.debug("REST CALL: stop monitor VNF interface")
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_name = data.get("vnf_name")
+        vnf_interface = data.get("vnf_interface", None)
+        metric = data.get("metric", 'tx_packets')
+        cookie = data.get("cookie", 0)
+
         try:
             c = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
             # return monitor message response
@@ -138,37 +174,40 @@ class MonitorLinkAction(Resource):
     # the global net is set from the topology file, and connected via connectDCNetwork function in rest_api_endpoint.py
     global net
 
-    def put(self, vnf_src_name, vnf_dst_name):
+    def put(self):
         logging.debug("REST CALL: monitor link flow add")
 
         try:
             command = 'add-flow'
-            return self._MonitorLinkAction(vnf_src_name, vnf_dst_name, command=command)
+            return self._MonitorLinkAction(command=command)
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
-    def delete(self, vnf_src_name, vnf_dst_name):
+    def delete(self):
         logging.debug("REST CALL: monitor link flow remove")
 
         try:
             command = 'del-flows'
-            return self._MonitorLinkAction(vnf_src_name, vnf_dst_name, command=command)
+            return self._MonitorLinkAction(command=command)
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
-    def _MonitorLinkAction(self, vnf_src_name, vnf_dst_name, command=None):
+    def _MonitorLinkAction(self, command=None):
         # call DCNetwork method, not really datacenter specific API for now...
         # no check if vnfs are really connected to this datacenter...
+
         try:
-            # check if json data is a dict
-            data = request.json
+            # get URL parameters
+            data = request.args
+            #then no data
             if data is None:
                 data = {}
-            elif type(data) is not dict:
-                data = json.loads(request.json)
 
+
+            vnf_src_name = data.get("vnf_src_name")
+            vnf_dst_name = data.get("vnf_dst_name")
             vnf_src_interface = data.get("vnf_src_interface")
             vnf_dst_interface = data.get("vnf_dst_interface")
             weight = data.get("weight")
@@ -225,8 +264,14 @@ class MonitorSkewAction(Resource):
     """
     global net
 
-    def put(self, vnf_name, resource_name='cpu'):
+    def put(self):
         logging.debug("REST CALL: start monitor skewness")
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_name = data.get("vnf_name")
+        resource_name = data.get("resource_name", 'cpu')
         try:
             # configure skewmon
             c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='start')
@@ -237,8 +282,14 @@ class MonitorSkewAction(Resource):
             logging.exception("API error.")
             return ex.message, 500
 
-    def delete(self, vnf_name, resource_name='cpu'):
+    def delete(self):
         logging.debug("REST CALL: stop monitor skewness")
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_name = data.get("vnf_name")
+        resource_name = data.get("resource_name", 'cpu')
         try:
             # configure skewmon
             c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='stop')
