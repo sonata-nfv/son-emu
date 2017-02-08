@@ -456,6 +456,7 @@ class DCNetwork(Containernet):
                 kwargs['switch_inport_name'] = src_sw_inport_name
                 kwargs['switch_outport_name'] = dst_sw_outport_name
                 kwargs['skip_vlan_tag'] = True
+                kwargs['pathindex'] = i
 
                 monitor_placement = kwargs.get('monitor_placement').strip()
                 # put monitor flow at the dst switch
@@ -615,10 +616,9 @@ class DCNetwork(Containernet):
         switch_inport_nr = src_sw_inport_nr
 
         # choose free vlan
-        ## if path contains more than 1 switch
         cmd = kwargs.get('cmd')
         vlan = None
-        if cmd == 'add-flow' and len(path) > 1:
+        if cmd == 'add-flow':
             if kwargs.get('tag'):
                 # use pre-defined tag
                 vlan = kwargs.get('tag')
