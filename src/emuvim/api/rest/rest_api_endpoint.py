@@ -92,7 +92,7 @@ class RestApiEndpoint(object):
         # install skewness monitor of resource usage disribution
         # the skewness metric is exported
         self.api.add_resource(MonitorSkewAction,
-                              "/restapi/monitor/skewness/<vnf_name>/<resource_name>")
+                              "/restapi/monitor/skewness")
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 
