@@ -652,12 +652,14 @@ class Packages(fr.Resource):
         """
         try:
             # get file contents
-            print(request.files)
+            LOG.info("POST /packages called")
             # lets search for the package in the request
+            is_file_object = False  # make API more robust: file can be in data or in files field
             if "package" in request.files:
                 son_file = request.files["package"]
-            # elif "file" in request.files:
-            #     son_file = request.files["file"]
+                is_file_object = True
+            elif len(request.data) > 0:
+                son_file = request.data
             else:
                 return {"service_uuid": None, "size": 0, "sha1": None, "error": "upload failed. file not found."}, 500
             # generate a uuid to reference this package
@@ -667,7 +669,11 @@ class Packages(fr.Resource):
             ensure_dir(UPLOAD_FOLDER)
             upload_path = os.path.join(UPLOAD_FOLDER, "%s.son" % service_uuid)
             # store *.son file to disk
-            son_file.save(upload_path)
+            if is_file_object:
+                son_file.save(upload_path)
+            else:
+                with open(upload_path, 'wb') as f:
+                    f.write(son_file)
             size = os.path.getsize(upload_path)
             # create a service object and register it
             s = Service(service_uuid, file_hash, upload_path)
@@ -695,15 +701,15 @@ class Instantiations(fr.Resource):
         Will return a new UUID to identify the running service instance.
         :return: UUID
         """
+        LOG.info("POST /instantiations (or /reqeusts) called")
         # try to extract the service uuid from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
 
         # lets be a bit fuzzy here to make testing easier
-        if service_uuid is None and len(GK.services) > 0:
+        if (service_uuid is None or service_uuid=="latest") and len(GK.services) > 0:
             # if we don't get a service uuid, we simple start the first service in the list
             service_uuid = list(GK.services.iterkeys())[0]
-
         if service_uuid in GK.services:
             # ok, we have a service uuid, lets start the service
             service_instance_uuid = GK.services.get(service_uuid).start_service()
@@ -764,8 +770,8 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
 api = fr.Api(app)
 # define endpoints
-api.add_resource(Packages, '/packages')
-api.add_resource(Instantiations, '/instantiations')
+api.add_resource(Packages, '/packages', '/api/v2/packages')
+api.add_resource(Instantiations, '/instantiations', '/api/v2/instantiations', '/api/v2/requests')
 api.add_resource(Exit, '/emulator/exit')
 
 
