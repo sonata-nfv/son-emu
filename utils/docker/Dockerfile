@@ -24,28 +24,38 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
 
-FROM ubuntu:14.04
+FROM ubuntu:trusty
 MAINTAINER steven.vanrossem@intec.ugent.be
 
 ENV SON_EMU_IN_DOCKER 1
 
+RUN apt-get clean
 RUN apt-get update \
-    && apt-get install -y  ansible git aptitude
+    && apt-get install -y  git aptitude
 
 
 # install containernet
+RUN apt-get install -y curl python-pip 
+# install docker
+RUN curl -fsSL https://get.docker.com/gpg | apt-key add -
+RUN curl -fsSL https://get.docker.com/ | sh
+
+RUN pip install -U urllib3 setuptools pyparsing docker
 WORKDIR /
 RUN git clone https://github.com/containernet/containernet.git
-WORKDIR containernet/ansible
-RUN echo 'localhost ansible_connection=local' >> /etc/ansible/hosts
-RUN ansible-playbook install.yml
+RUN containernet/util/install.sh
+WORKDIR containernet/
+RUN make develop
 
 # install son-emu
-WORKDIR /
+RUN echo 'install son-emu'
+RUN apt-get install -y  python-dev python-zmq libzmq-dev libffi-dev libssl-dev
+RUN pip install -U zerorpc tabulate argparse networkx six ryu oslo.config pytest Flask flask_restful requests prometheus_client pyaml
+WORKDIR / 
 RUN git clone https://github.com/sonata-nfv/son-emu.git
-WORKDIR /son-emu/ansible
-RUN ansible-playbook install.yml
-
+WORKDIR son-emu/
+RUN python setup.py develop
+WORKDIR / 
 RUN echo 'Done'
 
 
