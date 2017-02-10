@@ -75,27 +75,24 @@ class RestApiEndpoint(object):
 
         # network related actions (setup chaining between VNFs)
         self.api.add_resource(NetworkAction,
-                              "/restapi/network/<vnf_src_name>/<vnf_dst_name>")
+                              "/restapi/network")
 
 
         # monitoring related actions
         # export a network interface traffic rate counter
         self.api.add_resource(MonitorInterfaceAction,
-                              "/restapi/monitor/interface/<vnf_name>/<metric>",
-                              "/restapi/monitor/interface/<vnf_name>/<vnf_interface>/<metric>",
-                              "/restapi/monitor/interface/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+                              "/restapi/monitor/interface")
         # export flow traffic counter, of a manually pre-installed flow entry, specified by its cookie
         self.api.add_resource(MonitorFlowAction,
-                              "/restapi/monitor/flow/<vnf_name>/<metric>/<cookie>",
-                              "/restapi/monitor/flow/<vnf_name>/<vnf_interface>/<metric>/<cookie>")
+                              "/restapi/monitor/flow")
         # install monitoring of a specific flow on a pre-existing link in the service.
         # the traffic counters of the newly installed monitor flow are exported
         self.api.add_resource(MonitorLinkAction,
-                              "/restapi/monitor/link/<vnf_src_name>/<vnf_dst_name>")
+                              "/restapi/monitor/link")
         # install skewness monitor of resource usage disribution
         # the skewness metric is exported
         self.api.add_resource(MonitorSkewAction,
-                              "/restapi/monitor/skewness/<vnf_name>/<resource_name>")
+                              "/restapi/monitor/skewness")
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 

@@ -65,27 +65,33 @@ class NetworkAction(Resource):
 
     global net
 
-    def put(self, vnf_src_name, vnf_dst_name):
+    def put(self):
         logging.debug("REST CALL: network chain add")
         command = 'add-flow'
-        return self._NetworkAction(vnf_src_name, vnf_dst_name, command=command)
+        return self._NetworkAction(command=command)
 
-    def delete(self, vnf_src_name, vnf_dst_name):
+    def delete(self):
         logging.debug("REST CALL: network chain remove")
         command = 'del-flows'
-        return self._NetworkAction(vnf_src_name, vnf_dst_name, command=command)
+        return self._NetworkAction(command=command)
 
-    def _NetworkAction(self, vnf_src_name, vnf_dst_name, command=None):
+    def _NetworkAction(self, command=None):
         # call DCNetwork method, not really datacenter specific API for now...
         # no check if vnfs are really connected to this datacenter...
         try:
             # check if json data is a dict
-            data = request.json
+            data = request.args
+            # try json payload
+            if data is None:
+                data = request.json
+            # then no data
             if data is None:
                 data = {}
             elif type(data) is not dict:
                 data = json.loads(request.json)
 
+            vnf_src_name = data.get("vnf_src_name")
+            vnf_dst_name = data.get("vnf_dst_name")
             vnf_src_interface = data.get("vnf_src_interface")
             vnf_dst_interface = data.get("vnf_dst_interface")
             weight = data.get("weight")
