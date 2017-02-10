@@ -32,7 +32,7 @@ from flask_restful import Api
 
 # need to import total module to set its global variable dcs
 import compute
-from compute import dcs, ComputeList, Compute, DatacenterList, DatacenterStatus
+from compute import dcs, ComputeList, Compute, ComputeResources, DatacenterList, DatacenterStatus
 
 # need to import total module to set its global variable net
 import network
@@ -62,12 +62,11 @@ class RestApiEndpoint(object):
         # setup endpoints
 
         # compute related actions (start/stop VNFs, get info)
-        self.api.add_resource(Compute,
-                              "/restapi/compute/<dc_label>/<compute_name>",
-                              "/restapi/compute/<dc_label>/<compute_name>/<resource>/<value>")
+        self.api.add_resource(Compute, "/restapi/compute/<dc_label>/<compute_name>")
         self.api.add_resource(ComputeList,
                       "/restapi/compute",
                       "/restapi/compute/<dc_label>")
+        self.api.add_resource(ComputeResources, "/restapi/compute/resources/<dc_label>/<compute_name>")
 
         self.api.add_resource(DatacenterStatus, "/restapi/datacenter/<dc_label>")
         self.api.add_resource(DatacenterList, "/restapi/datacenter")
