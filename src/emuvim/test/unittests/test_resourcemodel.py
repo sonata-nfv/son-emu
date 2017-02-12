@@ -96,10 +96,11 @@ def createDummyContainerObject(name, flavor):
     class DummyContainer(object):
 
         def __init__(self):
-            self.cpu_period = -1
+            # take defaukt values from son-emu
+            # self.cpu_period = -1
             self.cpu_quota = -1
-            self.mem_limit = -1
-            self.memswap_limit = -1
+            # self.mem_limit = -1
+            # self.memswap_limit = -1
 
         def updateCpuLimit(self, cpu_period, cpu_quota):
             self.cpu_period = cpu_period
