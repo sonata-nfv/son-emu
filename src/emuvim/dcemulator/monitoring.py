@@ -606,6 +606,7 @@ class DCNetworkMonitor():
             while not started:
                 list1 = self.dockercli.containers.list(filters={'status': 'running', 'name': 'prometheus'})
                 if len(list1) >= 1:
+                    time.sleep(1)
                     started = True
                 if wait_time > 5:
                     return 'skewmon not started'

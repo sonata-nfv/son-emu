@@ -174,16 +174,16 @@ class ComputeResources(Resource):
         # then no data
         if params is None:
             params = {}
-        logging.info("REST CALL: update container resources {0}".format(params))
+        logging.debug("REST CALL: update container resources {0}".format(params))
         #check if container exists
         d = dcs.get(dc_label).net.getNodeByName(compute_name)
 
         # general request of cpu percentage
         # create a mutable copy
         params = params.to_dict()
-        if 'cpu' in params:
+        if 'cpu_bw' in params:
             cpu_period = int(dcs.get(dc_label).net.cpu_period)
-            value = params.get('cpu')
+            value = params.get('cpu_bw')
             cpu_quota = int(cpu_period * float(value))
             #put default values back
             if float(value) <= 0:
