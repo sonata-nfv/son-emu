@@ -164,7 +164,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         # calculate input values for CFS scheduler bandwidth limitation
         cpu_period, cpu_quota = self._calculate_cpu_cfs_values(cpu_time_percentage)
         # apply limits to container if changed
-        if d.cpu_period != cpu_period or d.cpu_quota != cpu_quota:
+        if d.resources['cpu_period'] != cpu_period or d.resources['cpu_quota'] != cpu_quota:
             LOG.debug("Setting CPU limit for %r: cpu_quota = cpu_period * limit = %f * %f = %f (op_factor=%f)" % (
                       d.name, cpu_period, cpu_time_percentage, cpu_quota, self.cpu_op_factor))
             d.updateCpuLimit(cpu_period=int(cpu_period), cpu_quota=int(cpu_quota))
@@ -210,7 +210,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         mem_limit = self.single_mu * number_mu
         mem_limit = self._calculate_mem_limit_value(mem_limit)
         # apply to container if changed
-        if d.mem_limit != mem_limit:
+        if d.resources['mem_limit'] != mem_limit:
             LOG.debug("Setting MEM limit for %r: mem_limit = %f MB (op_factor=%f)" %
                       (d.name, mem_limit/1024/1024, self.mem_op_factor))
             d.updateMemoryLimit(mem_limit=mem_limit)
