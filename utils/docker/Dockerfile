@@ -51,8 +51,10 @@ RUN make develop
 RUN echo 'install son-emu'
 RUN apt-get install -y  python-dev python-zmq libzmq-dev libffi-dev libssl-dev
 RUN pip install -U zerorpc tabulate argparse networkx six ryu oslo.config pytest Flask flask_restful requests prometheus_client pyaml
-WORKDIR / 
-RUN git clone https://github.com/sonata-nfv/son-emu.git
+WORKDIR /
+#avoid pulling not the latest git, copy the current dir, to run this from Jenkins
+#RUN git clone https://github.com/sonata-nfv/son-emu.git
+COPY . /son-emu
 WORKDIR son-emu/
 RUN python setup.py develop
 WORKDIR / 

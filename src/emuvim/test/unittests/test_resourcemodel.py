@@ -96,17 +96,24 @@ def createDummyContainerObject(name, flavor):
     class DummyContainer(object):
 
         def __init__(self):
-            self.cpu_period = -1
-            self.cpu_quota = -1
-            self.mem_limit = -1
-            self.memswap_limit = -1
+            # take defaukt values from son-emu
+            self.resources = dict(
+            cpu_period = -1,
+            cpu_quota = -1,
+            mem_limit = -1,
+            memswap_limit = -1
+            )
+            #self.cpu_period = self.resources['cpu_period']
+            #self.cpu_quota = self.resources['cpu_quota']
+            #self.mem_limit = self.resources['mem_limit']
+            #self.memswap_limit = self.resources['memswap_limit']
 
         def updateCpuLimit(self, cpu_period, cpu_quota):
-            self.cpu_period = cpu_period
-            self.cpu_quota = cpu_quota
+            self.resources['cpu_period'] = cpu_period
+            self.resources['cpu_quota'] = cpu_quota
 
         def updateMemoryLimit(self, mem_limit):
-            self.mem_limit = mem_limit
+            self.resources['mem_limit'] = mem_limit
 
     d = DummyContainer()
     d.name = name
@@ -138,28 +145,28 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
 
         c1 = createDummyContainerObject("c1", flavor="tiny")
         rm.allocate(c1)  # calculate allocation
-        self.assertEqual(float(c1.cpu_quota) / c1.cpu_period, E_CPU / MAX_CU * 0.5)   # validate compute result
-        self.assertEqual(float(c1.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 32)   # validate memory result
+        self.assertEqual(float(c1.resources['cpu_quota']) / c1.resources['cpu_period'], E_CPU / MAX_CU * 0.5)   # validate compute result
+        self.assertEqual(float(c1.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 32)   # validate memory result
 
         c2 = createDummyContainerObject("c2", flavor="small")
         rm.allocate(c2)  # calculate allocation
-        self.assertEqual(float(c2.cpu_quota) / c2.cpu_period, E_CPU / MAX_CU * 1)   # validate compute result
-        self.assertEqual(float(c2.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)   # validate memory result
+        self.assertEqual(float(c2.resources['cpu_quota']) / c2.resources['cpu_period'], E_CPU / MAX_CU * 1)   # validate compute result
+        self.assertEqual(float(c2.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)   # validate memory result
 
         c3 = createDummyContainerObject("c3", flavor="medium")
         rm.allocate(c3)  # calculate allocation
-        self.assertEqual(float(c3.cpu_quota) / c3.cpu_period, E_CPU / MAX_CU * 4)   # validate compute result
-        self.assertEqual(float(c3.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 256)   # validate memory result
+        self.assertEqual(float(c3.resources['cpu_quota']) / c3.resources['cpu_period'], E_CPU / MAX_CU * 4)   # validate compute result
+        self.assertEqual(float(c3.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 256)   # validate memory result
 
         c4 = createDummyContainerObject("c4", flavor="large")
         rm.allocate(c4)  # calculate allocation
-        self.assertEqual(float(c4.cpu_quota) / c4.cpu_period, E_CPU / MAX_CU * 8)   # validate compute result
-        self.assertEqual(float(c4.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 512)   # validate memory result
+        self.assertEqual(float(c4.resources['cpu_quota']) / c4.resources['cpu_period'], E_CPU / MAX_CU * 8)   # validate compute result
+        self.assertEqual(float(c4.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 512)   # validate memory result
 
         c5 = createDummyContainerObject("c5", flavor="xlarge")
         rm.allocate(c5)  # calculate allocation
-        self.assertEqual(float(c5.cpu_quota) / c5.cpu_period, E_CPU / MAX_CU * 16)   # validate compute result
-        self.assertEqual(float(c5.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 1024)   # validate memory result
+        self.assertEqual(float(c5.resources['cpu_quota']) / c5.resources['cpu_period'], E_CPU / MAX_CU * 16)   # validate compute result
+        self.assertEqual(float(c5.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 1024)   # validate memory result
 
 
     def testAllocationCpuLimit(self):
@@ -273,7 +280,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
 
         # check if there is a real limitation set for containers cgroup
         # deactivated for now, seems not to work in docker-in-docker setup used in CI
-        self.assertEqual(float(tc1.cpu_quota)/tc1.cpu_period, 0.005)
+        self.assertEqual(float(tc1.resources['cpu_quota'])/tc1.resources['cpu_period'], 0.005)
 
         # check if free was called during stopCompute
         self.dc[0].stopCompute("tc1")
@@ -306,33 +313,33 @@ class testUpbOverprovisioningCloudDcRM(SimpleTestTopology):
 
         c1 = createDummyContainerObject("c1", flavor="small")
         rm.allocate(c1)  # calculate allocation
-        self.assertAlmostEqual(float(c1.cpu_quota) / c1.cpu_period, E_CPU / MAX_CU * 1.0, places=5)
-        self.assertAlmostEqual(float(c1.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(c1.resources['cpu_quota']) / c1.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(float(c1.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
 
         c2 = createDummyContainerObject("c2", flavor="small")
         rm.allocate(c2)  # calculate allocation
-        self.assertAlmostEqual(float(c2.cpu_quota) / c2.cpu_period, E_CPU / MAX_CU * 1.0, places=5)
-        self.assertAlmostEqual(float(c2.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(c2.resources['cpu_quota']) / c2.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(float(c2.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
 
         c3 = createDummyContainerObject("c3", flavor="small")
         rm.allocate(c3)  # calculate allocation
-        self.assertAlmostEqual(float(c3.cpu_quota) / c3.cpu_period, E_CPU / MAX_CU * 1.0, places=5)
-        self.assertAlmostEqual(float(c3.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(c3.resources['cpu_quota']) / c3.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(float(c3.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
 
         # from this container onwards, we should go to over provisioning mode:
         c4 = createDummyContainerObject("c4", flavor="small")
         rm.allocate(c4)  # calculate allocation
-        self.assertAlmostEqual(float(c4.cpu_quota) / c4.cpu_period, E_CPU / MAX_CU * (float(3) / 4), places=5)
-        self.assertAlmostEqual(float(c4.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128, places=5)
+        self.assertAlmostEqual(float(c4.resources['cpu_quota']) / c4.resources['cpu_period'], E_CPU / MAX_CU * (float(3) / 4), places=5)
+        self.assertAlmostEqual(float(c4.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128, places=5)
         self.assertAlmostEqual(rm.cpu_op_factor, 0.75)
 
         c5 = createDummyContainerObject("c5", flavor="small")
         rm.allocate(c5)  # calculate allocation
-        self.assertAlmostEqual(float(c5.cpu_quota) / c5.cpu_period, E_CPU / MAX_CU * (float(3) / 5), places=5)
-        self.assertAlmostEqual(float(c5.mem_limit/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(c5.resources['cpu_quota']) / c5.resources['cpu_period'], E_CPU / MAX_CU * (float(3) / 5), places=5)
+        self.assertAlmostEqual(float(c5.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 0.6)
 
 
