@@ -29,6 +29,7 @@ import logging
 from flask_restful import Resource
 from flask import request
 import json
+from copy import deepcopy
 
 logging.basicConfig(level=logging.INFO)
 
@@ -51,10 +52,6 @@ class Compute(Resource):
     global dcs
 
     def put(self, dc_label, compute_name, resource=None, value=None):
-        # check if resource update
-        if resource and value:
-           c = self._update_resource(dc_label, compute_name, resource, value)
-           return c.getStatus(), 200
 
         # deploy new container
         # check if json data is a dict
@@ -78,20 +75,6 @@ class Compute(Resource):
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
-
-    def _update_resource(self, dc_label, compute_name, resource, value):
-        #check if container exists
-        d = dcs.get(dc_label).net.getNodeByName(compute_name)
-        if resource == 'cpu':
-            cpu_period = int(dcs.get(dc_label).net.cpu_period)
-            cpu_quota = int(cpu_period * float(value))
-            #put default values back
-            if float(value) <= 0:
-                cpu_period = 100000
-                cpu_quota = -1
-            d.updateCpuLimit(cpu_period=cpu_period, cpu_quota=cpu_quota)
-        return d
-
 
     def get(self, dc_label, compute_name):
 
@@ -151,6 +134,74 @@ class ComputeList(Resource):
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
+class ComputeResources(Resource):
+    """
+    Update the container's resources using the docker.update function
+    re-using the same parameters:
+        url params:
+           blkio_weight
+           cpu_period, cpu_quota, cpu_shares
+           cpuset_cpus
+           cpuset_mems
+           mem_limit
+           mem_reservation
+           memswap_limit
+           kernel_memory
+           restart_policy
+    see https://docs.docker.com/engine/reference/commandline/update/
+    or API docs: https://docker-py.readthedocs.io/en/stable/api.html#module-docker.api.container
+    :param dc_label: name of the DC
+    :param compute_name: compute container name
+
+    :return: docker inspect dict of deployed docker
+    """
+    global dcs
+
+    def put(self, dc_label, compute_name):
+        logging.debug("REST CALL: update container resources")
+
+        try:
+            c = self._update_resources(dc_label, compute_name)
+            return c.getStatus(), 200, CORS_HEADER
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500, CORS_HEADER
+
+    def _update_resources(self, dc_label, compute_name):
+
+        # get URL parameters
+        params = request.args
+        # then no data
+        if params is None:
+            params = {}
+        logging.debug("REST CALL: update container resources {0}".format(params))
+        #check if container exists
+        d = dcs.get(dc_label).net.getNodeByName(compute_name)
+
+        # general request of cpu percentage
+        # create a mutable copy
+        params = params.to_dict()
+        if 'cpu_bw' in params:
+            cpu_period = int(dcs.get(dc_label).net.cpu_period)
+            value = params.get('cpu_bw')
+            cpu_quota = int(cpu_period * float(value))
+            #put default values back
+            if float(value) <= 0:
+                cpu_period = 100000
+                cpu_quota = -1
+            params['cpu_period'] = cpu_period
+            params['cpu_quota'] = cpu_quota
+            #d.updateCpuLimit(cpu_period=cpu_period, cpu_quota=cpu_quota)
+
+        # only pass allowed keys to docker
+        allowed_keys = ['blkio_weight', 'cpu_period', 'cpu_quota', 'cpu_shares', 'cpuset_cpus',
+                        'cpuset_mems', 'mem_limit', 'mem_reservation', 'memswap_limit',
+                        'kernel_memory', 'restart_policy']
+        filtered_params = {key:params[key] for key in allowed_keys if key in params}
+
+        d.update_resources(**filtered_params)
+
+        return d
 
 class DatacenterList(Resource):
     global dcs
