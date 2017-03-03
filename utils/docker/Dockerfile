@@ -35,7 +35,9 @@ RUN apt-get update \
 
 
 # install containernet
-RUN apt-get install -y curl python-pip 
+RUN apt-get install -y curl && \
+    curl https://bootstrap.pypa.io/get-pip.py | python2
+
 # install docker
 RUN curl -fsSL https://get.docker.com/gpg | apt-key add -
 RUN curl -fsSL https://get.docker.com/ | sh
