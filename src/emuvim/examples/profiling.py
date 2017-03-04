@@ -67,6 +67,9 @@ class Profiling:
 
     stop_now = False
 
+    """
+     Set up a simple topology and start it
+    """
     def __init__(self):
         GracefulKiller(self)
         # create topology
@@ -94,6 +97,9 @@ class Profiling:
         self.net.stop()
         LOG.info("Stopped topology")
 
+    """
+     Set stop value to stop the topology
+    """
     def stop_it(self):
         self.stop_now = True
 
