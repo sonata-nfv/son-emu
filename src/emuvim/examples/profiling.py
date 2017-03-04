@@ -36,6 +36,7 @@ from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 from mininet.node import RemoteController
+from time import sleep
 import argparse
 import sys
 import signal
@@ -89,7 +90,7 @@ class Profiling:
         self.net.start()
         LOG.info("Started topology")
         while(not self.stop_now):
-            pass
+            sleep(1)
         self.net.stop()
         LOG.info("Stopped topology")
 
