@@ -47,7 +47,7 @@ Vagrant.configure(2) do |config|
   #config.vm.box = "ubuntu/xenial64"
 
   # so we use 14.04 for now
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "ubuntu/xenial64"
   
 
   # Disable automatic box update checking. If you disable this, then
@@ -77,7 +77,7 @@ Vagrant.configure(2) do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.synced_folder ".", "/home/vagrant/son-emu"
+  config.vm.synced_folder ".", "/home/ubuntu/son-emu"
   
 
   # Provider-specific configuration so you can fine-tune various
@@ -108,48 +108,33 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
      sudo apt-get update
-     sudo apt-get install -y git ansible aptitude
+     sudo apt-get install -y git ansible
      sudo echo "localhost ansible_connection=local" >> /etc/ansible/hosts
      # install containernet
      git clone https://github.com/containernet/containernet.git
      echo "Installing containernet (will take some time ~30 minutes) ..."
-     cd /home/vagrant/containernet/ansible
+     cd /home/ubuntu/containernet/ansible
      sudo ansible-playbook install.yml
 
      # install son-emu
      echo "Installing son-emu (will take some time) ..."
-     cd /home/vagrant/son-emu/ansible
+     cd /home/ubuntu/son-emu/ansible
      sudo ansible-playbook install.yml
 
      # execute son-emu tests at the end to validate installation
      echo "Running son-emu unit tests to validate installation"
-     cd /home/vagrant/son-emu
+     cd /home/ubuntu/son-emu
      sudo python setup.py develop
      sudo py.test -v src/emuvim/test/unittests
 
      # install son-cli
-     sudo apt-get install -y python-pip python-dev
-     sudo apt-get install -y python3.4 python3-dev libffi-dev libssl-dev libyaml-dev build-essential
+     sudo apt-get install -y python3.4 python3-dev python3-pip libyaml-dev build-essential
      sudo pip install virtualenv 
-     cd /home/vagrant
-     git clone https://github.com/sonata-nfv/son-cli.git
-     cd son-cli
-     virtualenv -p /usr/bin/python3.4 venv
-     source venv/bin/activate
-     python bootstrap.py
-     bin/buildout
-
-     # clone son-examples (disabled until repo goes public)
-     cd /home/vagrant
-     git clone https://github.com/sonata-nfv/son-examples.git
-
-     # prepare VM for some special containers (PF_RING)
-     cd /home/vagrant/son-examples/vnfs/sonata-vtc-vnf-docker/
-     chmod +x prepare_host.sh
-     sudo ./prepare_host.sh
+     sudo pip install numpy
+     sudo pip install scipy
 
      # place motd
-     cd /home/vagrant/son-emu
+     cd /home/ubuntu/son-emu
      sudo cp utils/vagrant/motd /etc/motd
 
      # pre-fetch sonata example vnfs from DockerHub
@@ -163,13 +148,4 @@ Vagrant.configure(2) do |config|
      sudo docker pull sonatanfv/son-emu-sap
   SHELL
 
-  # TODO the native ansible provisioner does not work so we directly call the shell commands
-  # install containernet using its ansible script
-  #config.vm.provision "ansible_local" do |ansible|
-  #  ansible.provisioning_path = "/home/vagrant/containernet/ansible"
-  #  ansible.playbook = "install.yml"
-  #  ansible.sudo = true
-  #  ansible.verbose = "v"
-  #  ansible.limit = "all"
-  #end
 end
