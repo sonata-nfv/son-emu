@@ -61,7 +61,6 @@ class GracefulKiller:
 
 """
     A simple topology with only one data center which will stop when another thread tells it to or when a time limit is reached.
-    :args: an argument list which may contain the time limit
 """
 class Profiling:
 
@@ -69,22 +68,23 @@ class Profiling:
 
     """
      Set up a simple topology and start it
+     :port: the port the REST interface will be using, port+1 will be in use as well
     """
-    def __init__(self):
+    def __init__(self, port=5000):
         GracefulKiller(self)
         # create topology
         self.net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=False)
         self.dc = self.net.addDatacenter("dc1")
 
         # add the command line interface endpoint to each DC (REST API)
-        self.rapi1 = RestApiEndpoint("0.0.0.0", 5001)
+        self.rapi1 = RestApiEndpoint("0.0.0.0", port+1)
         self.rapi1.connectDCNetwork(self.net)
         self.rapi1.connectDatacenter(self.dc)
         # run API endpoint server (in another thread, don't block)
         self.rapi1.start()
 
         # add the SONATA dummy gatekeeper to each DC
-        self.sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=False)
+        self.sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", port, deploy_sap=False)
         self.sdkg1.connectDatacenter(self.dc)
         # run the dummy gatekeeper (in another thread, don't block)
         self.sdkg1.start()
@@ -106,11 +106,11 @@ class Profiling:
 
 def main(args):
     setLogLevel('info')  # set Mininet loglevel
-    p = Profiling()
+    p = Profiling(args.get('port'))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run a simple topology")
-    parser.add_argument('--time', '-t', metavar='seconds', type=float, help='a time limit', default=-1, required=False, dest='time')
+    parser.add_argument('--port', '-p', type=int, help='the port for the REST interface', default=5000, required=False, dest='port')
     arg_list = vars(parser.parse_args(sys.argv[1:]))
     main(arg_list)
