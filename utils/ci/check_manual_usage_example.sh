@@ -54,7 +54,7 @@ rm -f screenlog.0
 
 
 # Start containernet with a topology
-screen -L -S sonemu -d -m python src/emuvim/examples/simple_topology.py
+screen -L -S sonemu -d -m sudo python src/emuvim/examples/simple_topology.py
 # Setup screen for immediate flusing
 screen -S sonemu -X logfile flush 0
 # Wait for the cli to start
