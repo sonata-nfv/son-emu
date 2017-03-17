@@ -58,7 +58,7 @@ screen -L -S sonemu -d -m python src/emuvim/examples/simple_topology.py
 # Setup screen for immediate flusing
 screen -S sonemu -X logfile flush 0
 # Wait for the cli to start
-W '^*** Starting CLI:'
+W '^*** Starting CLI:' 60s
 # Print nodes
 Cmd 'nodes'
 # Start vnf1
