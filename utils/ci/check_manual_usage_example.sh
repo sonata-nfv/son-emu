@@ -40,7 +40,7 @@ if ! screen --version | grep 'Screen version'; then
     screen --version | grep 'Screen version'
 fi
 # Initial cleanup
-pkill 'screen' || true
+pkill -f 'screen -L -S sonemu' || true
 screen -wipe || true
 rm -f screenlog.0
 
