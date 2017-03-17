@@ -69,7 +69,7 @@ son-emu-cli compute start -d datacenter1 -n vnf2 && sleep 1s
 son-emu-cli compute list && sleep 1s
 # Gather some infos
 Cmd 'sh echo "... starting various checks"'
-sync # avoid test overlapping
+sync # avoid text overlapping
 Cmd 'vnf1 ifconfig && echo "... checked vnf1"'
 W "^... checked vnf1"
 Cmd 'vnf2 ifconfig && echo "... checked vnf2"'
