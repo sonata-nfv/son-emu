@@ -14,6 +14,7 @@ W() {
     chmod +x ${SUBF}
     cat > ${SUBF} <<- EOF
 	#!/bin/bash -e
+	set -x
 	while true; do
 	    if strings screenlog.0 | grep -m 1 "\${1}"; then
 	        exit 0
@@ -21,6 +22,7 @@ W() {
 	    sleep 0.5s
 	done
 	EOF
+    cat ${SUBF}
     timeout -k 3s ${T} ${SUBF} "${1}"
     local RES=$?
     rm -f ${SUBF}
