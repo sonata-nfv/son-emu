@@ -39,6 +39,12 @@ if ! screen --version | grep 'Screen version'; then
     sudo apt-get install -y screen
     screen --version | grep 'Screen version'
 fi
+if ! timeout --version; then
+    # Install coreutils for the timeout command
+    sudo apt-get update -qq -y
+    sudo apt-get install -y coreutils
+    timeout --version
+fi
 # Initial cleanup
 pkill -f 'screen -L -S sonemu' || true
 screen -wipe || true
