@@ -48,7 +48,7 @@ if ! timeout --version; then
     timeout --version
 fi
 # Initial cleanup
-pkill -f 'screen -L -S sonemu' || true
+pkill -f 'SCREEN -L -S sonemu' || true
 screen -wipe || true
 rm -f screenlog.0
 
