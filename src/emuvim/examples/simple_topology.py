@@ -42,9 +42,8 @@ script.
 import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
-from emuvim.api.zerorpc.compute import ZeroRpcApiEndpoint
 from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
-from emuvim.api.zerorpc.network import ZeroRpcApiEndpointDCNetwork
+from mininet.node import RemoteController
 
 logging.basicConfig(level=logging.INFO)
 
@@ -53,14 +52,8 @@ def create_topology1():
     """
     1. Create a data center network object (DCNetwork)
     """
-    net = DCNetwork()
-
-    """
-    1b. add a monitoring agent to the DCNetwork
-    """
-    mon_api = ZeroRpcApiEndpointDCNetwork("0.0.0.0", 5151)
-    mon_api.connectDCNetwork(net)
-    mon_api.start()
+    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=True)
+    
     """
     2. Add (logical) data centers to the topology
        (each data center is one "bigswitch" in our simplified
@@ -100,34 +93,15 @@ def create_topology1():
        this API, e.g., start/stop/list compute instances.
     """
     # create a new instance of a endpoint implementation
-    zapi1 = ZeroRpcApiEndpoint("0.0.0.0", 4242)
     rapi1 = RestApiEndpoint("127.0.0.1", 5001)
     # connect data centers to this endpoint
-    zapi1.connectDatacenter(dc1)
-    zapi1.connectDatacenter(dc2)
-    zapi1.connectDatacenter(dc3)
-    zapi1.connectDatacenter(dc4)
     rapi1.connectDatacenter(dc1)
     rapi1.connectDatacenter(dc2)
     rapi1.connectDatacenter(dc3)
     rapi1.connectDatacenter(dc4)
     # run API endpoint server (in another thread, don't block)
-    zapi1.start()
-    rapi1.start()
 
-    """
-    5.1. For our example, we create a second endpoint to illustrate that
-         this is supported by our design. This feature allows us to have
-         one API endpoint for each data center. This makes the emulation
-         environment more realistic because you can easily create one
-         OpenStack-like REST API endpoint for *each* data center.
-         This will look like a real-world multi PoP/data center deployment
-         from the perspective of an orchestrator.
-    """
-    zapi2 = ZeroRpcApiEndpoint("0.0.0.0", 4343)
-    zapi2.connectDatacenter(dc3)
-    zapi2.connectDatacenter(dc4)
-    zapi2.start()
+    rapi1.start()
 
     """
     6. Finally we are done and can start our network (the emulator).
