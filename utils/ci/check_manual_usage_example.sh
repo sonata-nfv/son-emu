@@ -73,7 +73,7 @@ W "^... checked vnf1"
 Cmd 'vnf2 ifconfig && echo "... checked vnf2"'
 W "^... checked vnf2"
 # Try to ping vnfs
-Cmd 'vnf1 ping -c 2 vnf2 || echo "... checked ping"'
+Cmd 'vnf1 ping -c 2 vnf2 && echo "... checked ping"'
 W "^... checked ping" 20s
 Cmd 'quit'
 # Wait for sonemu to end
