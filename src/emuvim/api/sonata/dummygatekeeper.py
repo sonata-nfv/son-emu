@@ -45,6 +45,7 @@ import flask_restful as fr
 from collections import defaultdict
 import pkg_resources
 from subprocess import Popen
+import tempfile
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -345,7 +346,23 @@ class Service(object):
             mem_lim = int(mem_limit)
             cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(cpu_bw))
 
-            # 4. do the dc.startCompute(name="foobar") call to run the container
+            # 4. generate the volume paths for the docker container
+            volumes=list()
+            # a volume to extract log files
+            #tempfile.mkdtemp(dir="/tmp/results/%s/%s"%(self.uuid,vnf_name))
+            docker_log_path = "/tmp/results/%s/%s"%(self.uuid,vnf_name)
+            LOG.debug("LOG path for vnf %s is %s."%(vnf_name,docker_log_path))
+            #docker_log_path = tempfile.mkdtemp(dir=docker_log_path)
+            if not os.path.exists(docker_log_path):
+                os.makedirs(docker_log_path)
+            with open(docker_log_path+"/testfile", "w") as tf:
+                tf.write("placeholder")
+            tf.close()
+
+            volumes.append(docker_log_path+":/mnt/share/")
+
+
+            # 5. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
 
@@ -361,8 +378,16 @@ class Service(object):
 
             LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
-            vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small",
-                    cpu_quota=cpu_quota, cpu_period=cpu_period, cpuset=cpu_list, mem_limit=mem_lim)
+            vnfi = target_dc.startCompute(
+                    self.vnf_name2docker_name[vnf_name],
+                    network=intfs,
+                    image=docker_name,
+                    flavor_name="small",
+                    cpu_quota=cpu_quota,
+                    cpu_period=cpu_period,
+                    cpuset=cpu_list,
+                    mem_limit=mem_lim,
+                    volumes=volumes)
             return vnfi
 
     def _stop_vnfi(self, vnfi):
