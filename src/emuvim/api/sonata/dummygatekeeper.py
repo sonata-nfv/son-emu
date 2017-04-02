@@ -45,7 +45,6 @@ import flask_restful as fr
 from collections import defaultdict
 import pkg_resources
 from subprocess import Popen
-import tempfile
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -349,15 +348,11 @@ class Service(object):
             # 4. generate the volume paths for the docker container
             volumes=list()
             # a volume to extract log files
-            #tempfile.mkdtemp(dir="/tmp/results/%s/%s"%(self.uuid,vnf_name))
             docker_log_path = "/tmp/results/%s/%s"%(self.uuid,vnf_name)
             LOG.debug("LOG path for vnf %s is %s."%(vnf_name,docker_log_path))
-            #docker_log_path = tempfile.mkdtemp(dir=docker_log_path)
             if not os.path.exists(docker_log_path):
+                LOG.debug("Creating folder %s"%docker_log_path)
                 os.makedirs(docker_log_path)
-            with open(docker_log_path+"/testfile", "w") as tf:
-                tf.write("placeholder")
-            tf.close()
 
             volumes.append(docker_log_path+":/mnt/share/")
 
@@ -399,6 +394,7 @@ class Service(object):
         # Find the correct datacenter
         status = vnfi.getStatus()
         dc = vnfi.datacenter
+
         # stop the vnfi
         LOG.info("Stopping the vnf instance contained in %r in DC %r" % (status["name"], dc))
         dc.stopCompute(status["name"])
@@ -726,7 +722,7 @@ class Instantiations(fr.Resource):
         Will return a new UUID to identify the running service instance.
         :return: UUID
         """
-        LOG.info("POST /instantiations (or /reqeusts) called")
+        LOG.info("POST /instantiations (or /requests) called")
         # try to extract the service uuid from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
