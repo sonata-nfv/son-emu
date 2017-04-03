@@ -345,7 +345,19 @@ class Service(object):
             mem_lim = int(mem_limit)
             cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(cpu_bw))
 
-            # 4. do the dc.startCompute(name="foobar") call to run the container
+            # 4. generate the volume paths for the docker container
+            volumes=list()
+            # a volume to extract log files
+            docker_log_path = "/tmp/results/%s/%s"%(self.uuid,vnf_name)
+            LOG.debug("LOG path for vnf %s is %s."%(vnf_name,docker_log_path))
+            if not os.path.exists(docker_log_path):
+                LOG.debug("Creating folder %s"%docker_log_path)
+                os.makedirs(docker_log_path)
+
+            volumes.append(docker_log_path+":/mnt/share/")
+
+
+            # 5. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             intfs = vnfd.get("connection_points")
 
@@ -361,8 +373,16 @@ class Service(object):
 
             LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
-            vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small",
-                    cpu_quota=cpu_quota, cpu_period=cpu_period, cpuset=cpu_list, mem_limit=mem_lim)
+            vnfi = target_dc.startCompute(
+                    self.vnf_name2docker_name[vnf_name],
+                    network=intfs,
+                    image=docker_name,
+                    flavor_name="small",
+                    cpu_quota=cpu_quota,
+                    cpu_period=cpu_period,
+                    cpuset=cpu_list,
+                    mem_limit=mem_lim,
+                    volumes=volumes)
             return vnfi
 
     def _stop_vnfi(self, vnfi):
@@ -374,6 +394,7 @@ class Service(object):
         # Find the correct datacenter
         status = vnfi.getStatus()
         dc = vnfi.datacenter
+
         # stop the vnfi
         LOG.info("Stopping the vnf instance contained in %r in DC %r" % (status["name"], dc))
         dc.stopCompute(status["name"])
@@ -701,7 +722,7 @@ class Instantiations(fr.Resource):
         Will return a new UUID to identify the running service instance.
         :return: UUID
         """
-        LOG.info("POST /instantiations (or /reqeusts) called")
+        LOG.info("POST /instantiations (or /requests) called")
         # try to extract the service uuid from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
