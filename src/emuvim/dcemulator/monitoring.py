@@ -34,7 +34,7 @@ import time
 from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY, CollectorRegistry, \
     pushadd_to_gateway, push_to_gateway, delete_from_gateway
 import threading
-from subprocess import Popen
+from subprocess import Popen, check_call
 import os
 import docker
 import json
@@ -535,8 +535,15 @@ class DCNetworkMonitor():
 
     def _stop_container(self, name):
 
-        container = self.dockercli.containers.get(name)
-        container.remove(force=True)
+        #container = self.dockercli.containers.get(name)
+        #container.stop()
+        #container.remove(force=True)
+
+        # the only robust way to stop these containers is via Popen, it seems
+        time.sleep(1)
+        cmd = ['docker', 'rm', '-f', name]
+        Popen(cmd)
+
 
     def update_skewmon(self, vnf_name, resource_name, action):
 
