@@ -300,6 +300,7 @@ class Service(object):
 
             # check if we need to deploy the management ports (defined as type:management both on in the vnfd and nsd)
             intfs = vnfd.get("connection_points", [])
+            mgmt_intf_names = []
             if USE_DOCKER_MGMT:
                 vnf_id = vnf_name2id[vnf_name]
                 mgmt_intfs = [vnf_id + ':' + intf['id'] for intf in intfs if intf.get('type') == 'management']
@@ -312,6 +313,7 @@ class Service(object):
                             vnf_id, vnf_interface, vnf_sap_docker_name = parse_interface(nsd_intf_name)
                             found_interfaces = [intf for intf in intfs if intf.get('id') == vnf_interface]
                             intfs.remove(found_interfaces[0])
+                            mgmt_intf_names.append(vnf_interface)
 
             # 4. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
@@ -326,9 +328,10 @@ class Service(object):
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small",
                     cpu_quota=cpu_quota, cpu_period=cpu_period, cpuset=cpu_list, mem_limit=mem_lim)
 
-            # rename the docker0 interfaces (eth0) to 'docker_mgmt' in the VNFs
+            # rename the docker0 interfaces (eth0) to the management port name defined in the VNFD
             if USE_DOCKER_MGMT:
-                self._vnf_reconfigure_network(vnfi, 'eth0', new_name='docker_mgmt')
+                for intf_name in mgmt_intf_names:
+                    self._vnf_reconfigure_network(vnfi, 'eth0', new_name=intf_name)
 
             return vnfi
 
