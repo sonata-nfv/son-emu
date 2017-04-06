@@ -73,7 +73,8 @@ DEPLOY_SAP = False
 # flag to indicate if we use bidirectional forwarding rules in the automatic chaining process
 BIDIRECTIONAL_CHAIN = False
 
-
+# override the management interfaces in the descriptors with default docker0 interfaces in the containers
+USE_DOCKER_MGMT = True
 
 def generate_subnets(prefix, base, subnet_size=50, mask=24):
     # Generate a list of ipaddress in subnets
@@ -83,14 +84,12 @@ def generate_subnets(prefix, base, subnet_size=50, mask=24):
         r.append(ipaddress.ip_network(unicode(subnet)))
     return r
 # private subnet definitions for the generated interfaces
-# 10.0.xx.0/24
+# 10.10.xxx.0/24
 SAP_SUBNETS = generate_subnets('10.10', 0, subnet_size=50, mask=24)
-# 10.1.xx.0/24
+# 10.20.xxx.0/24
 ELAN_SUBNETS = generate_subnets('10.20', 0, subnet_size=50, mask=24)
-# 10.2.xx.0/30
+# 10.30.xxx.0/30
 ELINE_SUBNETS = generate_subnets('10.30', 0, subnet_size=50, mask=30)
-
-
 
 
 class Gatekeeper(object):
@@ -294,23 +293,43 @@ class Service(object):
             mem_lim = int(mem_limit)
             cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(cpu_bw))
 
+            vnf_name2id = defaultdict(lambda: "NotExistingNode",
+                                      reduce(lambda x, y: dict(x, **y),
+                                             map(lambda d: {d["vnf_name"]: d["vnf_id"]},
+                                                 self.nsd["network_functions"])))
+
+            # check if we need to deploy the management ports (defined as type:management both on in the vnfd and nsd)
+            intfs = vnfd.get("connection_points", [])
+            if USE_DOCKER_MGMT:
+                vnf_id = vnf_name2id[vnf_name]
+                mgmt_intfs = [vnf_id + ':' + intf['id'] for intf in intfs if intf.get('type') == 'management']
+                # check if any of these management interfaces are used in a management-type network in the nsd
+                for nsd_intf_name in mgmt_intfs:
+                    vlinks = [ l["connection_points_reference"] for l in self.nsd.get("virtual_links", [])]
+                    for link in vlinks:
+                        if nsd_intf_name in link and self.check_mgmt_interface(link):
+                            # this is indeed a management interface and can be skipped
+                            vnf_id, vnf_interface, vnf_sap_docker_name = parse_interface(nsd_intf_name)
+                            found_interfaces = [intf for intf in intfs if intf.get('id') == vnf_interface]
+                            intfs.remove(found_interfaces[0])
+
             # 4. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
-            intfs = vnfd.get("connection_points")
-
             # TODO: get all vnf id's from the nsd for this vnfd and use those as dockername
             # use the vnf_id in the nsd as docker name
             # so deployed containers can be easily mapped back to the nsd
-            vnf_name2id = defaultdict(lambda: "NotExistingNode",
-                                          reduce(lambda x, y: dict(x, **y),
-                                                 map(lambda d: {d["vnf_name"]: d["vnf_id"]},
-                                                     self.nsd["network_functions"])))
+
             self.vnf_name2docker_name[vnf_name] = vnf_name2id[vnf_name]
 
             LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_name, intfs))
             vnfi = target_dc.startCompute(self.vnf_name2docker_name[vnf_name], network=intfs, image=docker_name, flavor_name="small",
                     cpu_quota=cpu_quota, cpu_period=cpu_period, cpuset=cpu_list, mem_limit=mem_lim)
+
+            # rename the docker0 interfaces (eth0) to 'docker_mgmt' in the VNFs
+            if USE_DOCKER_MGMT:
+                self._vnf_reconfigure_network(vnfi, 'eth0', new_name='docker_mgmt')
+
             return vnfi
 
     def _stop_vnfi(self, vnfi):
@@ -343,7 +362,7 @@ class Service(object):
         return None
 
     @staticmethod
-    def _vnf_reconfigure_network(vnfi, if_name, net_str):
+    def _vnf_reconfigure_network(vnfi, if_name, net_str=None, new_name=None):
         """
         Reconfigure the network configuration of a specific interface
         of a running container.
@@ -352,12 +371,22 @@ class Service(object):
         :param net_str: network configuration string, e.g., 1.2.3.4/24
         :return:
         """
-        intf = vnfi.intf(intf=if_name)
-        if intf is not None:
-            intf.setIP(net_str)
-            LOG.debug("Reconfigured network of %s:%s to %r" % (vnfi.name, if_name, net_str))
-        else:
-            LOG.warning("Interface not found: %s:%s. Network reconfiguration skipped." % (vnfi.name, if_name))
+
+        # assign new ip address
+        if net_str is not None:
+            intf = vnfi.intf(intf=if_name)
+            if intf is not None:
+                intf.setIP(net_str)
+                LOG.debug("Reconfigured network of %s:%s to %r" % (vnfi.name, if_name, net_str))
+            else:
+                LOG.warning("Interface not found: %s:%s. Network reconfiguration skipped." % (vnfi.name, if_name))
+
+        if new_name is not None:
+            vnfi.cmd('ip link set', if_name, 'down')
+            vnfi.cmd('ip link set', if_name, 'name', new_name)
+            vnfi.cmd('ip link set', new_name, 'up')
+            LOG.debug("Reconfigured interface name of %s:%s to %s" % (vnfi.name, if_name, new_name))
+
 
 
     def _trigger_emulator_start_scripts_in_vnfis(self, vnfi_list):
@@ -423,7 +452,11 @@ class Service(object):
 
     def _load_saps(self):
         # create list of all SAPs
-        SAPs = [p for p in self.nsd["connection_points"]]
+        # check if we need to deploy management ports
+        if USE_DOCKER_MGMT:
+            SAPs = [p for p in self.nsd["connection_points"] if 'management' not in p.get('type')]
+        else:
+            SAPs = [p for p in self.nsd["connection_points"]]
 
         for sap in SAPs:
             # endpoint needed in this service
@@ -432,7 +465,7 @@ class Service(object):
             sap["type"] = sap.get("type", 'internal')
 
             # Each Service Access Point (connection_point) in the nsd is an IP address on the host
-            if sap.get["type"] == "external":
+            if sap["type"] == "external":
                 # add to vnfds to calculate placement later on
                 sap_net = SAP_SUBNETS.pop(0)
                 self.saps[sap_docker_name] = {"name": sap_docker_name , "type": "external", "net": sap_net}
@@ -442,7 +475,7 @@ class Service(object):
                     {"vnf_id": sap_docker_name, "vnf_name": sap_docker_name, "vnf_type": "sap_ext"})
 
             # Each Service Access Point (connection_point) in the nsd is getting its own container (default)
-            elif sap["type"] == "internal":
+            elif sap["type"] == "internal" or sap["type"] == "management":
                 # add SAP to self.vnfds
                 sapfile = pkg_resources.resource_filename(__name__, "sap_vnfd.yml")
                 sap_vnfd = load_yaml(sapfile)
@@ -463,6 +496,9 @@ class Service(object):
         self.saps_int = [self.saps[sap]['name'] for sap in self.saps if self.saps[sap]["type"] == "internal"]
 
     def _start_sap(self, sap, instance_uuid):
+        if not DEPLOY_SAP:
+            return
+
         LOG.info('start SAP: {0} ,type: {1}'.format(sap['name'],sap['type']))
         if sap["type"] == "internal":
             vnfi = None
@@ -486,11 +522,15 @@ class Service(object):
         # eg. different services get a unique cookie for their flowrules
         cookie = 1
         for link in eline_fwd_links:
+            # check if we need to deploy this link when its a management link:
+            if USE_DOCKER_MGMT:
+                if self.check_mgmt_interface(link["connection_points_reference"]):
+                    continue
+
             src_id, src_if_name, src_sap_id = parse_interface(link["connection_points_reference"][0])
             dst_id, dst_if_name, dst_sap_id = parse_interface(link["connection_points_reference"][1])
 
             setChaining = False
-
             # check if there is a SAP in the link and chain everything together
             if src_sap_id in self.saps and dst_sap_id in self.saps:
                 LOG.info('2 SAPs cannot be chained together : {0} - {1}'.format(src_sap_id, dst_sap_id))
@@ -560,9 +600,12 @@ class Service(object):
         :return:
         """
         for link in elan_fwd_links:
+            # check if we need to deploy this link when its a management link:
+            if USE_DOCKER_MGMT:
+                if self.check_mgmt_interface(link["connection_points_reference"]):
+                    continue
 
             elan_vnf_list = []
-
             # check if an external SAP is in the E-LAN (then a subnet is already defined)
             intfs_elan = [intf for intf in link["connection_points_reference"]]
             lan_sap = self.check_ext_saps(intfs_elan)
@@ -594,7 +637,7 @@ class Service(object):
 
                 vnf_name = self.vnf_id2vnf_name[vnf_id]
                 LOG.debug(
-                    "Setting up E-LAN link. %s(%s:%s) -> %s" % (
+                    "Setting up E-LAN interface. %s(%s:%s) -> %s" % (
                         vnf_name, vnf_id, intf_name, ip_address))
 
                 if vnf_name in self.vnfds:
@@ -740,6 +783,12 @@ class Service(object):
             if vnf_sap_docker_name in saps_ext:
                 return vnf_sap_docker_name
 
+    def check_mgmt_interface(self, intf_list):
+        SAPs_mgmt = [p.get('id') for p in self.nsd["connection_points"] if 'management' in p.get('type')]
+        for intf_name in intf_list:
+            if intf_name in SAPs_mgmt:
+                return True
+
 """
 Some (simple) placement algorithms
 """
@@ -816,7 +865,7 @@ class RoundRobinDcPlacementWithSAPs(object):
                 intf_id, intf_name, intf_sap_id = parse_interface(intf)
                 if intf_sap_id in saps:
                     dc = dcs_list[randint(0, dc_len-1)]
-                    saps[intf_id]['dc'] = dc
+                    saps[intf_sap_id]['dc'] = dc
 
 
 
