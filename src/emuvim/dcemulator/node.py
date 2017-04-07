@@ -91,8 +91,10 @@ class EmulatorCompute(Docker):
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
         status["short_id"] = self.dcli.inspect_container(self.dc)["Id"][:12]
+        status["hostname"] = self.dcli.inspect_container(self.dc)["Config"]['Hostname']
         status["datacenter"] = (None if self.datacenter is None
                                 else self.datacenter.label)
+
         return status
 
 
