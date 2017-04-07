@@ -29,6 +29,7 @@ import logging
 import threading
 from flask import Flask
 from flask_restful import Api
+#from gevent.wsgi import WSGIServer
 
 # need to import total module to set its global variable dcs
 import compute
@@ -115,3 +116,6 @@ class RestApiEndpoint(object):
 
     def _start_flask(self):
         self.app.run(self.ip, self.port, debug=True, use_reloader=False)
+        #this should be a more production-fit http-server
+        #http_server = WSGIServer((self.ip, self.port), self.app)
+        #http_server.serve_forever()
