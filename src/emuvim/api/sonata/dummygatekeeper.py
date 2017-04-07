@@ -457,6 +457,7 @@ class Service(object):
         # create list of all SAPs
         # check if we need to deploy management ports
         if USE_DOCKER_MGMT:
+            LOG.debug("nsd: {0}".format(self.nsd))
             SAPs = [p for p in self.nsd["connection_points"] if 'management' not in p.get('type')]
         else:
             SAPs = [p for p in self.nsd["connection_points"]]
