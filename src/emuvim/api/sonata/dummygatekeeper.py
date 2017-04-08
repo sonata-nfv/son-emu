@@ -1012,10 +1012,6 @@ api.add_resource(Instantiations, '/instantiations', '/api/v2/instantiations', '/
 api.add_resource(Exit, '/emulator/exit')
 
 
-#def initialize_GK():
-#    global GK
-#    GK = Gatekeeper()
-
 
 def start_rest_api(host, port, datacenters=dict()):
     GK.dcs = datacenters
