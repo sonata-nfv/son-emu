@@ -21,9 +21,14 @@ W() {
 	    sleep 0.5s
 	done
 	EOF
-    timeout -k 3s ${T} ${SUBF} "${1}"
-    local RES=$?
+    local RES=0
+    timeout -k 3s ${T} ${SUBF} "${1}" || RES=$?
     rm -f ${SUBF}
+    if [ ! "$RES" = "0" ]; then
+        sync
+        printheader "(Debug) Error while waiting for a pattern to appear in screenlog.0"
+        strings screenlog.0
+    fi
     return ${RES}
 }
 
