@@ -70,19 +70,20 @@ son-emu-cli compute start -d datacenter1 -n vnf1 && sleep 1s
 son-emu-cli compute start -d datacenter1 -n vnf2 && sleep 1s
 # List compute nodes
 son-emu-cli compute list && sleep 1s
-# Gather some infos
-Cmd 'sh echo "... starting various checks"'
 sync # avoid text overlapping
-Cmd 'vnf1 ifconfig && echo "... checked vnf1"'
+# Gather some infos
+Cmd 'sh sync && echo -e "\n... starting various checks"'
+sync # avoid text overlapping
+Cmd 'vnf1 ifconfig && sync && echo -e "\n... checked vnf1"'
 W "^... checked vnf1"
-Cmd 'vnf2 ifconfig && echo "... checked vnf2"'
+Cmd 'vnf2 ifconfig && sync && echo -e "\n... checked vnf2"'
 W "^... checked vnf2"
 # Try to ping vnfs
-Cmd 'vnf1 ping -c 2 vnf2 && echo "... checked ping"'
+Cmd 'vnf1 ping -c 2 vnf2 && sync && echo -e "\n... checked ping"'
 W "^... checked ping" 20s
 Cmd 'quit'
 # Wait for sonemu to end
-W '^*** Done'
+W '*** Done'
 
 echo -e '\n\n******************* Result ******************\n\n'
 strings screenlog.0
