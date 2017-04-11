@@ -21,9 +21,14 @@ W() {
 	    sleep 0.5s
 	done
 	EOF
-    timeout -k 3s ${T} ${SUBF} "${1}"
-    local RES=$?
+    local RES=0
+    timeout -k 3s ${T} ${SUBF} "${1}" || RES=$?
     rm -f ${SUBF}
+    if [ ! "$RES" = "0" ]; then
+        sync
+        echo -e "\n\n\n(Debug) Error while waiting for a pattern to appear in screenlog.0\n\n\n"
+        strings screenlog.0
+    fi
     return ${RES}
 }
 
@@ -65,19 +70,21 @@ son-emu-cli compute start -d datacenter1 -n vnf1 && sleep 1s
 son-emu-cli compute start -d datacenter1 -n vnf2 && sleep 1s
 # List compute nodes
 son-emu-cli compute list && sleep 1s
+sync # avoid text overlapping
 # Gather some infos
+Cmd 'sh sync'
 Cmd 'sh echo "... starting various checks"'
 sync # avoid text overlapping
-Cmd 'vnf1 ifconfig && echo "... checked vnf1"'
+Cmd 'vnf1 ifconfig && echo -e "\\n... checked vnf1"'
 W "^... checked vnf1"
-Cmd 'vnf2 ifconfig && echo "... checked vnf2"'
+Cmd 'vnf2 ifconfig && echo -e "\\n... checked vnf2"'
 W "^... checked vnf2"
 # Try to ping vnfs
-Cmd 'vnf1 ping -c 2 vnf2 && echo "... checked ping"'
+Cmd 'vnf1 ping -c 2 vnf2 && echo -e "\\n... checked ping"'
 W "^... checked ping" 20s
 Cmd 'quit'
 # Wait for sonemu to end
-W '^*** Done'
+W '*** Done'
 
 echo -e '\n\n******************* Result ******************\n\n'
 strings screenlog.0
