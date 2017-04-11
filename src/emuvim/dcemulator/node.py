@@ -91,8 +91,10 @@ class EmulatorCompute(Docker):
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
         status["short_id"] = self.dcli.inspect_container(self.dc)["Id"][:12]
+        status["hostname"] = self.dcli.inspect_container(self.dc)["Config"]['Hostname']
         status["datacenter"] = (None if self.datacenter is None
                                 else self.datacenter.label)
+
         return status
 
 
@@ -245,6 +247,24 @@ class Datacenter(object):
         del self.containers[name]
 
         return True
+
+    def attachExternalSAP(self, sap_name, sap_ip):
+        # create SAP as OVS internal interface
+        sap_intf = self.switch.attachInternalIntf(sap_name, sap_ip)
+
+        # add this as a link to the DCnetwork graph, so it is available for routing
+        attr_dict2 = {'src_port_id': sap_name, 'src_port_nr': None,
+                      'src_port_name': sap_name,
+                      'dst_port_id': self.switch.ports[sap_intf], 'dst_port_nr': self.switch.ports[sap_intf],
+                      'dst_port_name': sap_intf.name}
+        self.net.DCNetwork_graph.add_edge(sap_name, self.switch.name, attr_dict=attr_dict2)
+
+        attr_dict2 = {'dst_port_id': sap_name, 'dst_port_nr': None,
+                      'dst_port_name': sap_name,
+                      'src_port_id': self.switch.ports[sap_intf], 'src_port_nr': self.switch.ports[sap_intf],
+                      'src_port_name': sap_intf.name}
+        self.net.DCNetwork_graph.add_edge(self.switch.name, sap_name, attr_dict=attr_dict2)
+
 
     def listCompute(self):
         """

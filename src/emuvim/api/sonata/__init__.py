@@ -46,11 +46,12 @@ class SonataDummyGatekeeperEndpoint(object):
     topology.
     """
 
-    def __init__(self, listenip, port, deploy_sap=False):
+    def __init__(self, listenip, port, deploy_sap=False, docker_management=True):
         self.dcs = {}
         self.ip = listenip
         self.port = port
         dgk.DEPLOY_SAP = deploy_sap
+        dgk.USE_DOCKER_MGMT = docker_management
         logging.debug("Created API endpoint %s" % self)
 
     def __repr__(self):
