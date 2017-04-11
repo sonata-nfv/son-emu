@@ -75,12 +75,12 @@ sync # avoid text overlapping
 Cmd 'sh sync'
 Cmd 'sh echo "... starting various checks"'
 sync # avoid text overlapping
-Cmd 'vnf1 ifconfig && sync && echo -e "\\n... checked vnf1"'
+Cmd 'vnf1 ifconfig && echo -e "\\n... checked vnf1"'
 W "^... checked vnf1"
-Cmd 'vnf2 ifconfig && sync && echo -e "\\n... checked vnf2"'
+Cmd 'vnf2 ifconfig && echo -e "\\n... checked vnf2"'
 W "^... checked vnf2"
 # Try to ping vnfs
-Cmd 'vnf1 ping -c 2 vnf2 && sync && echo -e "\\n... checked ping"'
+Cmd 'vnf1 ping -c 2 vnf2 && echo -e "\\n... checked ping"'
 W "^... checked ping" 20s
 Cmd 'quit'
 # Wait for sonemu to end
