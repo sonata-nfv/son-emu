@@ -26,7 +26,7 @@ W() {
     rm -f ${SUBF}
     if [ ! "$RES" = "0" ]; then
         sync
-        printheader "(Debug) Error while waiting for a pattern to appear in screenlog.0"
+        echo "(Debug) Error while waiting for a pattern to appear in screenlog.0"
         strings screenlog.0
     fi
     return ${RES}
