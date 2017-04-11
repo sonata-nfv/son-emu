@@ -25,10 +25,12 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
+
 import logging
 import threading
 from flask import Flask
 from flask_restful import Api
+#from gevent.wsgi import WSGIServer
 
 # need to import total module to set its global variable dcs
 import compute
@@ -40,6 +42,9 @@ from network import NetworkAction
 
 import monitor
 from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction
+
+import pkg_resources
+from os import path
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,7 +61,12 @@ class RestApiEndpoint(object):
         self.port = port
 
         # setup Flask
-        self.app = Flask(__name__)
+        # find directory of dashboard files
+        dashboard_file = pkg_resources.resource_filename('emuvim.dashboard', "index.html")
+        dashboard_dir = path.dirname(dashboard_file)
+        logging.info("Started emu dashboard: {0}".format(dashboard_dir))
+
+        self.app = Flask(__name__, static_folder=dashboard_dir, static_url_path='/dashboard')
         self.api = Api(self.app)
 
         # setup endpoints
@@ -95,6 +105,7 @@ class RestApiEndpoint(object):
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 
+
     def connectDatacenter(self, dc):
         compute.dcs[dc.label] = dc
         logging.info(
@@ -115,3 +126,6 @@ class RestApiEndpoint(object):
 
     def _start_flask(self):
         self.app.run(self.ip, self.port, debug=True, use_reloader=False)
+        #this should be a more production-fit http-server
+        #http_server = WSGIServer((self.ip, self.port), self.app)
+        #http_server.serve_forever()

@@ -38,7 +38,8 @@ setup(name='emuvim',
       packages=find_packages('src'),
       include_package_data=True,
       package_data= {
-              'emuvim.api.sonata': ['*.yml']
+              'emuvim.api.sonata': ['*.yml'],
+              'emuvim.dashboard' : ['*.html', 'css/*.css','img/*','js/*.js']
       },
       install_requires=[
           'pyaml',
