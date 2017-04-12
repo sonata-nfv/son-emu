@@ -37,6 +37,11 @@ Cmd() {
     screen -S sonemu -X stuff "${1}^M"
 }
 
+Vnf() {
+    # Send a command inside the vnf1 container
+    docker exec -t "mn.${1}" /bin/bash -c "${2}" && sync
+}
+
 
 if ! screen --version | grep 'Screen version'; then
     # Install screen and do an initial cleanup
@@ -51,7 +56,8 @@ if ! timeout --version; then
     timeout --version
 fi
 # Initial cleanup
-pkill -f 'SCREEN -L -S sonemu' || true
+pkill --signal KILL -f 'SCREEN -L -S sonemu' || true
+sleep 1s
 screen -wipe || true
 rm -f screenlog.0
 
@@ -74,14 +80,14 @@ sync # avoid text overlapping
 # Gather some infos
 Cmd 'sh sync'
 Cmd 'sh echo "... starting various checks"'
-sync # avoid text overlapping
-Cmd 'vnf1 ifconfig && echo -e "\\n... checked vnf1"'
-W "^... checked vnf1"
-Cmd 'vnf2 ifconfig && echo -e "\\n... checked vnf2"'
-W "^... checked vnf2"
+sync # avoid text overlappin
+Cmd 'links'
+Vnf vnf1 'ifconfig'
+Vnf vnf2 'ifconfig'
 # Try to ping vnfs
-Cmd 'vnf1 ping -c 2 vnf2 && echo -e "\\n... checked ping"'
-W "^... checked ping" 20s
+IP_2=$(Vnf vnf2 'ip -f inet -o addr show vnf2-eth0' | cut -d\  -f 7 | cut -d/ -f 1)
+# IP_1=$(Vnf vnf1 'ip -f inet -o addr show vnf1-eth0' | cut -d\  -f 7 | cut -d/ -f 1)
+OUTPUT_A=$(Vnf vnf1 "ping -v -c 2 ${IP_2}")
 Cmd 'quit'
 # Wait for sonemu to end
 W '*** Done'
@@ -92,7 +98,7 @@ echo -e '\n\n*********************************************\n\n'
 
 
 # Check the ping result
-if grep ', 2 received' screenlog.0; then
+if echo ${OUTPUT_A} | grep ', 2 received'; then
     echo 'No problems detected'
     exit 0
 else
