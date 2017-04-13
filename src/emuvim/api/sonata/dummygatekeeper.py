@@ -85,8 +85,8 @@ def generate_subnets(prefix, base, subnet_size=50, mask=24):
     return r
 # private subnet definitions for the generated interfaces
 # 10.10.xxx.0/24
-SAP_SUBNETS = generate_subnets('10.10', 0, subnet_size=50, mask=24)
-# 10.20.xxx.0/24
+SAP_SUBNETS = generate_subnets('10.10', 0, subnet_size=50, mask=30)
+# 10.20.xxx.0/30
 ELAN_SUBNETS = generate_subnets('10.20', 0, subnet_size=50, mask=24)
 # 10.30.xxx.0/30
 ELINE_SUBNETS = generate_subnets('10.30', 0, subnet_size=50, mask=30)
@@ -534,7 +534,7 @@ class Service(object):
         elif sap["type"] == "external":
             target_dc = sap.get("dc")
             # add interface to dc switch
-            target_dc.attachExternalSAP(sap['name'], str(sap['net']))
+            target_dc.attachExternalSAP(sap['name'], sap['net'])
 
     def _connect_elines(self, eline_fwd_links, instance_uuid):
         """
@@ -563,26 +563,28 @@ class Service(object):
 
             elif src_sap_id in self.saps_ext:
                 src_id = src_sap_id
-                src_if_name = src_sap_id
+                # set intf name to None so the chaining function will choose the first one
+                src_if_name = None
                 src_name = self.vnf_id2vnf_name[src_id]
                 dst_name = self.vnf_id2vnf_name[dst_id]
                 dst_vnfi = self._get_vnf_instance(instance_uuid, dst_name)
                 if dst_vnfi is not None:
                     # choose first ip address in sap subnet
                     sap_net = self.saps[src_sap_id]['net']
-                    sap_ip = "{0}/{1}".format(str(sap_net[1]), sap_net.prefixlen)
+                    sap_ip = "{0}/{1}".format(str(sap_net[2]), sap_net.prefixlen)
                     self._vnf_reconfigure_network(dst_vnfi, dst_if_name, sap_ip)
                     setChaining = True
 
             elif dst_sap_id in self.saps_ext:
                 dst_id = dst_sap_id
-                dst_if_name = dst_sap_id
+                # set intf name to None so the chaining function will choose the first one
+                dst_if_name = None
                 src_name = self.vnf_id2vnf_name[src_id]
                 dst_name = self.vnf_id2vnf_name[dst_id]
                 src_vnfi = self._get_vnf_instance(instance_uuid, src_name)
                 if src_vnfi is not None:
                     sap_net = self.saps[dst_sap_id]['net']
-                    sap_ip = "{0}/{1}".format(str(sap_net[1]), sap_net.prefixlen)
+                    sap_ip = "{0}/{1}".format(str(sap_net[2]), sap_net.prefixlen)
                     self._vnf_reconfigure_network(src_vnfi, src_if_name, sap_ip)
                     setChaining = True
 

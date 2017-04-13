@@ -25,18 +25,18 @@ the Horizon 2020 and 5G-PPP programmes. The authors would like to
 acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
-from mininet.node import Docker
+from mininet.node import Docker, OVSBridge
 from mininet.link import Link
 from emuvim.dcemulator.resourcemodel import NotEnoughResourcesAvailable
 import logging
-import time
-import json
+
 
 LOG = logging.getLogger("dcemulator.node")
 LOG.setLevel(logging.DEBUG)
 
 
 DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
+EXTSAPDPID_BASE = 2000  # start of switch dpid's used for external SAP switches
 
 class EmulatorCompute(Docker):
     """
@@ -134,6 +134,11 @@ class Datacenter(object):
         global DCDPID_BASE
         DCDPID_BASE += 1
         return DCDPID_BASE
+
+    def _get_next_extSAP_dpid(self):
+        global EXTSAPDPID_BASE
+        EXTSAPDPID_BASE += 1
+        return EXTSAPDPID_BASE
 
     def create(self):
         """
@@ -248,23 +253,17 @@ class Datacenter(object):
 
         return True
 
-    def attachExternalSAP(self, sap_name, sap_ip):
-        # create SAP as OVS internal interface
-        sap_intf = self.switch.attachInternalIntf(sap_name, sap_ip)
+    def attachExternalSAP(self, sap_name, sap_net, **params):
+        # create SAP as separate OVS switch with an assigned ip address
+        sap_ip = str(sap_net[1]) + '/' + str(sap_net.prefixlen)
+        sap_switch = self.net.addExtSAP(sap_name, sap_ip, dpid=hex(self._get_next_extSAP_dpid())[2:], **params)
+        sap_switch.start()
 
-        # add this as a link to the DCnetwork graph, so it is available for routing
-        attr_dict2 = {'src_port_id': sap_name, 'src_port_nr': None,
-                      'src_port_name': sap_name,
-                      'dst_port_id': self.switch.ports[sap_intf], 'dst_port_nr': self.switch.ports[sap_intf],
-                      'dst_port_name': sap_intf.name}
-        self.net.DCNetwork_graph.add_edge(sap_name, self.switch.name, attr_dict=attr_dict2)
+        # link SAP to the DC switch
+        self.net.addLink(sap_switch, self.switch, cls=Link)
 
-        attr_dict2 = {'dst_port_id': sap_name, 'dst_port_nr': None,
-                      'dst_port_name': sap_name,
-                      'src_port_id': self.switch.ports[sap_intf], 'src_port_nr': self.switch.ports[sap_intf],
-                      'src_port_name': sap_intf.name}
-        self.net.DCNetwork_graph.add_edge(self.switch.name, sap_name, attr_dict=attr_dict2)
-
+        # allow connection to the external internet through the host
+        self.net.addSAPNAT(sap_switch, str(sap_net))
 
     def listCompute(self):
         """
