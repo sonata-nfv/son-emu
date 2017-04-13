@@ -21,15 +21,25 @@ W() {
 	    sleep 0.5s
 	done
 	EOF
-    timeout -k 3s ${T} ${SUBF} "${1}"
-    local RES=$?
+    local RES=0
+    timeout -k 3s ${T} ${SUBF} "${1}" || RES=$?
     rm -f ${SUBF}
+    if [ ! "$RES" = "0" ]; then
+        sync
+        echo -e "\n\n\n(Debug) Error while waiting for a pattern to appear in screenlog.0\n\n\n"
+        strings screenlog.0
+    fi
     return ${RES}
 }
 
 Cmd() {
     # Send a command to the screen session, aka into the containernet prompt
     screen -S sonemu -X stuff "${1}^M"
+}
+
+Vnf() {
+    # Send a command inside the vnf1 container
+    docker exec -t "mn.${1}" /bin/bash -c "${2}" && sync
 }
 
 
@@ -46,7 +56,8 @@ if ! timeout --version; then
     timeout --version
 fi
 # Initial cleanup
-pkill -f 'SCREEN -L -S sonemu' || true
+pkill --signal KILL -f 'SCREEN -L -S sonemu' || true
+sleep 1s
 screen -wipe || true
 rm -f screenlog.0
 
@@ -65,19 +76,21 @@ son-emu-cli compute start -d datacenter1 -n vnf1 && sleep 1s
 son-emu-cli compute start -d datacenter1 -n vnf2 && sleep 1s
 # List compute nodes
 son-emu-cli compute list && sleep 1s
-# Gather some infos
-Cmd 'sh echo "... starting various checks"'
 sync # avoid text overlapping
-Cmd 'vnf1 ifconfig && echo "... checked vnf1"'
-W "^... checked vnf1"
-Cmd 'vnf2 ifconfig && echo "... checked vnf2"'
-W "^... checked vnf2"
+# Gather some infos
+Cmd 'sh sync'
+Cmd 'sh echo "... starting various checks"'
+sync # avoid text overlappin
+Cmd 'links'
+Vnf vnf1 'ifconfig'
+Vnf vnf2 'ifconfig'
 # Try to ping vnfs
-Cmd 'vnf1 ping -c 2 vnf2 && echo "... checked ping"'
-W "^... checked ping" 20s
+IP_2=$(Vnf vnf2 'ip -f inet -o addr show vnf2-eth0' | cut -d\  -f 7 | cut -d/ -f 1)
+# IP_1=$(Vnf vnf1 'ip -f inet -o addr show vnf1-eth0' | cut -d\  -f 7 | cut -d/ -f 1)
+OUTPUT_A=$(Vnf vnf1 "ping -v -c 2 ${IP_2}")
 Cmd 'quit'
 # Wait for sonemu to end
-W '^*** Done'
+W '*** Done'
 
 echo -e '\n\n******************* Result ******************\n\n'
 strings screenlog.0
@@ -85,7 +98,7 @@ echo -e '\n\n*********************************************\n\n'
 
 
 # Check the ping result
-if grep ', 2 received' screenlog.0; then
+if echo ${OUTPUT_A} | grep ', 2 received'; then
     echo 'No problems detected'
     exit 0
 else
