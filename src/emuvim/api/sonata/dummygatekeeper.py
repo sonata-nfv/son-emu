@@ -74,7 +74,10 @@ DEPLOY_SAP = False
 BIDIRECTIONAL_CHAIN = False
 
 # override the management interfaces in the descriptors with default docker0 interfaces in the containers
-USE_DOCKER_MGMT = True
+USE_DOCKER_MGMT = False
+
+# automatically deploy uploaded packages (no need to execute son-access deploy --latest separately)
+AUTO_DEPLOY = True
 
 def generate_subnets(prefix, base, subnet_size=50, mask=24):
     # Generate a list of ipaddress in subnets
@@ -938,6 +941,12 @@ class Packages(fr.Resource):
             # create a service object and register it
             s = Service(service_uuid, file_hash, upload_path)
             GK.register_service_package(service_uuid, s)
+
+            # automatically deploy the service
+            if AUTO_DEPLOY:
+                # ok, we have a service uuid, lets start the service
+                service_instance_uuid = GK.services.get(service_uuid).start_service()
+
             # generate the JSON result
             return {"service_uuid": service_uuid, "size": size, "sha1": file_hash, "error": None}, 201
         except Exception as ex:
