@@ -77,7 +77,7 @@ BIDIRECTIONAL_CHAIN = False
 USE_DOCKER_MGMT = False
 
 # automatically deploy uploaded packages (no need to execute son-access deploy --latest separately)
-AUTO_DEPLOY = True
+AUTO_DEPLOY = False
 
 def generate_subnets(prefix, base, subnet_size=50, mask=24):
     # Generate a list of ipaddress in subnets
