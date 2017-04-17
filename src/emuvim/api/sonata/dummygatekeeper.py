@@ -79,6 +79,9 @@ USE_DOCKER_MGMT = False
 # automatically deploy uploaded packages (no need to execute son-access deploy --latest separately)
 AUTO_DEPLOY = False
 
+# and also automatically terminate any other running services
+AUTO_DELETE = False
+
 def generate_subnets(prefix, base, subnet_size=50, mask=24):
     # Generate a list of ipaddress in subnets
     r = list()
@@ -938,6 +941,15 @@ class Packages(fr.Resource):
                 with open(upload_path, 'wb') as f:
                     f.write(son_file)
             size = os.path.getsize(upload_path)
+
+            # first stop and delete any other running services
+            if AUTO_DELETE:
+                for service_uuid in GK.services:
+                    for instance_uuid in GK.services[service_uuid].instances:
+                        # valid service and instance UUID, stop service
+                        GK.services.get(service_uuid).stop_service(instance_uuid)
+                        LOG.info("service instance with uuid %r stopped." % instance_uuid)
+
             # create a service object and register it
             s = Service(service_uuid, file_hash, upload_path)
             GK.register_service_package(service_uuid, s)
