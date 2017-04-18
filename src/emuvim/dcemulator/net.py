@@ -229,6 +229,13 @@ class DCNetwork(Containernet):
 
         return link
 
+    def removeLink(self, link=None, node1=None, node2=None):
+        """
+        Remove the link from the Containernet and the networkx graph
+        """
+        Containernet.removeLink(self, link=link, node1=node1, node2=node2)
+        self.DCNetwork_graph.remove_edge(node2.name, node1.name)
+
     def addDocker( self, label, **params ):
         """
         Wrapper for addDocker method to use custom container class.

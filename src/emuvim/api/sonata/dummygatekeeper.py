@@ -47,6 +47,7 @@ import pkg_resources
 from subprocess import Popen
 from random import randint
 import ipaddress
+import copy
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -246,6 +247,12 @@ class Service(object):
 
         for v in vnf_instances:
             self._stop_vnfi(v)
+
+        for sap_name in self.saps_ext:
+            ext_sap = self.saps[sap_name]
+            target_dc = ext_sap.get("dc")
+            target_dc.removeExternalSAP(sap_name, ext_sap['net'])
+            LOG.info("Stopping the SAP instance: %r in DC %r" % (sap_name, target_dc))
 
         if not GK_STANDALONE_MODE:
             # remove placement?
@@ -484,7 +491,6 @@ class Service(object):
         # create list of all SAPs
         # check if we need to deploy management ports
         if USE_DOCKER_MGMT:
-            LOG.debug("nsd: {0}".format(self.nsd))
             SAPs = [p for p in self.nsd["connection_points"] if 'management' not in p.get('type')]
         else:
             SAPs = [p for p in self.nsd["connection_points"]]
@@ -944,8 +950,10 @@ class Packages(fr.Resource):
 
             # first stop and delete any other running services
             if AUTO_DELETE:
-                for service_uuid in GK.services:
-                    for instance_uuid in GK.services[service_uuid].instances:
+                service_list = copy.copy(GK.services)
+                for service_uuid in service_list:
+                    instances_list = copy.copy(GK.services[service_uuid].instances)
+                    for instance_uuid in instances_list:
                         # valid service and instance UUID, stop service
                         GK.services.get(service_uuid).stop_service(instance_uuid)
                         LOG.info("service instance with uuid %r stopped." % instance_uuid)
