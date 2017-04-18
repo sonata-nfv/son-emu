@@ -256,14 +256,19 @@ class Datacenter(object):
     def attachExternalSAP(self, sap_name, sap_net, **params):
         # create SAP as separate OVS switch with an assigned ip address
         sap_ip = str(sap_net[1]) + '/' + str(sap_net.prefixlen)
+        # allow connection to the external internet through the host
+        params = dict(NAT=True, SAPNet=str(sap_net))
         sap_switch = self.net.addExtSAP(sap_name, sap_ip, dpid=hex(self._get_next_extSAP_dpid())[2:], **params)
         sap_switch.start()
 
         # link SAP to the DC switch
         self.net.addLink(sap_switch, self.switch, cls=Link)
 
-        # allow connection to the external internet through the host
-        self.net.addSAPNAT(sap_switch, str(sap_net))
+    def removeExternalSAP(self, sap_name, sap_net):
+        sap_switch = self.net.getNodeByName(sap_name)
+        # link SAP to the DC switch
+        self.net.removeLink(link=None, node1=sap_switch, node2=self.switch)
+        self.net.removeExtSAP(sap_name, str(sap_net))
 
     def listCompute(self):
         """
