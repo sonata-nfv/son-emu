@@ -98,6 +98,8 @@ ELAN_SUBNETS = generate_subnets('10.20', 0, subnet_size=50, mask=24)
 # 10.30.xxx.0/30
 ELINE_SUBNETS = generate_subnets('10.30', 0, subnet_size=50, mask=30)
 
+# path to the VNFD for the SAP VNF that is deployed as internal SAP point
+SAP_VNFD=None
 
 class Gatekeeper(object):
 
@@ -514,7 +516,10 @@ class Service(object):
             # Each Service Access Point (connection_point) in the nsd is getting its own container (default)
             elif sap["type"] == "internal" or sap["type"] == "management":
                 # add SAP to self.vnfds
-                sapfile = pkg_resources.resource_filename(__name__, "sap_vnfd.yml")
+                if SAP_VNFD is None:
+                    sapfile = pkg_resources.resource_filename(__name__, "sap_vnfd.yml")
+                else:
+                    sapfile = SAP_VNFD
                 sap_vnfd = load_yaml(sapfile)
                 sap_vnfd["connection_points"][0]["id"] = sap_interface
                 sap_vnfd["name"] = sap_docker_name
