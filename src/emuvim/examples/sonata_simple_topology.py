@@ -40,13 +40,14 @@ from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.sonata import SonataDummyGatekeeperEndpoint
 from mininet.node import RemoteController
+import os
 
 logging.basicConfig(level=logging.INFO)
 
 
 def create_topology1():
     # create topology
-    net = DCNetwork(controller=RemoteController, monitor=True, enable_learning=True)
+    net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=True)
     dc1 = net.addDatacenter("dc1")
 
 
@@ -57,8 +58,16 @@ def create_topology1():
     # run API endpoint server (in another thread, don't block)
     rapi1.start()
 
+
+    # specify a vnfd file to be deployed as internal SAP:
+    sap_vnfd = 'vepc_sap_vnfd.yml'
+    dir_path = os.path.dirname(__file__)
+    sap_vnfd_path = os.path.join(dir_path, sap_vnfd)
+    # sap_vnfd_path = None
     # add the SONATA dummy gatekeeper to each DC
-    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=True, auto_deploy=True, docker_management=True, auto_delete=True)
+    sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 5000, deploy_sap=True, auto_deploy=True,
+                                          docker_management=True, auto_delete=True,
+                                          sap_vnfd_path=sap_vnfd_path)
     sdkg1.connectDatacenter(dc1)
     # run the dummy gatekeeper (in another thread, don't block)
     sdkg1.start()
