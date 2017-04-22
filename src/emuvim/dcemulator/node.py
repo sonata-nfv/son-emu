@@ -223,6 +223,7 @@ class Datacenter(object):
             self.net.addLink(d, self.switch, params1=nw, cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
         self.containers[name] = d
+
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
@@ -281,12 +282,14 @@ class Datacenter(object):
         """
         Return a dict with status information about this DC.
         """
+        container_list = [name for name in self.containers]
         return {
             "label": self.label,
             "internalname": self.name,
             "switch": self.switch.name,
             "n_running_containers": len(self.containers),
-            "metadata": self.metadata
+            "metadata": self.metadata,
+            "vnf_list" : container_list
         }
 
     def assignResourceModel(self, rm):
