@@ -40,7 +40,7 @@ function update_table_datacenter(data)
     // clear table
     $("#table_datacenter").empty();
     // header
-    $("#table_datacenter").append('<tr class="tbl-head"><td>Label</td><td>Int. Name</td><td>Switch</td><td>Num. Containers</td><td>Metadata Items</td></tr>');
+    $("#table_datacenter").append('<tr class="tbl-head"><td>Label</td><td>Int. Name</td><td>Switch</td><td>Num. Containers</td><td>VNFs</td></tr>');
     // fill table
     $.each(data, function(i, item) {
         var row_str = "";
@@ -49,7 +49,8 @@ function update_table_datacenter(data)
         row_str += '<td>' + item.internalname + '</td>';
         row_str += '<td>' + item.switch + '</td>';
         row_str += '<td><span class="badge">' + item.n_running_containers + '</span></td>';
-        row_str += '<td><span class="badge">' + Object.keys(item.metadata).length + '</span></td>';
+        //row_str += '<td><span class="badge">' + Object.keys(item.metadata).length + '</span></td>';
+        row_str += '<td>' + item.vnf_list + '</span></td>';
         row_str += '<tr>';
 	$("#table_datacenter").append(row_str);
     });
@@ -104,6 +105,14 @@ function fetch_container()
     $.getJSON(request_url,  update_table_container);
 }
 
+
+function fetch_d3graph()
+{
+    // do HTTP request and trigger gui update on success
+    var request_url = API_HOST + "/restapi/network/d3jsgraph";
+    console.debug("fetching from: " + request_url);
+    //$.getJSON(request_url,  update_graph);
+}
 
 function fetch_loop()
 {
@@ -160,6 +169,9 @@ $(document).ready(function(){
     // add listeners
     $("#btn_connect").click(connect);
     $("#btn_disconnect").click(disconnect);
+
+    fetch_datacenter();
+    fetch_container();
 
     // additional refresh on window focus
     $(window).focus(function () {
