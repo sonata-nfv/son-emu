@@ -504,7 +504,9 @@ class DCNetworkMonitor():
                "--publish={0}:8080".format(port),
                "--name=cadvisor",
                "--label",'com.containernet=""',
-               "google/cadvisor:latest"
+               "google/cadvisor:latest",
+               "--storage_duration=1m0s",
+               "--allow_dynamic_housekeeping=true",
                ]
         logging.info('Start cAdvisor container {0}'.format(cmd))
         return Popen(cmd)
