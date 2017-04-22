@@ -970,6 +970,7 @@ class Packages(fr.Resource):
             # automatically deploy the service
             if AUTO_DEPLOY:
                 # ok, we have a service uuid, lets start the service
+                reset_subnets()
                 service_instance_uuid = GK.services.get(service_uuid).start_service()
 
             # generate the JSON result
@@ -1130,6 +1131,18 @@ def parse_interface(interface_name):
         vnf_sap_docker_name = interface_name
 
     return vnf_id, vnf_interface, vnf_sap_docker_name
+
+def reset_subnets():
+    # private subnet definitions for the generated interfaces
+    # 10.10.xxx.0/24
+    global SAP_SUBNETS
+    SAP_SUBNETS = generate_subnets('10.10', 0, subnet_size=50, mask=30)
+    # 10.20.xxx.0/30
+    global ELAN_SUBNETS
+    ELAN_SUBNETS = generate_subnets('10.20', 0, subnet_size=50, mask=24)
+    # 10.30.xxx.0/30
+    global ELINE_SUBNETS
+    ELINE_SUBNETS = generate_subnets('10.30', 0, subnet_size=50, mask=30)
 
 if __name__ == '__main__':
     """
