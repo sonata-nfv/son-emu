@@ -162,6 +162,7 @@ function disconnect()
 $(document).ready(function(){
     console.info("document ready");
     // setup global connection error handling
+    /*
     $.ajaxSetup({
         "error": errorAjaxConnection
     });
@@ -169,9 +170,10 @@ $(document).ready(function(){
     // add listeners
     $("#btn_connect").click(connect);
     $("#btn_disconnect").click(disconnect);
+    */
+    setTimeout(fetch_datacenter, 2000);//fetch_datacenter();
+    setTimeout(fetch_container, 4000);//fetch_container();
 
-    fetch_datacenter();
-    fetch_container();
 
     // additional refresh on window focus
     $(window).focus(function () {
