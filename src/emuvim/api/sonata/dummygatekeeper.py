@@ -486,8 +486,8 @@ class Service(object):
                         self.package_content_path,
                         make_relative_path(pc.get("name")))
                     vnfd = load_yaml(vnfd_path)
-                    self.vnfds[vnfd.get("name")] = vnfd
-                    LOG.debug("Loaded VNFD: %r" % vnfd.get("name"))
+                    self.vnfds[vnfd.get("id")] = vnfd
+                    LOG.debug("Loaded VNFD: %r" % vnfd.get("id"))
 
     def _load_saps(self):
         # create list of all SAPs
