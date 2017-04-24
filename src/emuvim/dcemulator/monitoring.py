@@ -504,9 +504,10 @@ class DCNetworkMonitor():
                "--publish={0}:8080".format(port),
                "--name=cadvisor",
                "--label",'com.containernet=""',
+               "--detach=true",
                "google/cadvisor:latest",
-               "--storage_duration=1m0s",
-               "--allow_dynamic_housekeeping=true",
+               #"--storage_duration=1m0s",
+               #"--allow_dynamic_housekeeping=true",
                #"--housekeeping_interval=1s",
                ]
         logging.info('Start cAdvisor container {0}'.format(cmd))
