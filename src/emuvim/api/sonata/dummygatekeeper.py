@@ -273,6 +273,8 @@ class Service(object):
             res_req = u.get("resource_requirements")
             cpu_list = res_req.get("cpu").get("cores")
             if not cpu_list or len(cpu_list)==0:
+                cpu_list = res_req.get("cpu").get("vcpus")
+            if not cpu_list or len(cpu_list)==0:
                 cpu_list="1"
             cpu_bw = res_req.get("cpu").get("cpu_bw")
             if not cpu_bw:
