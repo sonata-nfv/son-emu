@@ -42,7 +42,7 @@ RUN apt-get install -y curl && \
 RUN curl -fsSL https://get.docker.com/gpg | apt-key add -
 RUN curl -fsSL https://get.docker.com/ | sh
 
-RUN pip install -U urllib3 setuptools pyparsing docker
+RUN pip install -U urllib3 setuptools pyparsing docker python-iptables
 WORKDIR /
 RUN git clone https://github.com/containernet/containernet.git
 RUN containernet/util/install.sh
