@@ -56,7 +56,8 @@ setup(name='emuvim',
           'docker==2.0.2',
           'requests',
           'prometheus_client',
-          'urllib3'
+          'urllib3',
+          'ipaddress'
       ],
       zip_safe=False,
       entry_points={
