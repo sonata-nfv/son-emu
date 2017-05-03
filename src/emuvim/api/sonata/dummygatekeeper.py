@@ -675,7 +675,7 @@ class Service(object):
                     vnf_id = vnf_sap_id
 
                 LOG.debug(
-                    "Setting up E-LAN interface. %s(%s:%s) -> %s" % (
+                    "Setting up E-LAN interface. (%s:%s) -> %s" % (
                         vnf_id, intf_name, ip_address))
 
                 if vnf_id in self.vnfds:
