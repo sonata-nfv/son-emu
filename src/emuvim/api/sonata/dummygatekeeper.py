@@ -149,7 +149,6 @@ class Service(object):
         self.local_docker_files = dict()
         self.remote_docker_image_urls = dict()
         self.instances = dict()
-        #self.vnf_name2docker_name = dict()
         # dict to find the vnf_name for any vnf id
         self.vnf_id2vnf_name = dict()
 
@@ -196,9 +195,8 @@ class Service(object):
             #self._calculate_placement(FirstDcPlacement)
             self._calculate_placement(RoundRobinDcPlacementWithSAPs)
         # 3. start all vnfds that we have in the service (except SAPs)
-        for vnf_id in self.vnf_id2vnf_name:
-            vnf_name = self.vnf_id2vnf_name[vnf_id]
-            vnfd = self.vnfds[vnf_name]
+        for vnf_id in self.vnfds:
+            vnfd = self.vnfds[vnf_id]
             vnfi = None
             if not GK_STANDALONE_MODE:
                 vnfi = self._start_vnfd(vnfd, vnf_id)
@@ -265,19 +263,18 @@ class Service(object):
         """
         Start a single VNFD of this service
         :param vnfd: vnfd descriptor dict
-        :param vnf-id: vnfd descriptor dict
+        :param vnf_id: unique id of this vnf in the nsd
         :return:
         """
-        # the vnf_name refers to the container to be deployed
+        # the vnf_name refers to the container image to be deployed
         vnf_name = vnfd.get("name")
-
 
         # iterate over all deployment units within each VNFDs
         for u in vnfd.get("virtual_deployment_units"):
             # 1. get the name of the docker image to start and the assigned DC
-            if vnf_name not in self.remote_docker_image_urls:
-                raise Exception("No image name for %r found. Abort." % vnf_name)
-            docker_name = self.remote_docker_image_urls.get(vnf_name)
+            if vnf_id not in self.remote_docker_image_urls:
+                raise Exception("No image name for %r found. Abort." % vnf_id)
+            docker_name = self.remote_docker_image_urls.get(vnf_id)
             target_dc = vnfd.get("dc")
             # 2. perform some checks to ensure we can start the container
             assert(docker_name is not None)
@@ -309,22 +306,10 @@ class Service(object):
             mem_lim = int(mem_limit)
             cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(cpu_bw))
 
-
-            # vnf_name2id = defaultdict(lambda: "NotExistingNode",
-            #                           reduce(lambda x, y: dict(x, **y),
-            #                                  map(lambda d: {d["vnf_name"]: d["vnf_id"]},
-            #                                      self.nsd["network_functions"])))
-
-            # vnf_id2name = defaultdict(lambda: "NotExistingNode",
-            #                           reduce(lambda x, y: dict(x, **y),
-            #                                  map(lambda d: {d["vnf_id"]: d["vnf_name"]},
-            #                                      self.nsd["network_functions"])))
-
             # check if we need to deploy the management ports (defined as type:management both on in the vnfd and nsd)
             intfs = vnfd.get("connection_points", [])
             mgmt_intf_names = []
             if USE_DOCKER_MGMT:
-                #vnf_id = vnf_name2id[vnf_name]
                 mgmt_intfs = [vnf_id + ':' + intf['id'] for intf in intfs if intf.get('type') == 'management']
                 # check if any of these management interfaces are used in a management-type network in the nsd
                 for nsd_intf_name in mgmt_intfs:
@@ -340,8 +325,8 @@ class Service(object):
             # 4. generate the volume paths for the docker container
             volumes=list()
             # a volume to extract log files
-            docker_log_path = "/tmp/results/%s/%s"%(self.uuid,vnf_name)
-            LOG.debug("LOG path for vnf %s is %s."%(vnf_name,docker_log_path))
+            docker_log_path = "/tmp/results/%s/%s"%(self.uuid,vnf_id)
+            LOG.debug("LOG path for vnf %s is %s."%(vnf_id,docker_log_path))
             if not os.path.exists(docker_log_path):
                 LOG.debug("Creating folder %s"%docker_log_path)
                 os.makedirs(docker_log_path)
@@ -354,10 +339,6 @@ class Service(object):
             # TODO: get all vnf id's from the nsd for this vnfd and use those as dockername
             # use the vnf_id in the nsd as docker name
             # so deployed containers can be easily mapped back to the nsd
-
-            #self.vnf_name2docker_name[vnf_name] = vnf_id
-
-            #LOG.info("Starting %r as %r in DC %r" % (vnf_name, self.vnf_name2docker_name[vnf_name], vnfd.get("dc")))
             LOG.info("Starting %r as %r in DC %r" % (vnf_name, vnf_id, vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_id, intfs))
             vnfi = target_dc.startCompute(
@@ -400,8 +381,6 @@ class Service(object):
         :return:
         """
         dn = vnf_id
-        #if vnf_id in self.vnf_name2docker_name:
-        #    dn = self.vnf_name2docker_name[name]
         for vnfi in self.instances[instance_uuid]["vnf_instances"]:
             if vnfi.name == dn:
                 return vnfi
@@ -492,6 +471,9 @@ class Service(object):
         Load all VNFD YAML files referenced in MANIFEST.MF and keep them in dict.
         :return:
         """
+
+        # first make a list of all the vnfds in the package
+        vnfd_set = dict()
         if "package_content" in self.manifest:
             for pc in self.manifest.get("package_content"):
                 if pc.get("content-type") == "application/sonata.function_descriptor":
@@ -499,8 +481,12 @@ class Service(object):
                         self.package_content_path,
                         make_relative_path(pc.get("name")))
                     vnfd = load_yaml(vnfd_path)
-                    self.vnfds[vnfd.get("name")] = vnfd
-                    LOG.debug("Loaded VNFD: %r" % vnfd.get("id"))
+                    vnfd_set[vnfd.get("name")] = vnfd
+            # then link each vnf_id in the nsd to its vnfd
+            for  vnf_id in self.vnf_id2vnf_name:
+                vnf_name = self.vnf_id2vnf_name[vnf_id]
+                self.vnfds[vnf_id] = vnfd_set[vnf_name]
+                LOG.debug("Loaded VNFD: {0} id: {1}".format(vnf_name, vnf_id))
 
     def _load_saps(self):
         # create list of all SAPs
@@ -522,7 +508,7 @@ class Service(object):
                 sap_net = SAP_SUBNETS.pop(0)
                 self.saps[sap_docker_name] = {"name": sap_docker_name , "type": "external", "net": sap_net}
                 # add SAP vnf to list in the NSD so it is deployed later on
-                # each SAP get a unique VNFD and vnf_id in the NSD and custom type (only defined in the dummygatekeeper)
+                # each SAP gets a unique VNFD and vnf_id in the NSD and custom type (only defined in the dummygatekeeper)
                 self.nsd["network_functions"].append(
                     {"vnf_id": sap_docker_name, "vnf_name": sap_docker_name, "vnf_type": "sap_ext"})
 
@@ -558,7 +544,7 @@ class Service(object):
         if sap["type"] == "internal":
             vnfi = None
             if not GK_STANDALONE_MODE:
-                vnfi = self._start_vnfd(sap)
+                vnfi = self._start_vnfd(sap, sap['name'])
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
 
         elif sap["type"] == "external":
@@ -595,8 +581,6 @@ class Service(object):
                 src_id = src_sap_id
                 # set intf name to None so the chaining function will choose the first one
                 src_if_name = None
-                #src_name = self.vnf_id2vnf_name[src_id]
-                #dst_name = self.vnf_id2vnf_name[dst_id]
                 dst_vnfi = self._get_vnf_instance(instance_uuid, dst_id)
                 if dst_vnfi is not None:
                     # choose first ip address in sap subnet
@@ -609,8 +593,6 @@ class Service(object):
                 dst_id = dst_sap_id
                 # set intf name to None so the chaining function will choose the first one
                 dst_if_name = None
-                #src_name = self.vnf_id2vnf_name[src_id]
-                #dst_name = self.vnf_id2vnf_name[dst_id]
                 src_vnfi = self._get_vnf_instance(instance_uuid, src_id)
                 if src_vnfi is not None:
                     sap_net = self.saps[dst_sap_id]['net']
@@ -625,8 +607,6 @@ class Service(object):
                     src_id = src_sap_id
                 if dst_sap_id in self.saps_int:
                     dst_id = dst_sap_id
-                #src_name = self.vnf_id2vnf_name[src_id]
-                #dst_name = self.vnf_id2vnf_name[dst_id]
                 # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-Link
                 src_vnfi = self._get_vnf_instance(instance_uuid, src_id)
                 dst_vnfi = self._get_vnf_instance(instance_uuid, dst_id)
@@ -692,7 +672,6 @@ class Service(object):
                     src_docker_name = vnf_sap_id
                     vnf_id = vnf_sap_id
 
-                #vnf_name = self.vnf_id2vnf_name[vnf_id]
                 LOG.debug(
                     "Setting up E-LAN interface. %s(%s:%s) -> %s" % (
                         vnf_id, intf_name, ip_address))
@@ -833,7 +812,7 @@ class Service(object):
         return int(cpu_period), int(cpu_quota)
 
     def check_ext_saps(self, intf_list):
-        # check if the list of interfacs contains an externl SAP
+        # check if the list of interfacs contains an external SAP
         saps_ext = [self.saps[sap]['name'] for sap in self.saps if self.saps[sap]["type"] == "external"]
         for intf_name in intf_list:
             vnf_id, vnf_interface, vnf_sap_docker_name = parse_interface(intf_name)
@@ -856,7 +835,7 @@ class FirstDcPlacement(object):
     Placement: Always use one and the same data center from the GK.dcs dict.
     """
     def place(self, nsd, vnfds, saps, dcs):
-        for name, vnfd in vnfds.iteritems():
+        for id, vnfd in vnfds.iteritems():
             vnfd["dc"] = list(dcs.itervalues())[0]
 
 
@@ -867,7 +846,7 @@ class RoundRobinDcPlacement(object):
     def place(self, nsd, vnfds, saps, dcs):
         c = 0
         dcs_list = list(dcs.itervalues())
-        for name, vnfd in vnfds.iteritems():
+        for id, vnfd in vnfds.iteritems():
             vnfd["dc"] = dcs_list[c % len(dcs_list)]
             c += 1  # inc. c to use next DC
 
@@ -881,7 +860,7 @@ class RoundRobinDcPlacementWithSAPs(object):
         # place vnfs
         c = 0
         dcs_list = list(dcs.itervalues())
-        for name, vnfd in vnfds.iteritems():
+        for id, vnfd in vnfds.iteritems():
             vnfd["dc"] = dcs_list[c % len(dcs_list)]
             c += 1  # inc. c to use next DC
 
@@ -890,11 +869,6 @@ class RoundRobinDcPlacementWithSAPs(object):
         eline_fwd_links = [l for l in vlinks if (l["connectivity_type"] == "E-Line")]
         elan_fwd_links = [l for l in vlinks if  (l["connectivity_type"] == "E-LAN")]
 
-        # vnf_id2vnf_name = defaultdict(lambda: "NotExistingNode",
-        #                               reduce(lambda x, y: dict(x, **y),
-        #                                      map(lambda d: {d["vnf_id"]: d["vnf_name"]},
-        #                                          nsd["network_functions"])))
-
         # SAPs on E-Line links are placed on the same DC as the VNF on the E-Line
         for link in eline_fwd_links:
             src_id, src_if_name, src_sap_id = parse_interface(link["connection_points_reference"][0])
@@ -902,13 +876,11 @@ class RoundRobinDcPlacementWithSAPs(object):
 
             # check if there is a SAP in the link
             if src_sap_id in saps:
-                #dst_vnf_name = vnf_id2vnf_name[dst_id]
                 # get dc where connected vnf is mapped to
                 dc = vnfds[dst_id]['dc']
                 saps[src_sap_id]['dc'] = dc
 
             if dst_sap_id in saps:
-                #src_vnf_name = vnf_id2vnf_name[src_id]
                 # get dc where connected vnf is mapped to
                 dc = vnfds[src_id]['dc']
                 saps[dst_sap_id]['dc'] = dc
