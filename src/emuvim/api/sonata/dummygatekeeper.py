@@ -248,7 +248,7 @@ class Service(object):
         for sap_name in self.saps_ext:
             ext_sap = self.saps[sap_name]
             target_dc = ext_sap.get("dc")
-            target_dc.removeExternalSAP(sap_name, ext_sap['net'])
+            target_dc.removeExternalSAP(sap_name)
             LOG.info("Stopping the SAP instance: %r in DC %r" % (sap_name, target_dc))
 
         if not GK_STANDALONE_MODE:
