@@ -259,7 +259,7 @@ class Service(object):
         # last step: remove the instance from the list of all instances
         del self.instances[instance_uuid]
 
-    def _start_vnfd(self, vnfd, vnf_id):
+    def _start_vnfd(self, vnfd, vnf_id, **kwargs):
         """
         Start a single VNFD of this service
         :param vnfd: vnfd descriptor dict
@@ -352,7 +352,8 @@ class Service(object):
                     cpu_period=cpu_period,
                     cpuset=cpu_list,
                     mem_limit=mem_lim,
-                    volumes=volumes)
+                    volumes=volumes,
+                    type=kwargs.get('type','docker'))
 
             # rename the docker0 interfaces (eth0) to the management port name defined in the VNFD
             if USE_DOCKER_MGMT:
@@ -546,7 +547,7 @@ class Service(object):
         if sap["type"] == "internal":
             vnfi = None
             if not GK_STANDALONE_MODE:
-                vnfi = self._start_vnfd(sap, sap['name'])
+                vnfi = self._start_vnfd(sap, sap['name'], type='sap_int')
             self.instances[instance_uuid]["vnf_instances"].append(vnfi)
 
         elif sap["type"] == "external":

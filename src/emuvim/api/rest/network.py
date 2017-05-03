@@ -36,6 +36,7 @@ import logging
 from flask_restful import Resource
 from flask import request
 import json
+import networkx
 
 logging.basicConfig(level=logging.INFO)
 
@@ -132,11 +133,12 @@ class DrawD3jsgraph(Resource):
         nodes2 = list()
         links = list()
         # add all DCs
-        #for dc in net.dcs:
+        node_attr = networkx.get_node_attributes(net.DCNetwork_graph, 'type')
         for node_name in net.DCNetwork_graph.nodes():
             nodes2.append(node_name)
             node_index = nodes2.index(node_name)
-            node_dict = {"name":node_name,"group":node_index}
+            type = node_attr[node_name]
+            node_dict = {"name":node_name,"group":type}
             nodes.append(node_dict)
 
         # add links between other DCs
