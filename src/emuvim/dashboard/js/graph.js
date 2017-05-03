@@ -1,6 +1,6 @@
 var width = 960,
     height = 500,
-    color = d3.scale.category20c();
+    color = d3.scale.category10();
 
 var svg = d3.select("#table_graph").append("svg")
     .attr("width", width)
@@ -40,7 +40,7 @@ d3.json("http://127.0.0.1:5001/restapi/network/d3jsgraph", function(error, json)
   //    .attr("height", 16);
   node.append("circle")
     .attr("r", 10)
-    .style("fill", function(d) { return color(d.name); });
+    .style("fill", function(d) { return color(d.group); });
 
   node.append("text")
       .attr("dx", 12)
