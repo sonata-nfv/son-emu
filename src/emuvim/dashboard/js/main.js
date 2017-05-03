@@ -171,8 +171,8 @@ $(document).ready(function(){
     $("#btn_connect").click(connect);
     $("#btn_disconnect").click(disconnect);
     */
-    setTimeout(fetch_datacenter, 2000);//fetch_datacenter();
-    setTimeout(fetch_container, 4000);//fetch_container();
+    setTimeout(fetch_datacenter, 1000);//fetch_datacenter();
+    setTimeout(fetch_container, 2000);//fetch_container();
 
 
     // additional refresh on window focus
