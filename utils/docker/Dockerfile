@@ -25,17 +25,16 @@
 # partner consortium (www.sonata-nfv.eu).
 
 FROM ubuntu:trusty
-MAINTAINER steven.vanrossem@intec.ugent.be
 
 ENV SON_EMU_IN_DOCKER 1
 
 RUN apt-get clean
 RUN apt-get update \
-    && apt-get install -y  git aptitude
+    && apt-get install -y  git aptitude build-essential python-setuptools python-dev software-properties-common
 
 
 # install containernet
-RUN apt-get install -y curl && \
+RUN apt-get install -y curl iptables && \
     curl https://bootstrap.pypa.io/get-pip.py | python2
 
 # install docker

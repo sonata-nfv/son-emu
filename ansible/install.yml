@@ -69,5 +69,8 @@
    - name: install iptc
      pip: name=python-iptables state=latest
 
+   - name: install ipaddress
+     pip: name=ipaddress state=latest
+
 
 
