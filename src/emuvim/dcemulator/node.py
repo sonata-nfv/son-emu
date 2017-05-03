@@ -67,7 +67,7 @@ class EmulatorCompute(Docker):
             vnf_interface = str(i)
             dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
             # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
-            intf_dict = {'intf_name': str(i), 'ip': i.IP(), 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            intf_dict = {'intf_name': str(i), 'ip': i.IP(), 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
             networkStatusList.append(intf_dict)
 
         return networkStatusList
