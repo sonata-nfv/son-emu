@@ -109,12 +109,12 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
             dst_ip = [intf['ip'] for intf in network_list if intf['intf_name'] == intf_dst][0]
             dst_mask = [intf['netmask'] for intf in network_list if intf['intf_name'] == intf_dst][0]
 
-            print "src = {0}:{1} ip={2}/{3} ".format(vnf_src, intf_src, src_ip, src_mask)
-            print "dst = {0}:{1} ip={2}/{3} ".format(vnf_dst, intf_dst, dst_ip, dst_mask)
+            print "src = {0}:{1} ip={2} ".format(vnf_src, intf_src, src_ip, src_mask)
+            print "dst = {0}:{1} ip={2} ".format(vnf_dst, intf_dst, dst_ip, dst_mask)
 
             # check if the E-Line IP's are in the same subnet
-            ret = ip_network(u'{0}/{1}'.format(src_ip, src_mask), strict=False)\
-                .compare_networks(ip_network(u'{0}/{1}'.format(dst_ip, dst_mask),strict=False))
+            ret = ip_network(u'{0}'.format(src_ip, src_mask), strict=False)\
+                .compare_networks(ip_network(u'{0}'.format(dst_ip, dst_mask),strict=False))
             self.assertTrue(ret == 0)
 
 
