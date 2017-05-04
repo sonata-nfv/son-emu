@@ -138,7 +138,8 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
             test_ip_list = list(ELAN_list)
             test_ip_list.remove(ip_address)
             for ip in test_ip_list:
-                p = self.net.ping([vnf],manualdestip=ip)
+                # only take ip address, without netmask
+                p = self.net.ping([vnf],manualdestip=ip.split('/')[0])
                 print p
                 self.assertTrue(p <= 0.0)
 
