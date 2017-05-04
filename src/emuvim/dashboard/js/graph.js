@@ -12,7 +12,6 @@ var force = d3.layout.force()
     .charge(-100)
     .size([width, height]);
 
-//d3.json("js/graph.json", function(error, json) {
 d3.json("http://127.0.0.1:5001/restapi/network/d3jsgraph", function(error, json) {
   if (error) throw error;
 
@@ -31,14 +30,7 @@ d3.json("http://127.0.0.1:5001/restapi/network/d3jsgraph", function(error, json)
       .enter().append("g")
       .attr("class", "node")
       .call(force.drag)
-      .on("click", click);
 
-  //node.append("image")
-  //    .attr("xlink:href", "https://github.com/favicon.ico")
-  //    .attr("x", -8)
-  //    .attr("y", -8)
-  //    .attr("width", 16)
-  //    .attr("height", 16);
   node.append("circle")
     .attr("r", 10)
     .style("fill", function(d) { return color(d.group); });
@@ -57,17 +49,5 @@ d3.json("http://127.0.0.1:5001/restapi/network/d3jsgraph", function(error, json)
     node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
 
-  // action to take on mouse click
-  function click() {
-      d3.select(this).select("text").transition()
-          .duration(750)
-          .attr("x", 22)
-          .style("stroke", "lightsteelblue")
-          .style("stroke-width", ".5px")
-          .style("font", "20px sans-serif");
-      d3.select(this).select("circle").transition()
-          .duration(750)
-          .attr("r", 16);
-  }
 
 });
