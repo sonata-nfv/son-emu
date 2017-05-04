@@ -67,7 +67,7 @@ class EmulatorCompute(Docker):
             vnf_interface = str(i)
             dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
             # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
-            intf_dict = {'intf_name': str(i), 'ip': i.IP(), 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            intf_dict = {'intf_name': str(i), 'ip': "{0}/{1}".format(i.IP(), i.prefixLen), 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
             networkStatusList.append(intf_dict)
 
         return networkStatusList
@@ -98,6 +98,62 @@ class EmulatorCompute(Docker):
         return status
 
 
+class EmulatorExtSAP(object):
+    """
+    Emulator specific class that defines an external service access point (SAP) for the service.
+    Inherits from Containernet's OVSBridge class.
+    Represents a single OVS switch connected to a (logical)
+    data center.
+    We can add emulator specific helper functions to it.
+    """
+
+    def __init__(self, sap_name, sap_net, datacenter, **kwargs):
+
+        self.datacenter = datacenter  # pointer to current DC
+        self.net = self.datacenter.net
+        self.name = sap_name
+
+        LOG.debug("Starting ext SAP instance %r in data center %r" % (sap_name, str(self.datacenter)))
+
+        # create SAP as separate OVS switch with an assigned ip address
+        self.ip = str(sap_net[1]) + '/' + str(sap_net.prefixlen)
+        self.subnet = sap_net
+        # allow connection to the external internet through the host
+        params = dict(NAT=True)
+        self.switch = self.net.addExtSAP(sap_name, self.ip, dpid=hex(self._get_next_extSAP_dpid())[2:], **params)
+        self.switch.start()
+
+    def _get_next_extSAP_dpid(self):
+        global EXTSAPDPID_BASE
+        EXTSAPDPID_BASE += 1
+        return EXTSAPDPID_BASE
+
+    def getNetworkStatus(self):
+        """
+        Helper method to receive information about the virtual networks
+        this compute instance is connected to.
+        """
+        # get all links and find dc switch interface
+        networkStatusList = []
+        for i in self.switch.intfList():
+            vnf_name = self.name
+            vnf_interface = str(i)
+            if vnf_interface == 'lo':
+                continue
+            dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
+            # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
+            intf_dict = {'intf_name': str(i), 'ip': self.ip, 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            networkStatusList.append(intf_dict)
+
+        return networkStatusList
+
+    def getStatus(self):
+        return {
+            "name": self.switch.name,
+            "datacenter": self.datacenter.name,
+            "network": self.getNetworkStatus()
+        }
+
 class Datacenter(object):
     """
     Represents a logical data center to which compute resources
@@ -124,6 +180,8 @@ class Datacenter(object):
         self.switch = None
         # keep track of running containers
         self.containers = {}
+        # keep track of attached external access points
+        self.extSAPs = {}
         # pointer to assigned resource model
         self._resource_model = None
 
@@ -134,11 +192,6 @@ class Datacenter(object):
         global DCDPID_BASE
         DCDPID_BASE += 1
         return DCDPID_BASE
-
-    def _get_next_extSAP_dpid(self):
-        global EXTSAPDPID_BASE
-        EXTSAPDPID_BASE += 1
-        return EXTSAPDPID_BASE
 
     def create(self):
         """
@@ -255,21 +308,18 @@ class Datacenter(object):
         return True
 
     def attachExternalSAP(self, sap_name, sap_net, **params):
-        # create SAP as separate OVS switch with an assigned ip address
-        sap_ip = str(sap_net[1]) + '/' + str(sap_net.prefixlen)
-        # allow connection to the external internet through the host
-        params = dict(NAT=True)
-        sap_switch = self.net.addExtSAP(sap_name, sap_ip, dpid=hex(self._get_next_extSAP_dpid())[2:], **params)
-        sap_switch.start()
-
+        extSAP = EmulatorExtSAP(sap_name, sap_net, self, **params)
         # link SAP to the DC switch
-        self.net.addLink(sap_switch, self.switch, cls=Link)
+        self.net.addLink(extSAP.switch, self.switch, cls=Link)
+        self.extSAPs[sap_name] = extSAP
 
     def removeExternalSAP(self, sap_name):
-        sap_switch = self.net.getNodeByName(sap_name)
-        # link SAP to the DC switch
+        sap_switch = self.extSAPs[sap_name].switch
+        #sap_switch = self.net.getNodeByName(sap_name)
+        # remove link of SAP to the DC switch
         self.net.removeLink(link=None, node1=sap_switch, node2=self.switch)
         self.net.removeExtSAP(sap_name)
+        del self.extSAPs[sap_name]
 
     def listCompute(self):
         """
@@ -278,18 +328,27 @@ class Datacenter(object):
         """
         return list(self.containers.itervalues())
 
+    def listExtSAPs(self):
+        """
+        Return a list of all external SAPs assigned to this
+        data center.
+        """
+        return list(self.extSAPs.itervalues())
+
     def getStatus(self):
         """
         Return a dict with status information about this DC.
         """
         container_list = [name for name in self.containers]
+        ext_saplist = [sap_name for sap_name in self.extSAPs]
         return {
             "label": self.label,
             "internalname": self.name,
             "switch": self.switch.name,
             "n_running_containers": len(self.containers),
             "metadata": self.metadata,
-            "vnf_list" : container_list
+            "vnf_list" : container_list,
+            "ext SAP list" : ext_saplist
         }
 
     def assignResourceModel(self, rm):

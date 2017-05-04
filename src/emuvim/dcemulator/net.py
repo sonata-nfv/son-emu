@@ -41,7 +41,7 @@ from mininet.link import TCLink
 from mininet.clean import cleanup
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
-from emuvim.dcemulator.node import Datacenter, EmulatorCompute
+from emuvim.dcemulator.node import Datacenter, EmulatorCompute, EmulatorExtSAP
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
 LOG = logging.getLogger("dcemulator.net")
@@ -257,7 +257,6 @@ class DCNetwork(Containernet):
         # make sure that 'type' is set
         params['type'] = params.get('type','sap_ext')
         self.DCNetwork_graph.add_node(sap_name, type=params['type'])
-        LOG.info('add ext sap: {0}'.format(sap_name))
         return Containernet.addExtSAP(self, sap_name, sap_ip, **params)
 
     def removeExtSAP(self, sap_name, **params):
@@ -921,7 +920,14 @@ class DCNetwork(Containernet):
                 dict.update({match[0]:m2})
         return dict
 
-    def find_connected_dc_interface(self, vnf_src_name, vnf_src_interface):
+    def find_connected_dc_interface(self, vnf_src_name, vnf_src_interface=None):
+
+        if vnf_src_interface is None:
+            # take first interface by default
+            connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
+            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
+            vnf_src_interface = link_dict[0]['src_port_id']
+
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:

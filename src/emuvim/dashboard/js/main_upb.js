@@ -66,41 +66,27 @@ function update_table_container(data)
     // clear table
     $("#table_container").empty();
     // header
-    $("#table_container").append('<tr class="tbl-head"><td>Datacenter</td><td>Container</td><td>Image</td><td>docker0</td><td>Networking   [datacenter port | interface | ip]</td></tr>');
+    $("#table_container").append('<tr class="tbl-head"><td>Datacenter</td><td>Container</td><td>Image</td><td>docker0</td><td>Status</td></tr>');
     // fill table
     $.each(data, function(i, item) {
         var row_str = "";
-        row_str += '<tr class="tbl-row clickable_row" id="container_row_' + item[0] +'">';
+        row_str += '<tr class="tbl-row clickable_row" id="container_row_' + i +'">';
         row_str += '<td>' + item[1].datacenter + '</td>';
         row_str += '<td>' + item[0] + '</td>';
         row_str += '<td>' + item[1].image + '</td>';
-        row_str += '<td><code>' + item[1].docker_network + '</code></td>';
-        row_str += '<td><table class="interface_table" id="network_list_' + item[0] + '">';
-        //row_str += build_network_table(item[1].network, item[0]);
-        row_str += '</table></td>';
-        row_str += '</tr>';
-	    $("#table_container").append(row_str);
-	    build_network_table(item[1].network, item[0]);
+        row_str += '<td><code>' + item[1].docker_network + '<code></td>';
+        if(item[1].state.Status == "running")
+            row_str += '<td><span class="label label-success">running</span></td>';
+        else
+            row_str += '<td><span class="label label-danger">stopped</span></td>';
+        row_str += '<tr>';
+	$("#table_container").append(row_str);
     });
     $("#lbl_container_count").text(data.length);
     // update lateness counter
     LAST_UPDATE_TIMESTAMP_CONTAINER = Date.now();
 }
 
-function build_network_table(network_list, id)
-{
-    console.debug('network list ' + id)
-    console.debug(network_list)
-    var row_str = "";
-    network_list.forEach(function(interface) {
-        row_str += '<tr class="interface_row">';
-        row_str += '<td class="interface_port">' + interface.dc_portname + '</td>';
-        row_str += '<td class="interface name">' + interface.intf_name + '</td>';
-        row_str += '<td class="interface_ip">' + interface.ip + '</td>';
-        row_str += '</tr>';
-    });
-    $("#network_list_" + id).append(row_str)
-}
 
 function fetch_datacenter()
 {
@@ -185,8 +171,8 @@ $(document).ready(function(){
     $("#btn_connect").click(connect);
     $("#btn_disconnect").click(disconnect);
     */
-    setTimeout(fetch_datacenter, 500);//fetch_datacenter();
-    setTimeout(fetch_container, 1000);//fetch_container();
+    setTimeout(fetch_datacenter, 1000);//fetch_datacenter();
+    setTimeout(fetch_container, 2000);//fetch_container();
 
 
     // additional refresh on window focus
