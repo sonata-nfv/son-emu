@@ -679,15 +679,14 @@ class Service(object):
                     "Setting up E-LAN interface. (%s:%s) -> %s" % (
                         vnf_id, intf_name, ip_address))
 
-                if vnf_id in self.vnfds:
-                    # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
-                    # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
-                    # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is necessary.
-                    vnfi = self._get_vnf_instance(instance_uuid, vnf_id)
-                    if vnfi is not None:
-                        self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
-                        # add this vnf and interface to the E-LAN for tagging
-                        elan_vnf_list.append({'name': src_docker_name, 'interface': intf_name})
+                # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
+                # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
+                # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is necessary.
+                vnfi = self._get_vnf_instance(instance_uuid, vnf_id)
+                if vnfi is not None:
+                    self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
+                    # add this vnf and interface to the E-LAN for tagging
+                    elan_vnf_list.append({'name': src_docker_name, 'interface': intf_name})
 
             # install the VLAN tags for this E-LAN
             GK.net.setLAN(elan_vnf_list)
