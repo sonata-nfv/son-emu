@@ -274,7 +274,6 @@ class DCNetwork(Containernet):
         # add this switch to the global topology overview
         if add_to_graph:
             self.DCNetwork_graph.add_node(name, type=params.get('type','switch'))
-            LOG.info('*** **** *** add switch: {0} type: {1}'.format(name, params.get('type')))
 
         # set the learning switch behavior
         if 'failMode' in params :

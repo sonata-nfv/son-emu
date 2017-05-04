@@ -36,16 +36,16 @@ body {
 }
 
 .interface_table {
-    width: 350px;
+    width: 420px;
 }
 
 
 .interface_port {
-   width: 150px;
+   width: 120px;
 }
 
 .interface_name {
-   width: 150px;
+   width: 200px;
 }
 
 .interface_ip {

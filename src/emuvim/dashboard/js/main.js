@@ -66,7 +66,7 @@ function update_table_container(data)
     // clear table
     $("#table_container").empty();
     // header
-    $("#table_container").append('<tr class="tbl-head"><td>Datacenter</td><td>Container</td><td>Image</td><td>docker0</td><td>Networking   [datacenter port | interface | ip]</td></tr>');
+    $("#table_container").append('<tr class="tbl-head"><td>Datacenter</td><td>Container</td><td>Image</td><td>docker0</td><td>--Networking--<div id="table_network"></div></td></tr>');
     // fill table
     $.each(data, function(i, item) {
         var row_str = "";
@@ -83,6 +83,7 @@ function update_table_container(data)
 	    build_network_table(item[1].network, item[0]);
     });
     $("#lbl_container_count").text(data.length);
+    $("#table_network").append('<table class="interface_table"><tr class="interface_row"><td class="interface_port">datacenter port</td><td class="interface name">interface</td><td class="interface_ip">ip</td></tr></table>')
     // update lateness counter
     LAST_UPDATE_TIMESTAMP_CONTAINER = Date.now();
 }
