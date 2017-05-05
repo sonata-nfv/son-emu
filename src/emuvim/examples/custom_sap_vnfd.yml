@@ -9,13 +9,13 @@ vendor: "eu.sonata-nfv"
 name: "sap_vnf"
 version: "0.1"
 author: "Steven Van Rossem, Ghent University, steven.vanrossem@intec.ugent.be"
-description: "A sink for the vEPC service"
+description: "An empty ubuntu VNF; used as SAP"
 ##
 ## The virtual deployment unit.
 ##
 virtual_deployment_units:
   - id: "1"
-    vm_image: "sink:v3"
+    vm_image: "sonatanfv/son-emu-sap"
     vm_image_format: "docker"
     resource_requirements:
       cpu:
@@ -38,7 +38,7 @@ virtual_links:
   - id: "port"
     connectivity_type: "E-Line"
     connection_points_reference:
-      - "vdu01:cp01"
+      - "vdu01:cp02"
       - "port"
 
 ##
