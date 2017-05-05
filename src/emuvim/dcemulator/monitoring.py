@@ -202,7 +202,7 @@ class DCNetworkMonitor():
         network_metric = {}
 
         # check if port is specified (vnf:port)
-        if vnf_interface is None:
+        if vnf_interface is None or vnf_interface == '':
             # take first interface by default
             connected_sw = self.net.DCNetwork_graph.neighbors(vnf_name)[0]
             link_dict = self.net.DCNetwork_graph[vnf_name][connected_sw]
@@ -404,8 +404,10 @@ class DCNetworkMonitor():
         previous_measurement = metric_dict['previous_measurement']
         previous_monitor_time = metric_dict['previous_monitor_time']
         mon_port = metric_dict['mon_port']
-
         for port_stat in port_stat_dict[str(switch_dpid)]:
+            # ovs output also gives back 'LOCAL' port
+            if port_stat['port_no'] == 'LOCAL':
+                continue
             if int(port_stat['port_no']) == int(mon_port):
                 port_uptime = port_stat['duration_sec'] + port_stat['duration_nsec'] * 10 ** (-9)
                 this_measurement = int(port_stat[metric_key])
@@ -502,7 +504,11 @@ class DCNetworkMonitor():
                "--publish={0}:8080".format(port),
                "--name=cadvisor",
                "--label",'com.containernet=""',
-               "google/cadvisor:latest"
+               "--detach=true",
+               "google/cadvisor:latest",
+               #"--storage_duration=1m0s",
+               #"--allow_dynamic_housekeeping=true",
+               #"--housekeeping_interval=1s",
                ]
         logging.info('Start cAdvisor container {0}'.format(cmd))
         return Popen(cmd)

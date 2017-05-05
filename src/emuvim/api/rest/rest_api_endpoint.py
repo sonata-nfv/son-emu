@@ -30,7 +30,7 @@ import logging
 import threading
 from flask import Flask
 from flask_restful import Api
-#from gevent.wsgi import WSGIServer
+from gevent.wsgi import WSGIServer
 
 # need to import total module to set its global variable dcs
 import compute
@@ -38,7 +38,7 @@ from compute import dcs, ComputeList, Compute, ComputeResources, DatacenterList,
 
 # need to import total module to set its global variable net
 import network
-from network import NetworkAction
+from network import NetworkAction, DrawD3jsgraph
 
 import monitor
 from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction
@@ -85,7 +85,8 @@ class RestApiEndpoint(object):
         # network related actions (setup chaining between VNFs)
         self.api.add_resource(NetworkAction,
                               "/restapi/network")
-
+        self.api.add_resource(DrawD3jsgraph,
+                              "/restapi/network/d3jsgraph")
 
         # monitoring related actions
         # export a network interface traffic rate counter
@@ -102,6 +103,7 @@ class RestApiEndpoint(object):
         # the skewness metric is exported
         self.api.add_resource(MonitorSkewAction,
                               "/restapi/monitor/skewness")
+
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
 
@@ -125,7 +127,7 @@ class RestApiEndpoint(object):
         logging.info("Started API endpoint @ http://%s:%d" % (self.ip, self.port))
 
     def _start_flask(self):
-        self.app.run(self.ip, self.port, debug=True, use_reloader=False)
+        #self.app.run(self.ip, self.port, debug=True, use_reloader=False)
         #this should be a more production-fit http-server
-        #http_server = WSGIServer((self.ip, self.port), self.app)
-        #http_server.serve_forever()
+        http_server = WSGIServer((self.ip, self.port), self.app)
+        http_server.serve_forever()
