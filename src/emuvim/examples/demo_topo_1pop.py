@@ -60,7 +60,7 @@ def create_topology1():
 
 
     # specify a vnfd file to be deployed as internal SAP:
-    sap_vnfd = 'vepc_sap_vnfd.yml'
+    sap_vnfd = 'custom_sap_vnfd.yml'
     dir_path = os.path.dirname(__file__)
     sap_vnfd_path = os.path.join(dir_path, sap_vnfd)
     # sap_vnfd_path = None
