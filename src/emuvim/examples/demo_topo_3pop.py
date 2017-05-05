@@ -49,12 +49,19 @@ def create_topology1():
     # create topology
     net = DCNetwork(controller=RemoteController, monitor=False, enable_learning=True)
     dc1 = net.addDatacenter("dc1")
-
+    dc2 = net.addDatacenter("dc2")
+    dc3 = net.addDatacenter("dc3")
+    s1 = net.addSwitch("s1")
+    net.addLink(dc1, s1)
+    net.addLink(dc2, s1)
+    net.addLink(dc3, s1)
 
     # add the command line interface endpoint to each DC (REST API)
     rapi1 = RestApiEndpoint("0.0.0.0", 5001)
     rapi1.connectDCNetwork(net)
     rapi1.connectDatacenter(dc1)
+    rapi1.connectDatacenter(dc2)
+    rapi1.connectDatacenter(dc3)
     # run API endpoint server (in another thread, don't block)
     rapi1.start()
 
@@ -69,6 +76,8 @@ def create_topology1():
                                           docker_management=True, auto_delete=True,
                                           sap_vnfd_path=sap_vnfd_path)
     sdkg1.connectDatacenter(dc1)
+    sdkg1.connectDatacenter(dc2)
+    sdkg1.connectDatacenter(dc3)
     # run the dummy gatekeeper (in another thread, don't block)
     sdkg1.start()
 

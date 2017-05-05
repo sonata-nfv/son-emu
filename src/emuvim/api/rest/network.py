@@ -36,6 +36,7 @@ import logging
 from flask_restful import Resource
 from flask import request
 import json
+import networkx
 
 logging.basicConfig(level=logging.INFO)
 
@@ -121,3 +122,32 @@ class NetworkAction(Resource):
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
+
+
+class DrawD3jsgraph(Resource):
+
+    global net
+
+    def get(self):
+        nodes = list()
+        nodes2 = list()
+        links = list()
+        # add all DCs
+        node_attr = networkx.get_node_attributes(net.DCNetwork_graph, 'type')
+        for node_name in net.DCNetwork_graph.nodes():
+            nodes2.append(node_name)
+            node_index = nodes2.index(node_name)
+            type = node_attr[node_name]
+            node_dict = {"name":node_name,"group":type}
+            nodes.append(node_dict)
+
+        # add links between other DCs
+        for node1_name in net.DCNetwork_graph.nodes():
+            node1_index = nodes2.index(node1_name)
+            for node2_name in net.DCNetwork_graph.neighbors(node1_name):
+                node2_index = nodes2.index(node2_name)
+                edge_dict = {"source": node1_index, "target": node2_index, "value": 10}
+                links.append(edge_dict)
+
+        json = {"nodes":nodes, "links":links}
+        return json, 200, CORS_HEADER

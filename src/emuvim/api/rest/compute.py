@@ -123,13 +123,21 @@ class ComputeList(Resource):
             if dc_label is None or dc_label == 'None':
                 # return list with all compute nodes in all DCs
                 all_containers = []
+                all_extSAPs = []
                 for dc in dcs.itervalues():
                     all_containers += dc.listCompute()
-                return [(c.name, c.getStatus()) for c in all_containers], 200, CORS_HEADER
+                    all_extSAPs += dc.listExtSAPs()
+
+                extSAP_list = [(sap.name, sap.getStatus()) for sap in all_extSAPs]
+                container_list = [(c.name, c.getStatus()) for c in all_containers]
+                total_list = container_list + extSAP_list
+                return total_list, 200, CORS_HEADER
             else:
                 # return list of compute nodes for specified DC
-                return [(c.name, c.getStatus())
-                        for c in dcs.get(dc_label).listCompute()], 200, CORS_HEADER
+                container_list = [(c.name, c.getStatus()) for c in dcs.get(dc_label).listCompute()]
+                extSAP_list = [(sap.name, sap.getStatus()) for sap in dcs.get(dc_label).listExtSAPs()]
+                total_list = container_list + extSAP_list
+                return total_list, 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER

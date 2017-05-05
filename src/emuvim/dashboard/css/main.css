@@ -26,9 +26,28 @@ body {
 .tbl-row > td {
     padding-top: 4px;
     padding-bottom: 4px;
+    vertical-align: top;
+    border-top: 1pt solid black;
 
 }
 
 .spacer {
     height: 20px;
+}
+
+.interface_table {
+    width: 420px;
+}
+
+
+.interface_port {
+   width: 120px;
+}
+
+.interface_name {
+   width: 200px;
+}
+
+.interface_ip {
+   width: 100px;
 }

@@ -41,7 +41,7 @@ from mininet.link import TCLink
 from mininet.clean import cleanup
 import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
-from emuvim.dcemulator.node import Datacenter, EmulatorCompute
+from emuvim.dcemulator.node import Datacenter, EmulatorCompute, EmulatorExtSAP
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
 LOG = logging.getLogger("dcemulator.net")
@@ -229,19 +229,42 @@ class DCNetwork(Containernet):
 
         return link
 
+    def removeLink(self, link=None, node1=None, node2=None):
+        """
+        Remove the link from the Containernet and the networkx graph
+        """
+        Containernet.removeLink(self, link=link, node1=node1, node2=node2)
+        self.DCNetwork_graph.remove_edge(node2.name, node1.name)
+
     def addDocker( self, label, **params ):
         """
         Wrapper for addDocker method to use custom container class.
         """
-        self.DCNetwork_graph.add_node(label)
+        self.DCNetwork_graph.add_node(label, type=params.get('type', 'docker'))
         return Containernet.addDocker(self, label, cls=EmulatorCompute, **params)
 
-    def removeDocker( self, label, **params ):
+    def removeDocker( self, label, **params):
         """
         Wrapper for removeDocker method to update graph.
         """
         self.DCNetwork_graph.remove_node(label)
         return Containernet.removeDocker(self, label, **params)
+
+    def addExtSAP(self, sap_name, sap_ip, **params):
+        """
+        Wrapper for addExtSAP method to store SAP  also in graph.
+        """
+        # make sure that 'type' is set
+        params['type'] = params.get('type','sap_ext')
+        self.DCNetwork_graph.add_node(sap_name, type=params['type'])
+        return Containernet.addExtSAP(self, sap_name, sap_ip, **params)
+
+    def removeExtSAP(self, sap_name, **params):
+        """
+        Wrapper for removeExtSAP method to remove SAP  also from graph.
+        """
+        self.DCNetwork_graph.remove_node(sap_name)
+        return Containernet.removeExtSAP(self, sap_name)
 
     def addSwitch( self, name, add_to_graph=True, **params ):
         """
@@ -250,7 +273,7 @@ class DCNetwork(Containernet):
 
         # add this switch to the global topology overview
         if add_to_graph:
-            self.DCNetwork_graph.add_node(name)
+            self.DCNetwork_graph.add_node(name, type=params.get('type','switch'))
 
         # set the learning switch behavior
         if 'failMode' in params :
@@ -259,12 +282,6 @@ class DCNetwork(Containernet):
             failMode = self.failMode
 
         s = Containernet.addSwitch(self, name, protocols='OpenFlow10,OpenFlow12,OpenFlow13', failMode=failMode, **params)
-
-        # set flow entry that enables learning switch behavior (needed to enable E-LAN functionality)
-        #LOG.info('failmode {0}'.format(failMode))
-        #if failMode == 'standalone' :
-        #    LOG.info('add NORMAL')
-        #    s.dpctl('add-flow', 'actions=NORMAL')
 
         return s
 
@@ -902,7 +919,14 @@ class DCNetwork(Containernet):
                 dict.update({match[0]:m2})
         return dict
 
-    def find_connected_dc_interface(self, vnf_src_name, vnf_src_interface):
+    def find_connected_dc_interface(self, vnf_src_name, vnf_src_interface=None):
+
+        if vnf_src_interface is None:
+            # take first interface by default
+            connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
+            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
+            vnf_src_interface = link_dict[0]['src_port_id']
+
         for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:

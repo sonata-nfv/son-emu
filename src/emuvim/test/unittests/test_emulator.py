@@ -146,16 +146,18 @@ class testEmulatorNetworking( SimpleTestTopology ):
         # check status
         # check get status
         s1 = self.dc[0].containers.get("vnf1").getStatus()
+        print s1
         self.assertTrue(s1["name"] == "vnf1")
         self.assertTrue(s1["state"]["Running"])
         self.assertTrue(s1["network"][0]['intf_name'] == 'intf1')
-        self.assertTrue(s1["network"][0]['ip'] == '10.0.10.1')
+        self.assertTrue(s1["network"][0]['ip'] == '10.0.10.1/24')
 
         s2 = self.dc[1].containers.get("vnf2").getStatus()
+        print s2
         self.assertTrue(s2["name"] == "vnf2")
         self.assertTrue(s2["state"]["Running"])
         self.assertTrue(s2["network"][0]['intf_name'] == 'intf2')
-        self.assertTrue(s2["network"][0]['ip'] == '10.0.10.2')
+        self.assertTrue(s2["network"][0]['ip'] == '10.0.10.2/24')
 
         # should be not not yet connected
         self.assertTrue(self.net.ping([vnf1, vnf2]) > 0.0)
