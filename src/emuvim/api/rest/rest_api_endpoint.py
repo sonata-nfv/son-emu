@@ -41,7 +41,7 @@ import network
 from network import NetworkAction, DrawD3jsgraph
 
 import monitor
-from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction
+from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction, MonitorTerminal
 
 import pkg_resources
 from os import path
@@ -103,6 +103,9 @@ class RestApiEndpoint(object):
         # the skewness metric is exported
         self.api.add_resource(MonitorSkewAction,
                               "/restapi/monitor/skewness")
+        # start a terminal window for the specified vnfs
+        self.api.add_resource(MonitorTerminal,
+                              "/restapi/monitor/term")
 
 
         logging.debug("Created API endpoint %s(%s:%d)" % (self.__class__.__name__, self.ip, self.port))
