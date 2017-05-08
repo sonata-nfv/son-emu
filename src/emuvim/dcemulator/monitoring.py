@@ -34,7 +34,7 @@ import time
 from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY, CollectorRegistry, \
     pushadd_to_gateway, push_to_gateway, delete_from_gateway
 import threading
-from subprocess import Popen, check_call
+from subprocess import Popen
 import os
 import docker
 import json
@@ -625,6 +625,46 @@ class DCNetworkMonitor():
                 time.sleep(1)
                 wait_time += 1
         return ret
+
+    def term(self, vnf_list=[]):
+        """
+        Start a terminal window for the specified VNFs
+        (start a terminal for all VNFs if vnf_list is empty)
+        :param vnf_list:
+        :return:
+        """
+
+
+        if vnf_list is None:
+            vnf_list = []
+        if not isinstance(vnf_list, list):
+            vnf_list = str(vnf_list).split(',')
+            vnf_list = map(str.strip, vnf_list)
+        logging.info('vnf_list: {}'.format(vnf_list))
+
+        return self.start_xterm(vnf_list)
+
+
+    # start an xterm for the specfified vnfs
+    def start_xterm(self, vnf_names):
+        # start xterm for all vnfs
+        for vnf_name in vnf_names:
+            terminal_cmd = "docker exec -it mn.{0} /bin/bash".format(vnf_name)
+
+            cmd = ['xterm', '-xrm', 'XTerm*selectToClipboard: true', '-xrm', 'XTerm.vt100.allowTitleOps: false',
+                   '-T', vnf_name,
+                   '-e', terminal_cmd]
+            Popen(cmd)
+
+        ret = 'xterms started for {0}'.format(vnf_names)
+        if len(vnf_names) == 0:
+            ret = 'vnf list is empty, no xterms started'
+        return ret
+
+
+
+
+
 
 
 
