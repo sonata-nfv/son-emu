@@ -36,7 +36,7 @@ body {
 }
 
 .interface_table {
-    width: 420px;
+    width: 570px;
 }
 
 
@@ -50,4 +50,8 @@ body {
 
 .interface_ip {
    width: 100px;
+}
+
+.interface_mac {
+   width: 150px;
 }

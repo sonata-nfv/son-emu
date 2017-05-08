@@ -83,7 +83,7 @@ function update_table_container(data)
 	    build_network_table(item[1].network, item[0]);
     });
     $("#lbl_container_count").text(data.length);
-    $("#table_network").append('<table class="interface_table"><tr class="interface_row"><td class="interface_port">datacenter port</td><td class="interface name">interface</td><td class="interface_ip">ip</td></tr></table>')
+    $("#table_network").append('<table class="interface_table"><tr class="interface_row"><td class="interface_port">datacenter port</td><td class="interface_name">interface</td><td class="interface_ip">ip</td><td class="interface_mac">mac</td></tr></table>')
     // update lateness counter
     LAST_UPDATE_TIMESTAMP_CONTAINER = Date.now();
 }
@@ -96,8 +96,9 @@ function build_network_table(network_list, id)
     network_list.forEach(function(interface) {
         row_str += '<tr class="interface_row">';
         row_str += '<td class="interface_port">' + interface.dc_portname + '</td>';
-        row_str += '<td class="interface name">' + interface.intf_name + '</td>';
+        row_str += '<td class="interface_name">' + interface.intf_name + '</td>';
         row_str += '<td class="interface_ip">' + interface.ip + '</td>';
+        row_str += '<td class="interface_mac">' + interface.mac + '</td>';
         row_str += '</tr>';
     });
     $("#network_list_" + id).append(row_str)
