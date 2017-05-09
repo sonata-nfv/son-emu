@@ -34,10 +34,11 @@ import time
 from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY, CollectorRegistry, \
     pushadd_to_gateway, push_to_gateway, delete_from_gateway
 import threading
-from subprocess import Popen, check_call
+from subprocess import Popen
 import os
 import docker
 import json
+from copy import deepcopy
 
 logging.basicConfig(level=logging.INFO)
 
@@ -272,7 +273,7 @@ class DCNetworkMonitor():
             link_dict = self.net.DCNetwork_graph[vnf_name][connected_sw]
             vnf_interface = link_dict[0]['src_port_id']
 
-        for metric_dict in self.network_metrics:
+        for metric_dict in deepcopy(self.network_metrics):
             if metric_dict['vnf_name'] == vnf_name and metric_dict['vnf_interface'] == vnf_interface \
                     and metric_dict['metric_key'] == metric:
 
@@ -302,20 +303,17 @@ class DCNetworkMonitor():
             elif metric_dict['vnf_name'] == vnf_name and vnf_interface is None and metric is None:
                 self.monitor_lock.acquire()
                 self.network_metrics.remove(metric_dict)
-                for collector in self.registry._collectors:
-                    collector_dict = collector._metrics.copy()
-                    for name, interface, id in collector_dict:
-                        if name == vnf_name:
-                            logging.info('3 name:{0} labels:{1} metrics:{2}'.format(collector._name, collector._labelnames,
-                                                                           collector._metrics))
-                            collector.remove(name, interface, 'None')
+                logging.info('remove metric from monitor: vnf_name:{0} vnf_interface:{1} mon_port:{2}'.format(metric_dict['vnf_name'], metric_dict['vnf_interface'], metric_dict['mon_port']))
 
                 delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
                 self.monitor_lock.release()
-                logging.info('Stopped monitoring vnf: {0}'.format(vnf_name))
-                return 'Stopped monitoring: {0}'.format(vnf_name)
+                continue
 
-        return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
+        if vnf_interface is None and metric is None:
+            logging.info('Stopped monitoring vnf: {0}'.format(vnf_name))
+            return 'Stopped monitoring: {0}'.format(vnf_name)
+        else:
+            return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
 
 
 # get all metrics defined in the list and export it to Prometheus
@@ -430,7 +428,7 @@ class DCNetworkMonitor():
 
                 else:
                     time_delta = (port_uptime - metric_dict['previous_monitor_time'])
-                    metric_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
+                    #metric_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
 
                 metric_dict['previous_measurement'] = this_measurement
                 metric_dict['previous_monitor_time'] = port_uptime
@@ -438,6 +436,7 @@ class DCNetworkMonitor():
 
         logging.exception('metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface))
         logging.exception('monport:{0}, dpid:{1}'.format(mon_port, switch_dpid))
+        logging.exception('monitored network_metrics:{0}'.format(self.network_metrics))
         logging.exception('port dict:{0}'.format(port_stat_dict))
         return 'metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface)
 
@@ -626,6 +625,46 @@ class DCNetworkMonitor():
                 time.sleep(1)
                 wait_time += 1
         return ret
+
+    def term(self, vnf_list=[]):
+        """
+        Start a terminal window for the specified VNFs
+        (start a terminal for all VNFs if vnf_list is empty)
+        :param vnf_list:
+        :return:
+        """
+
+
+        if vnf_list is None:
+            vnf_list = []
+        if not isinstance(vnf_list, list):
+            vnf_list = str(vnf_list).split(',')
+            vnf_list = map(str.strip, vnf_list)
+        logging.info('vnf_list: {}'.format(vnf_list))
+
+        return self.start_xterm(vnf_list)
+
+
+    # start an xterm for the specfified vnfs
+    def start_xterm(self, vnf_names):
+        # start xterm for all vnfs
+        for vnf_name in vnf_names:
+            terminal_cmd = "docker exec -it mn.{0} /bin/bash".format(vnf_name)
+
+            cmd = ['xterm', '-xrm', 'XTerm*selectToClipboard: true', '-xrm', 'XTerm.vt100.allowTitleOps: false',
+                   '-T', vnf_name,
+                   '-e', terminal_cmd]
+            Popen(cmd)
+
+        ret = 'xterms started for {0}'.format(vnf_names)
+        if len(vnf_names) == 0:
+            ret = 'vnf list is empty, no xterms started'
+        return ret
+
+
+
+
+
 
 
 

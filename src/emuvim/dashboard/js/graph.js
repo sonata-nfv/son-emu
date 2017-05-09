@@ -30,6 +30,7 @@ d3.json("http://127.0.0.1:5001/restapi/network/d3jsgraph", function(error, json)
       .enter().append("g")
       .attr("class", "node")
       .call(force.drag)
+      .on("dblclick", dblclick)
 
   node.append("circle")
     .attr("r", 10)
@@ -48,6 +49,18 @@ d3.json("http://127.0.0.1:5001/restapi/network/d3jsgraph", function(error, json)
 
     node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   });
+
+  // action to take on double mouse click, call rest api to start xterm
+  function dblclick() {
+      var vnf_name = d3.select(this).text()
+      console.debug(vnf_name)
+      var rest_url = "http://127.0.0.1:5001/restapi/monitor/term?vnf_list=" + vnf_name
+
+      d3.json(rest_url, function(error, json) {
+        if (error) throw error;
+        console.debug(json)
+      });
+  }
 
 
 });
