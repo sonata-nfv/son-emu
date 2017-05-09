@@ -35,6 +35,7 @@ logging.basicConfig(level=logging.INFO)
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 
+# the dcs dict is set in the rest_api_endpoint.py upon datacenter init
 dcs = {}
 
 
@@ -49,6 +50,7 @@ class Compute(Resource):
     example networks list({"id":"input","ip": "10.0.0.254/8"}, {"id":"output","ip": "11.0.0.254/24"})
     :return: docker inspect dict of deployed docker
     """
+
     global dcs
 
     def put(self, dc_label, compute_name, resource=None, value=None):

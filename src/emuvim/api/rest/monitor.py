@@ -277,10 +277,10 @@ class MonitorSkewAction(Resource):
             c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='start')
 
             # return monitor message response
-            return  str(c), 200
+            return  str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500
+            return ex.message, 500, CORS_HEADER
 
     def delete(self):
         logging.debug("REST CALL: stop monitor skewness")
@@ -300,3 +300,27 @@ class MonitorSkewAction(Resource):
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
+class MonitorTerminal(Resource):
+    """
+    start a terminal for the selected VNFs
+    :param vnf_list: list of names of the VNFs to start a terminal from (all VNFs if None)
+    :return: message string indicating if the monitor action is succesful or not
+    """
+    global net
+
+    def get(self):
+        # get URL parameters
+        data = request.args
+        if data is None:
+            data = {}
+        vnf_list = data.get("vnf_list")
+        logging.debug("REST CALL: start terminal for: {}".format(vnf_list))
+        try:
+            # start terminals
+            c = net.monitor_agent.term(vnf_list)
+
+            # return monitor message response
+            return  str(c), 200, CORS_HEADER
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500, CORS_HEADER
