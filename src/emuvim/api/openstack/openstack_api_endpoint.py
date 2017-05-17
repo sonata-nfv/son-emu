@@ -73,4 +73,8 @@ class OpenstackApiEndpoint():
         """
         for component in self.openstack_endpoints.values():
             url = "http://" + component.ip + ":" + str(component.port) + "/shutdown"
-            requests.get(url)
+            try:
+                requests.get(url)
+            except:
+                # seems to be stopped
+                pass
