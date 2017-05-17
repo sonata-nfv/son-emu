@@ -97,7 +97,7 @@ class MonitorVnf(Resource):
             vnf_name = 'mn.' + vnf_name
 
         found = False
-        from emuvim.api.heat.openstack_api_endpoint import OpenstackApiEndpoint
+        from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
         for api in OpenstackApiEndpoint.dc_apis:
             if vnf_name[3:] in api.compute.dc.net:
                 found = True
@@ -143,7 +143,7 @@ class MonitorVnfAbs(Resource):
             vnf_name = 'mn.' + vnf_name
 
         found = False
-        from emuvim.api.heat.openstack_api_endpoint import OpenstackApiEndpoint
+        from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
         for api in OpenstackApiEndpoint.dc_apis:
             if vnf_name[3:] in api.compute.dc.net:
                 found = True
@@ -218,7 +218,7 @@ class MonitorVnfDcStack(Resource):
     # Returns a string or a Response object
     def _findName(self, dc, stack, vnf):
         dc_real = None
-        from emuvim.api.heat.openstack_api_endpoint import OpenstackApiEndpoint
+        from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
         for api in OpenstackApiEndpoint.dc_apis:
             # search for datacenters
             if dc in api.manage.net.dcs:

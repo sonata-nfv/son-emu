@@ -139,7 +139,7 @@ class Net:
         """
         if cidr is None:
             if self._cidr is not None:
-                import emuvim.api.heat.ip_handler as IP
+                import emuvim.api.openstack.ip_handler as IP
                 IP.free_cidr(self._cidr, self.subnet_id)
             self._cidr = None
             self.reset_issued_ip_addresses()

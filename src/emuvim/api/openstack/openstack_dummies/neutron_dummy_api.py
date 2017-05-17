@@ -461,7 +461,7 @@ class NeutronCreateSubnet(Resource):
                 net.subnet_id = subnet_dict["subnet"]["id"]
             else:
                 net.subnet_id = str(uuid.uuid4())
-            import emuvim.api.heat.ip_handler as IP
+            import emuvim.api.openstack.ip_handler as IP
             net.set_cidr(IP.get_new_cidr(net.subnet_id))
 
             if "tenant_id" in subnet_dict["subnet"]:
