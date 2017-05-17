@@ -677,8 +677,6 @@ class OpenstackCompute(object):
         del self.dc.switch.ports[link.intf2]
         del self.dc.switch.nameToIntf[link.intf2.name]
         self.dc.net.removeLink(link=link)
-        self.dc.net.DCNetwork_graph.remove_edge(server_name, self.dc.switch.name)
-        self.dc.net.DCNetwork_graph.remove_edge(self.dc.switch.name, server_name)
         for intf_key in self.dc.net[server_name].intfs.keys():
             if self.dc.net[server_name].intfs[intf_key].link == link:
                 self.dc.net[server_name].intfs[intf_key].delete()
