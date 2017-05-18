@@ -34,6 +34,7 @@ import os
 import unittest
 import requests
 import simplejson as json
+import time
 
 from emuvim.test.api_base_openstack import ApiBaseOpenStack
 
@@ -54,10 +55,12 @@ class testRestApi(ApiBaseOpenStack):
 
         # start api
         self.startApi()
+        time.sleep(2)
 
         # start Mininet network
         self.startNet()
-
+        time.sleep(2)
+        
     @unittest.skip("temporarily disabled")
     def testChainingDummy(self):
         print('->>>>>>> test Chaining Class->>>>>>>>>>>>>>>')
