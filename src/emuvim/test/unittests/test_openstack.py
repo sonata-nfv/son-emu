@@ -55,11 +55,9 @@ class testRestApi(ApiBaseOpenStack):
 
         # start api
         self.startApi()
-        time.sleep(2)
 
         # start Mininet network
         self.startNet()
-        time.sleep(2)
         
     @unittest.skip("temporarily disabled")
     def testChainingDummy(self):
