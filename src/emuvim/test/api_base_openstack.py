@@ -34,6 +34,7 @@ import unittest
 import os
 import subprocess
 import docker
+import time
 from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
 from mininet.clean import cleanup
@@ -136,6 +137,7 @@ class ApiBaseOpenStack(unittest.TestCase):
 
 
     def tearDown(self):
+        time.sleep(2)
         print('->>>>>>> tear everything down ->>>>>>>>>>>>>>>')
         self.stopApi() # stop all flask threads
         self.stopNet() # stop some mininet and containernet stuff
@@ -153,6 +155,7 @@ class ApiBaseOpenStack(unittest.TestCase):
                 stdout=devnull,
                 stderr=devnull,
                 shell=True)
+        time.sleep(2)
 
 
 
