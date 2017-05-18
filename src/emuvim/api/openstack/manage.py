@@ -15,7 +15,6 @@ import json
 import random
 from emuvim.api.openstack.resources import Net, Port
 from mininet.node import OVSSwitch, RemoteController, Node
-from emuvim.api.openstack.monitor_api import MonitorDummyApi
 
 
 class OpenstackManage(object):
@@ -62,12 +61,6 @@ class OpenstackManage(object):
         self.thread = threading.Thread(target=self.chain._start_flask, args=())
         self.thread.daemon = True
         self.thread.name = self.chain.__class__
-        self.thread.start()
-
-        self.monitoring = MonitorDummyApi(self.ip, 3000)
-        self.thread = threading.Thread(target=self.monitoring._start_flask, args=())
-        self.thread.daemon = True
-        self.thread.name = self.monitoring.__class__
         self.thread.start()
 
         # floating ip network setup
