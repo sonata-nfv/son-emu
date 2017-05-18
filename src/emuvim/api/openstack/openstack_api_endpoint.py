@@ -4,6 +4,8 @@ import logging
 import threading
 import compute
 import requests
+import socket
+import time
 
 
 class OpenstackApiEndpoint():
@@ -55,7 +57,7 @@ class OpenstackApiEndpoint():
         logging.info("Connected DCNetwork to API endpoint %s(%s:%d)" % (
             self.__class__.__name__, self.ip, self.port))
 
-    def start(self):
+    def start(self, wait_for_port=False):
         """
         Start all connected OpenStack endpoints that are connected to this API endpoint.
         """
@@ -66,6 +68,9 @@ class OpenstackApiEndpoint():
             thread.daemon = True
             thread.name = component.__class__
             thread.start()
+            if wait_for_port:
+                self._wait_for_port(component.ip, component.port)
+                
 
     def stop(self):
         """
@@ -78,3 +83,14 @@ class OpenstackApiEndpoint():
             except:
                 # seems to be stopped
                 pass
+
+    def _wait_for_port(self, ip, port):
+        for i in range(0, 10):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)  # 1 Second Timeout
+            r = s.connect_ex((ip, port))
+            if r == 0:
+                break  # port is open proceed
+            else:
+                logging.warning("Waiting for {}:{} ... ({}/10)".format(ip, port, i + 1))
+            time.sleep(1)

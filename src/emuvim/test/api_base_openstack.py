@@ -103,7 +103,7 @@ class ApiBaseOpenStack(unittest.TestCase):
 
     def startApi(self):
         for i in self.api:
-            i.start()
+            i.start(wait_for_port=True)
 
     def stopApi(self):
         for i in self.api:
