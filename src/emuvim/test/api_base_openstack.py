@@ -69,7 +69,7 @@ class ApiBaseOpenStack(unittest.TestCase):
         """
         self.net = DCNetwork(controller=controller, **kwargs)
         for i in range(0, ndatacenter):
-            self.api.append(OpenstackApiEndpoint("0.0.0.0", 5000+i))
+            self.api.append(OpenstackApiEndpoint("0.0.0.0", 15000+i))
 
         # add some switches
         # start from s1 because ovs does not like to have dpid = 0
@@ -142,7 +142,7 @@ class ApiBaseOpenStack(unittest.TestCase):
         cleanup()
         # make sure that all pending docker containers are killed
         with open(os.devnull, 'w') as devnull: # kill a possibly running docker process that blocks the open ports
-            subprocess.call("kill $(netstat -npl | grep '5000' | grep -o -e'[0-9]\+/docker' | grep -o -e '[0-9]\+')",
+            subprocess.call("kill $(netstat -npl | grep '15000' | grep -o -e'[0-9]\+/docker' | grep -o -e '[0-9]\+')",
                 stdout=devnull,
                 stderr=devnull,
                 shell=True)
