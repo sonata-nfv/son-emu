@@ -1,18 +1,18 @@
-var API_HOST = "http://127.0.0.1:5001";
+var API_HOST = "";  // set to a remote url if dashboard is not served by REST API server
 var ERROR_ALERT = false;
 var TIMESTAMP = 0;
 var CONNECTED = false;
 var LATENESS_UPDATE_INTERVAL = 50;
-var DATA_UPDATE_INTERVAL = 1000 * 10;
+var DATA_UPDATE_INTERVAL = 1000 * 2;
 var LAST_UPDATE_TIMESTAMP_CONTAINER = 0;
 var LAST_UPDATE_TIMESTAMP_DATACENTER = 0;
 
 
 function update_lateness_loop() {
     lateness_datacenter= (Date.now() - LAST_UPDATE_TIMESTAMP_DATACENTER) / 1000;
-    $("#lbl_lateness_datacenter").text("Lateness: " + Number(lateness_datacenter).toPrecision(3) + "s");
+    $("#lbl_lateness_datacenter").text("Lateness: " + Number(lateness_datacenter).toPrecision(2) + "s");
     lateness_container= (Date.now() - LAST_UPDATE_TIMESTAMP_CONTAINER) / 1000;
-    $("#lbl_lateness_container").text("Lateness: " + Number(lateness_container).toPrecision(3) + "s");
+    $("#lbl_lateness_container").text("Lateness: " + Number(lateness_container).toPrecision(2) + "s");
     // loop while connected
     if(CONNECTED)
         setTimeout(update_lateness_loop, LATENESS_UPDATE_INTERVAL)
@@ -26,11 +26,12 @@ function errorAjaxConnection()
     {
         ERROR_ALERT = true;
         // show message
-        alert("ERROR!\nAPI request failed.\n\n Please check the backend connection.", function() {
+        alert("API request failed. Is the emulator running?", function() {
             // callback
             ERROR_ALERT = false;
         });
     }
+    CONNECTED = false;
 }
 
 
@@ -106,14 +107,6 @@ function fetch_container()
 }
 
 
-function fetch_d3graph()
-{
-    // do HTTP request and trigger gui update on success
-    var request_url = API_HOST + "/restapi/network/d3jsgraph";
-    console.debug("fetching from: " + request_url);
-    //$.getJSON(request_url,  update_graph);
-}
-
 function fetch_loop()
 {
     // only fetch if we are connected
@@ -134,7 +127,7 @@ function connect()
 {
     console.info("connect()");
     // get host address
-    API_HOST = "http://" + $("#text_api_host").val();
+    //API_HOST = "http://" + $("#text_api_host").val();
     console.debug("API address: " + API_HOST);
     // reset data
     LAST_UPDATE_TIMESTAMP_DATACENTER = Date.now();
@@ -144,36 +137,19 @@ function connect()
     update_lateness_loop();
     // restart data fetch loop
     fetch_loop();
-    // gui updates
-    $("#btn_disconnect").removeClass("disabled");
-    $("#btn_connect").addClass("disabled");
-}
-
-function disconnect()
-{
-    console.info("disconnect()");
-    CONNECTED = false;
-     // gui updates
-    $("#btn_connect").removeClass("disabled");
-    $("#btn_disconnect").addClass("disabled");
 }
 
 
 $(document).ready(function(){
     console.info("document ready");
     // setup global connection error handling
-    /*
+    
     $.ajaxSetup({
         "error": errorAjaxConnection
     });
 
-    // add listeners
-    $("#btn_connect").click(connect);
-    $("#btn_disconnect").click(disconnect);
-    */
-    setTimeout(fetch_datacenter, 1000);//fetch_datacenter();
-    setTimeout(fetch_container, 2000);//fetch_container();
-
+    // connect
+    connect();
 
     // additional refresh on window focus
     $(window).focus(function () {
