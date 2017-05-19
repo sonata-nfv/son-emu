@@ -27,17 +27,17 @@ To install the emulator package in development mode, do:
 * `ansible` Install scripts
 * `misc` Example packages and VNFs
 * `src` 
- * `emuvim` Emulator components
-  * `api` API endpoint implementations
-   * `rest` REST API for son-emu-cli
-   * `sonata` Dummy gatekeeper API
-   * `openstack` OpenStack-like APIs for MANO integration
-  * `cli` Command line client to control the emulator
-  * `dashboard` A web-based dashboard to display the emulator's state
-  * `dcemulator` Emulator core
-   * `resourcemodel` Resource limitation models
-  * `examples` Example topology scripts
-  * `test` Test scripts
+    * `emuvim` Emulator components
+        * `api` API endpoint implementations
+            * `rest` REST API for son-emu-cli
+            * `sonata` Dummy gatekeeper API
+            * `openstack` OpenStack-like APIs for MANO integration
+        * `cli` Command line client to control the emulator
+        * `dashboard` A web-based dashboard to display the emulator's state
+        * `dcemulator` Emulator core
+            * `resourcemodel` Resource limitation models
+        * `examples` Example topology scripts
+        * `test` Test scripts
 * `utils` Helper scripts for SONATA's CI/CD setup
 
 
