@@ -56,6 +56,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         sdkg1.connectDatacenter(self.dc[1])
         # run the dummy gatekeeper (in another thread, don't block)
         sdkg1.start()
+        time.sleep(3)
         # start Mininet network
         self.startNet()
         time.sleep(1)
@@ -161,6 +162,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         sdkg1.connectDatacenter(self.dc[1])
         # run the dummy gatekeeper (in another thread, don't block)
         sdkg1.start()
+        time.sleep(3)
         # start Mininet network
         self.startNet()
         time.sleep(1)
@@ -216,6 +218,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         sdkg1.connectDatacenter(self.dc[1])
         # run the dummy gatekeeper (in another thread, don't block)
         sdkg1.start()
+        time.sleep(3)
         # start Mininet network
         self.startNet()
         time.sleep(1)

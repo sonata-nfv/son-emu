@@ -233,8 +233,21 @@ class DCNetwork(Containernet):
         """
         Remove the link from the Containernet and the networkx graph
         """
+        if link is not None:
+            node1 = link.intf1.node
+            node2 = link.intf2.node
+        assert node1 is not None
+        assert node2 is not None
         Containernet.removeLink(self, link=link, node1=node1, node2=node2)
-        self.DCNetwork_graph.remove_edge(node2.name, node1.name)
+        # TODO we might decrease the loglevel to debug:
+        try:
+            self.DCNetwork_graph.remove_edge(node2.name, node1.name)
+        except:
+            LOG.warning("%s not found in DCNetwork_graph." % ((node2.name, node1.name)))
+        try:
+            self.DCNetwork_graph.remove_edge(node1.name, node2.name)
+        except:
+            LOG.warning("%s not found in DCNetwork_graph." % ((node1.name, node2.name)))
 
     def addDocker( self, label, **params ):
         """
