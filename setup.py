@@ -57,7 +57,8 @@ setup(name='emuvim',
           'requests',
           'prometheus_client',
           'urllib3',
-          'ipaddress'
+          'ipaddress',
+          'simplejson'
       ],
       zip_safe=False,
       entry_points={
