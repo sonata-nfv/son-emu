@@ -53,7 +53,7 @@ class RestApiClient():
             metric = args.get("metric"))
 
         url = "{0}/restapi/monitor/interface".format(args.get("endpoint"))
-        response = put(url, json=params)
+        response = put(url, params=params)
         pp.pprint(response.text)
 
     def stop_metric(self, args):
@@ -63,7 +63,7 @@ class RestApiClient():
             metric=args.get("metric"))
 
         url = "{0}/restapi/monitor/interface".format(args.get("endpoint"))
-        response = put(url, json=params)
+        response = put(url, params=params)
         pp.pprint(response.text)
 
     def setup_flow(self, args):
@@ -74,7 +74,7 @@ class RestApiClient():
             cookie=args.get("cookie"))
 
         url = "{0}/restapi/monitor/flow".format(args.get("endpoint"))
-        response = put(url, json=params)
+        response = put(url, params=params)
         pp.pprint(response.text)
 
     def stop_flow(self, args):
@@ -85,7 +85,7 @@ class RestApiClient():
             cookie=args.get("cookie"))
 
         url = "{0}/restapi/monitor/flow".format(args.get("endpoint"))
-        response = put(url, json=params)
+        response = put(url, params=params)
         pp.pprint(response.text)
 
     def prometheus(self, args):
