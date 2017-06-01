@@ -44,6 +44,7 @@ To install the emulator package in development mode, do:
 #### Run Unit Tests
 * `cd ~/son-emu`
 * `sudo py.test -v src/emuvim/test/unittests`
+(To force using Python2: `python2 -m  pytest -v src/emuvim/test/unittests`)
 
 
 ### Building

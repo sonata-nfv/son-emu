@@ -80,7 +80,7 @@ class RestApiClient():
         print (tabulate(table, headers=headers, tablefmt="grid"))
 
 
-parser = argparse.ArgumentParser(description='son-emu datacenter')
+parser = argparse.ArgumentParser(description='son-emu-cli datacenter')
 parser.add_argument(
     "command",
     choices=['list', 'status'],
@@ -91,7 +91,7 @@ parser.add_argument(
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",
-    help="UUID of the plugin to be manipulated.")
+    help="REST API endpoint of son-emu (default:http://127.0.0.1:5001)")
 
 
 def main(argv):
