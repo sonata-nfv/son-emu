@@ -56,9 +56,12 @@ class RestApiEndpoint(object):
     default command line client.
     """
 
-    def __init__(self, listenip, port):
+    def __init__(self, listenip, port, DCnetwork=None):
         self.ip = listenip
         self.port = port
+
+        # connect this DC network to the rest api endpoint (needed for the networking and monitoring api)
+        self.connectDCNetwork(DCnetwork)
 
         # setup Flask
         # find directory of dashboard files
