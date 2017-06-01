@@ -44,10 +44,9 @@ class RestApiClient():
             print("Command not implemented.")
 
     def add(self, args):
-        vnf_src_name = self._parse_vnf_name(args.get("source"))
-        vnf_dst_name = self._parse_vnf_name(args.get("destination"))
-
         params = self._create_dict(
+            vnf_src_name=self._parse_vnf_name(args.get("source")),
+            vnf_dst_name = self._parse_vnf_name(args.get("destination")),
             vnf_src_interface=self._parse_vnf_interface(args.get("source")),
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
@@ -56,18 +55,14 @@ class RestApiClient():
             cookie=args.get("cookie"),
             priority=args.get("priority"))
 
-        response = put("%s/restapi/network/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_src_name,
-                        vnf_dst_name),
-                       json=params)
-        pp.pprint(response.json())
+        response = put("{0}/restapi/network".format(args.get("endpoint")),
+                       params=params)
+        pp.pprint(response.text)
 
     def remove(self, args):
-        vnf_src_name = self._parse_vnf_name(args.get("source"))
-        vnf_dst_name = self._parse_vnf_name(args.get("destination"))
-
         params = self._create_dict(
+            vnf_src_name = self._parse_vnf_name(args.get("source")),
+            vnf_dst_name = self._parse_vnf_name(args.get("destination")),
             vnf_src_interface=self._parse_vnf_interface(args.get("source")),
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
@@ -76,12 +71,9 @@ class RestApiClient():
             cookie=args.get("cookie"),
             priority=args.get("priority"))
 
-        response = delete("%s/restapi/network/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_src_name,
-                        vnf_dst_name),
-                       json=params)
-        pp.pprint(response.json())
+        response = delete("{0}/restapi/network".format(args.get("endpoint")),
+                       params=params)
+        pp.pprint(response.text)
 
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
@@ -98,7 +90,7 @@ class RestApiClient():
     def _create_dict(self, **kwargs):
         return kwargs
 
-parser = argparse.ArgumentParser(description='son-emu network')
+parser = argparse.ArgumentParser(description='son-emu-cli network')
 parser.add_argument(
     "command",
     choices=['add', 'remove'],
@@ -130,7 +122,7 @@ parser.add_argument(
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",
-    help="UUID of the plugin to be manipulated.")
+    help="REST API endpoint of son-emu (default:http://127.0.0.1:5001)")
 
 def main(argv):
     args = vars(parser.parse_args(argv))

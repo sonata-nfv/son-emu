@@ -93,7 +93,7 @@ def create_topology1():
        this API, e.g., start/stop/list compute instances.
     """
     # create a new instance of a endpoint implementation
-    rapi1 = RestApiEndpoint("127.0.0.1", 5001)
+    rapi1 = RestApiEndpoint("127.0.0.1", 5001, net)
     # connect data centers to this endpoint
     rapi1.connectDatacenter(dc1)
     rapi1.connectDatacenter(dc2)

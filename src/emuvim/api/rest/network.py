@@ -38,7 +38,7 @@ from flask import request
 import json
 import networkx
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 
@@ -83,8 +83,7 @@ class NetworkAction(Resource):
             # check if json data is a dict
             data = request.args
             # try json payload
-            if data is None:
-                data = request.json
+            data = request.json
             # then no data
             if data is None:
                 data = {}
