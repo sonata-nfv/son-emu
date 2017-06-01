@@ -81,10 +81,9 @@ class NetworkAction(Resource):
         # no check if vnfs are really connected to this datacenter...
         try:
             # check json payload
-            logging.info("json: {}".format(request.json))
-            logging.info("args: {}".format(request.args))
+            logging.debug("json: {}".format(request.json))
+            logging.debug("args: {}".format(request.args))
 
-            # when called directly with curl via REST
             data = request.json
             if data is None:
                 data = request.args
