@@ -110,7 +110,7 @@ class RestApiClient():
             Popen(['xterm', '-xrm', 'XTerm.vt100.allowTitleOps: false', '-T', vnf_name,
                    '-e', "docker exec -it mn.{0} /bin/bash".format(vnf_name)])
 
-parser = argparse.ArgumentParser(description="""son-emu compute
+parser = argparse.ArgumentParser(description="""son-emu-cli compute
     
     Examples:
     - son-emu-cli compute start -d dc2 -n client -i sonatanfv/sonata-iperf3-vnf
@@ -144,7 +144,7 @@ parser.add_argument(
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",
-    help="UUID of the plugin to be manipulated.")
+    help="REST API endpoint of son-emu (default:http://127.0.0.1:5001)")
 
 
 def main(argv):
