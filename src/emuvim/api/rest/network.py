@@ -80,16 +80,17 @@ class NetworkAction(Resource):
         # call DCNetwork method, not really datacenter specific API for now...
         # no check if vnfs are really connected to this datacenter...
         try:
-            # check if json data is a dict
-            data = request.args
-            # try json payload
+            # check json payload
+            logging.debug("json: {}".format(request.json))
+            logging.debug("args: {}".format(request.args))
+
             data = request.json
-            # then no data
+            if data is None:
+                data = request.args
             if data is None:
                 data = {}
-            elif type(data) is not dict:
-                data = json.loads(request.json)
 
+            logging.info("data: {}".format(data))
             vnf_src_name = data.get("vnf_src_name")
             vnf_dst_name = data.get("vnf_dst_name")
             vnf_src_interface = data.get("vnf_src_interface")

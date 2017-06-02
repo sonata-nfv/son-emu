@@ -72,7 +72,7 @@ class RestApiClient():
             priority=args.get("priority"))
 
         response = delete("{0}/restapi/network".format(args.get("endpoint")),
-                       params=params)
+                          params=params)
         pp.pprint(response.text)
 
     def _parse_vnf_name(self, vnf_name_str):
