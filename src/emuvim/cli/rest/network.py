@@ -26,10 +26,8 @@ acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
 from requests import get,put, delete
-import pprint
 import argparse
 
-pp = pprint.PrettyPrinter(indent=4)
 
 class RestApiClient():
 
@@ -57,7 +55,7 @@ class RestApiClient():
 
         response = put("{0}/restapi/network".format(args.get("endpoint")),
                        params=params)
-        pp.pprint(response.text)
+        print(self._nice_print(response.text))
 
     def remove(self, args):
         params = self._create_dict(
@@ -73,7 +71,7 @@ class RestApiClient():
 
         response = delete("{0}/restapi/network".format(args.get("endpoint")),
                           params=params)
-        pp.pprint(response.text)
+        print(self._nice_print(response.text))
 
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
@@ -89,6 +87,12 @@ class RestApiClient():
 
     def _create_dict(self, **kwargs):
         return kwargs
+
+    def _nice_print(self, text):
+        # some modules seem to return unicode strings where newlines, other special characters are escaped
+        text = str(text).replace('\\n', '\n')
+        text = str(text).replace('\\"', '"')
+        return text
 
 parser = argparse.ArgumentParser(description='son-emu-cli network')
 parser.add_argument(
@@ -108,7 +112,7 @@ parser.add_argument(
     "--weight", "-w", dest="weight",
     help="weight edge attribute to calculate the path")
 parser.add_argument(
-    "--priority", "-p", dest="priority", default="0",
+    "--priority", "-p", dest="priority", default="1000",
     help="priority of flow rule")
 parser.add_argument(
     "--match", "-m", dest="match",
@@ -117,7 +121,7 @@ parser.add_argument(
     "--bidirectional", "-b", dest="bidirectional", action='store_true',
     help="add/remove the flow entries from src to dst and back")
 parser.add_argument(
-    "--cookie", "-c", dest="cookie",
+    "--cookie", "-c", dest="cookie", default="10",
     help="cookie for this flow, as easy to use identifier (eg. per tenant/service)")
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
