@@ -20,7 +20,7 @@ class DemoTopology(DCNetwork):
         Initialize multi PoP emulator network.
         """
         super(DemoTopology, self).__init__(
-            monitor=False,
+            monitor=True,
             enable_learning=True
         )
         # define members for later use

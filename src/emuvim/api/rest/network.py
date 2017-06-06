@@ -90,7 +90,6 @@ class NetworkAction(Resource):
             if data is None:
                 data = {}
 
-            logging.info("data: {}".format(data))
             vnf_src_name = data.get("vnf_src_name")
             vnf_dst_name = data.get("vnf_dst_name")
             vnf_src_interface = data.get("vnf_src_interface")

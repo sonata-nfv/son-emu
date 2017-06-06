@@ -117,6 +117,57 @@ class testEmulatorTopology( SimpleTestTopology ):
 
 class testEmulatorNetworking( SimpleTestTopology ):
 
+    def testSDNChainingSingleService_withLearning(self):
+        """
+        Create a two data centers and interconnect them with additional
+        switches between them.
+        Uses Ryu SDN controller.
+        Connect the Docker hosts to different datacenters and setup the links between.
+        """
+        # create network
+        self.createNet(
+            nswitches=3, ndatacenter=2, nhosts=0, ndockers=0,
+            autolinkswitches=True,
+            controller=RemoteController,
+            enable_learning=True)
+        # setup links
+        self.net.addLink(self.dc[0], self.s[0])
+        self.net.addLink(self.s[2], self.dc[1])
+        # start Mininet network
+        self.startNet()
+
+        # add compute resources
+        vnf1 = self.dc[0].startCompute("vnf1", network=[{'id':'intf1', 'ip':'10.0.10.1/24'}])
+        vnf2 = self.dc[1].startCompute("vnf2", network=[{'id':'intf2', 'ip':'10.0.10.2/24'}])
+        # check number of running nodes
+        self.assertTrue(len(self.getContainernetContainers()) == 2)
+        self.assertTrue(len(self.net.hosts) == 2)
+        self.assertTrue(len(self.net.switches) == 5)
+        # check status
+        # check get status
+        s1 = self.dc[0].containers.get("vnf1").getStatus()
+        print s1
+        self.assertTrue(s1["name"] == "vnf1")
+        self.assertTrue(s1["state"]["Running"])
+        self.assertTrue(s1["network"][0]['intf_name'] == 'intf1')
+        self.assertTrue(s1["network"][0]['ip'] == '10.0.10.1/24')
+
+        s2 = self.dc[1].containers.get("vnf2").getStatus()
+        print s2
+        self.assertTrue(s2["name"] == "vnf2")
+        self.assertTrue(s2["state"]["Running"])
+        self.assertTrue(s2["network"][0]['intf_name'] == 'intf2')
+        self.assertTrue(s2["network"][0]['ip'] == '10.0.10.2/24')
+
+        # should be connected because learning = True
+        self.assertTrue(self.net.ping([vnf1, vnf2]) <= 0.0)
+        # setup links
+        self.net.setChain('vnf1', 'vnf2', 'intf1', 'intf2', bidirectional=True, cmd='add-flow')
+        # should still be connected
+        self.assertTrue(self.net.ping([vnf1, vnf2]) <= 0.0)
+        # stop Mininet network
+        self.stopNet()
+
     def testSDNChainingSingleService(self):
         """
         Create a two data centers and interconnect them with additional
