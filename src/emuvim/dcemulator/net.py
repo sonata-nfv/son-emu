@@ -33,6 +33,7 @@ from subprocess import Popen
 import re
 import requests
 import os
+import json
 
 from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
@@ -49,6 +50,11 @@ LOG.setLevel(logging.DEBUG)
 
 # default CPU period used for cpu percentage-based cfs values (microseconds)
 CPU_PERIOD = 1000000
+
+# default priority setting for added flow-rules
+DEFAULT_PRIORITY = 1000
+# default cookie number for new flow-rules
+DEFAULT_COOKIE = 10
 
 class DCNetwork(Containernet):
     """
@@ -710,7 +716,15 @@ class DCNetwork(Containernet):
                 switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
                 current_hop = next_hop
 
-        return "path {2} between {0} and {1}".format(vnf_src_name, vnf_dst_name, cmd)
+        flow_options = {
+            'priority':kwargs.get('priority', DEFAULT_PRIORITY),
+            'cookie':kwargs.get('cookie', DEFAULT_COOKIE),
+            'vlan':kwargs['vlan'],
+            'path':kwargs['path'],
+            'match_input':kwargs.get('match')
+        }
+        flow_options_str = json.dumps(flow_options, indent=1)
+        return "success: {2} between {0} and {1} with options: {3}".format(vnf_src_name, vnf_dst_name, cmd, flow_options_str)
 
     def _set_flow_entry_ryu_rest(self, node, switch_inport_nr, switch_outport_nr, **kwargs):
         match = 'in_port=%s' % switch_inport_nr
@@ -722,7 +736,7 @@ class DCNetwork(Containernet):
         index = kwargs.get('pathindex')
 
         vlan = kwargs.get('vlan')
-        priority = kwargs.get('priority')
+        priority = kwargs.get('priority', DEFAULT_PRIORITY)
         # flag to not set the ovs port vlan tag
         skip_vlan_tag = kwargs.get('skip_vlan_tag')
         # table id to put this flowentry

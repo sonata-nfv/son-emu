@@ -92,14 +92,19 @@ class testRestApi(SimpleTestTopology):
 
         print('network add vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli network add -src vnf1 -dst vnf2 -b -c 10", shell=True)
+        output = subprocess.check_output("son-emu-cli network add -src vnf1 -dst vnf2 -b -c 10", shell=True)
+        self.assertTrue("add-flow" in output)
+        self.assertTrue("success" in output)
+
         print('network remove vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli network remove -src vnf1 -dst vnf2 -b", shell=True)
+        output = subprocess.check_output("son-emu-cli network remove -src vnf1 -dst vnf2 -b", shell=True)
+        self.assertTrue("del-flows" in output)
+        self.assertTrue("success" in output)
 
         print('>>>>> checking --> son-emu-cli compute stop -d datacenter0 -n vnf2 ->>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli compute stop -d datacenter0 -n vnf2", shell=True)
+        output = subprocess.check_output("son-emu-cli compute stop -d datacenter0 -n vnf2", shell=True)
 
         # check number of running nodes
         self.assertTrue(len(self.getContainernetContainers()) == 2)
@@ -111,7 +116,6 @@ class testRestApi(SimpleTestTopology):
 
         print('>>>>> checking --> son-emu-cli compute list ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli compute list", shell=True)
         output = subprocess.check_output("son-emu-cli compute list", shell=True)
 
         # check datacenter list result
@@ -119,7 +123,6 @@ class testRestApi(SimpleTestTopology):
 
         print('>>>>> checking --> son-emu-cli compute status -d datacenter0 -n vnf1 ->>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli compute status -d datacenter0 -n vnf1", shell=True)
         output = subprocess.check_output("son-emu-cli compute status -d datacenter0 -n vnf1", shell=True)
         output = ast.literal_eval(output)
 
@@ -129,18 +132,13 @@ class testRestApi(SimpleTestTopology):
 
         print('>>>>> checking --> son-emu-cli datacenter list ->>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli datacenter list", shell=True)
         output = subprocess.check_output("son-emu-cli datacenter list", shell=True)
-
         # check datacenter list result
-
         self.assertTrue("datacenter0" in output)
 
         print('->>>>> checking --> son-emu-cli datacenter status -d datacenter0 ->>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli datacenter status -d datacenter0", shell=True)
         output = subprocess.check_output("son-emu-cli datacenter status -d datacenter0", shell=True)
-
         # check datacenter status result
         self.assertTrue("datacenter0" in output)
 
