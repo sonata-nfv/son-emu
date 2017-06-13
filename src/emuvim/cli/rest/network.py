@@ -26,10 +26,8 @@ acknowledge the contributions of their colleagues of the SONATA
 partner consortium (www.sonata-nfv.eu).
 """
 from requests import get,put, delete
-import pprint
 import argparse
 
-pp = pprint.PrettyPrinter(indent=4)
 
 class RestApiClient():
 
@@ -44,10 +42,9 @@ class RestApiClient():
             print("Command not implemented.")
 
     def add(self, args):
-        vnf_src_name = self._parse_vnf_name(args.get("source"))
-        vnf_dst_name = self._parse_vnf_name(args.get("destination"))
-
         params = self._create_dict(
+            vnf_src_name=self._parse_vnf_name(args.get("source")),
+            vnf_dst_name = self._parse_vnf_name(args.get("destination")),
             vnf_src_interface=self._parse_vnf_interface(args.get("source")),
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
@@ -56,18 +53,14 @@ class RestApiClient():
             cookie=args.get("cookie"),
             priority=args.get("priority"))
 
-        response = put("%s/restapi/network/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_src_name,
-                        vnf_dst_name),
-                       json=params)
-        pp.pprint(response.json())
+        response = put("{0}/restapi/network".format(args.get("endpoint")),
+                       params=params)
+        print(self._nice_print(response.text))
 
     def remove(self, args):
-        vnf_src_name = self._parse_vnf_name(args.get("source"))
-        vnf_dst_name = self._parse_vnf_name(args.get("destination"))
-
         params = self._create_dict(
+            vnf_src_name = self._parse_vnf_name(args.get("source")),
+            vnf_dst_name = self._parse_vnf_name(args.get("destination")),
             vnf_src_interface=self._parse_vnf_interface(args.get("source")),
             vnf_dst_interface=self._parse_vnf_interface(args.get("destination")),
             weight=args.get("weight"),
@@ -76,12 +69,9 @@ class RestApiClient():
             cookie=args.get("cookie"),
             priority=args.get("priority"))
 
-        response = delete("%s/restapi/network/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_src_name,
-                        vnf_dst_name),
-                       json=params)
-        pp.pprint(response.json())
+        response = delete("{0}/restapi/network".format(args.get("endpoint")),
+                          params=params)
+        print(self._nice_print(response.text))
 
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
@@ -98,7 +88,13 @@ class RestApiClient():
     def _create_dict(self, **kwargs):
         return kwargs
 
-parser = argparse.ArgumentParser(description='son-emu network')
+    def _nice_print(self, text):
+        # some modules seem to return unicode strings where newlines, other special characters are escaped
+        text = str(text).replace('\\n', '\n')
+        text = str(text).replace('\\"', '"')
+        return text
+
+parser = argparse.ArgumentParser(description='son-emu-cli network')
 parser.add_argument(
     "command",
     choices=['add', 'remove'],
@@ -116,7 +112,7 @@ parser.add_argument(
     "--weight", "-w", dest="weight",
     help="weight edge attribute to calculate the path")
 parser.add_argument(
-    "--priority", "-p", dest="priority", default="0",
+    "--priority", "-p", dest="priority", default="1000",
     help="priority of flow rule")
 parser.add_argument(
     "--match", "-m", dest="match",
@@ -125,12 +121,12 @@ parser.add_argument(
     "--bidirectional", "-b", dest="bidirectional", action='store_true',
     help="add/remove the flow entries from src to dst and back")
 parser.add_argument(
-    "--cookie", "-c", dest="cookie",
+    "--cookie", "-c", dest="cookie", default="10",
     help="cookie for this flow, as easy to use identifier (eg. per tenant/service)")
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",
-    help="UUID of the plugin to be manipulated.")
+    help="REST API endpoint of son-emu (default:http://127.0.0.1:5001)")
 
 def main(argv):
     args = vars(parser.parse_args(argv))

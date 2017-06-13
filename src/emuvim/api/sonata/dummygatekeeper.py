@@ -48,6 +48,7 @@ from subprocess import Popen
 from random import randint
 import ipaddress
 import copy
+import time
 
 logging.basicConfig()
 LOG = logging.getLogger("sonata-dummy-gatekeeper")
@@ -100,6 +101,9 @@ ELINE_SUBNETS = generate_subnets('10.30', 0, subnet_size=50, mask=30)
 
 # path to the VNFD for the SAP VNF that is deployed as internal SAP point
 SAP_VNFD=None
+
+# Time in seconds to wait for vnf stop scripts to execute fully
+VNF_STOP_WAIT_TIME = 5
 
 class Gatekeeper(object):
 
@@ -241,6 +245,10 @@ class Service(object):
         # get relevant information
         # instance_uuid = str(self.uuid.uuid4())
         vnf_instances = self.instances[instance_uuid]["vnf_instances"]
+
+        # trigger stop skripts in vnf instances and wait a few seconds for completion
+        self._trigger_emulator_stop_scripts_in_vnfis(vnf_instances)
+        time.sleep(VNF_STOP_WAIT_TIME)
 
         for v in vnf_instances:
             self._stop_vnfi(v)
@@ -431,6 +439,21 @@ class Service(object):
                     t = threading.Thread(target=vnfi.cmdPrint, args=(cmd,))
                     t.daemon = True
                     t.start()
+
+    def _trigger_emulator_stop_scripts_in_vnfis(self, vnfi_list):
+        for vnfi in vnfi_list:
+            config = vnfi.dcinfo.get("Config", dict())
+            env = config.get("Env", list())
+            for env_var in env:
+                var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
+                if var=="SON_EMU_CMD_STOP":
+                    LOG.info("Executing stop script in %r: %r" % (vnfi.name, cmd))
+                    # execute command in new thread to ensure that GK is not blocked by VNF
+                    t = threading.Thread(target=vnfi.cmdPrint, args=(cmd,))
+                    t.daemon = True
+                    t.start()
+
+
 
     def _unpack_service_package(self):
         """
