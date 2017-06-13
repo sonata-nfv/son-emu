@@ -199,12 +199,15 @@ class MonitorLinkAction(Resource):
         # no check if vnfs are really connected to this datacenter...
 
         try:
-            # get URL parameters
-            data = request.args
-            #then no data
+            # check json payload
+            logging.debug("json: {}".format(request.json))
+            logging.debug("args: {}".format(request.args))
+
+            data = request.json
+            if data is None:
+                data = request.args
             if data is None:
                 data = {}
-
 
             vnf_src_name = data.get("vnf_src_name")
             vnf_dst_name = data.get("vnf_dst_name")

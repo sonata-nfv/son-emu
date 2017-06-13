@@ -46,52 +46,47 @@ class RestApiClient():
             print("Command not implemented.")
 
     def setup_metric(self, args):
-        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
-        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
 
-        response = put("%s/restapi/monitor/interface/%s/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_name,
-                        vnf_interface,
-                        args.get("metric")))
-        pp.pprint(response.json())
+        params = self._create_dict(
+            vnf_name=self._parse_vnf_name(args.get("vnf_name")),
+            vnf_interface = self._parse_vnf_interface(args.get("vnf_name")),
+            metric = args.get("metric"))
+
+        url = "{0}/restapi/monitor/interface".format(args.get("endpoint"))
+        response = put(url, params=params)
+        pp.pprint(response.text)
 
     def stop_metric(self, args):
-        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
-        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        params = self._create_dict(
+            vnf_name=self._parse_vnf_name(args.get("vnf_name")),
+            vnf_interface=self._parse_vnf_interface(args.get("vnf_name")),
+            metric=args.get("metric"))
 
-        response = delete("%s/restapi/monitor/interface/%s/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_name,
-                        vnf_interface,
-                        args.get("metric")))
-        pp.pprint(response.json())
+        url = "{0}/restapi/monitor/interface".format(args.get("endpoint"))
+        response = put(url, params=params)
+        pp.pprint(response.text)
 
     def setup_flow(self, args):
-        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
-        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        params = self._create_dict(
+            vnf_name=self._parse_vnf_name(args.get("vnf_name")),
+            vnf_interface=self._parse_vnf_interface(args.get("vnf_name")),
+            metric=args.get("metric"),
+            cookie=args.get("cookie"))
 
-        response = put("%s/restapi/monitor/flow/%s/%s/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_name,
-                        vnf_interface,
-                        args.get("metric"),
-                        args.get("cookie")))
-
-        pp.pprint(response.json())
+        url = "{0}/restapi/monitor/flow".format(args.get("endpoint"))
+        response = put(url, params=params)
+        pp.pprint(response.text)
 
     def stop_flow(self, args):
-        vnf_name = self._parse_vnf_name(args.get("vnf_name"))
-        vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
+        params = self._create_dict(
+            vnf_name=self._parse_vnf_name(args.get("vnf_name")),
+            vnf_interface=self._parse_vnf_interface(args.get("vnf_name")),
+            metric=args.get("metric"),
+            cookie=args.get("cookie"))
 
-        response = delete("%s/restapi/monitor/flow/%s/%s/%s/%s" %
-                       (args.get("endpoint"),
-                        vnf_name,
-                        vnf_interface,
-                        args.get("metric"),
-                        args.get("cookie")))
-
-        pp.pprint(response.json())
+        url = "{0}/restapi/monitor/flow".format(args.get("endpoint"))
+        response = put(url, params=params)
+        pp.pprint(response.text)
 
     def prometheus(self, args):
         # This functions makes it more user-friendly to create the correct prometheus query
@@ -100,6 +95,7 @@ class RestApiClient():
         vnf_interface = self._parse_vnf_interface(args.get("vnf_name"))
         dc_label = args.get("datacenter")
         query = args.get("query")
+
         vnf_status = get("%s/restapi/compute/%s/%s" %
             (args.get("endpoint"),
              args.get("datacenter"),
@@ -122,7 +118,10 @@ class RestApiClient():
 
         return vnf_interface
 
-parser = argparse.ArgumentParser(description='son-emu monitor')
+    def _create_dict(self, **kwargs):
+        return kwargs
+
+parser = argparse.ArgumentParser(description='son-emu-cli monitor')
 parser.add_argument(
     "command",
     choices=['setup_metric', 'stop_metric', 'setup_flow', 'stop_flow','prometheus'],
@@ -145,7 +144,7 @@ parser.add_argument(
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",
-    help="UUID of the plugin to be manipulated.")
+    help="REST API endpoint of son-emu (default:http://127.0.0.1:5001)")
 
 def main(argv):
     args = vars(parser.parse_args(argv))
