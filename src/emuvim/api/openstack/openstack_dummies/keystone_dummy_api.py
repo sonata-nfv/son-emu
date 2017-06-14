@@ -13,6 +13,8 @@ class KeystoneDummyApi(BaseOpenstackDummy):
         self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(KeystoneShowAPIv2, "/v2.0", resource_class_kwargs={'api': self})
         self.api.add_resource(KeystoneGetToken, "/v2.0/tokens", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneShowAPIv3, "/v3", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneGetTokenv3, "/v3/auth/tokens", resource_class_kwargs={'api': self})
 
     def _start_flask(self):
         logging.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
@@ -77,6 +79,68 @@ class KeystoneListVersions(Resource):
 
 
 class KeystoneShowAPIv2(Resource):
+    """
+    Entrypoint for all openstack clients.
+    This returns all current entrypoints running on son-emu.
+    """
+
+    def __init__(self, api):
+        self.api = api
+
+    def get(self):
+        """
+        List API entrypoints.
+
+        :return: Returns an openstack style response for all entrypoints.
+        :rtype: :class:`flask.response`
+        """
+        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+
+        neutron_port = self.api.port + 4696
+        heat_port = self.api.port + 3004
+
+        resp = dict()
+        resp['version'] = {
+            "status": "stable",
+            "media-types": [
+                {
+                    "base": "application/json",
+                    "type": "application/vnd.openstack.identity-v2.0+json"
+                }
+            ],
+            "id": "v2.0",
+            "links": [
+                {
+                    "href": "http://%s:%d/v2.0" % (self.api.ip, self.api.port),
+                    "rel": "self"
+                },
+                {
+                    "href": "http://%s:%d/v2.0/tokens" % (self.api.ip, self.api.port),
+                    "rel": "self"
+                },
+                {
+                    "href": "http://%s:%d/v2.0/networks" % (self.api.ip, neutron_port),
+                    "rel": "self"
+                },
+                {
+                    "href": "http://%s:%d/v2.0/subnets" % (self.api.ip, neutron_port),
+                    "rel": "self"
+                },
+                {
+                    "href": "http://%s:%d/v2.0/ports" % (self.api.ip, neutron_port),
+                    "rel": "self"
+                },
+                {
+                    "href": "http://%s:%d/v1/<tenant_id>/stacks" % (self.api.ip, heat_port),
+                    "rel": "self"
+                }
+            ]
+        }
+
+        return Response(json.dumps(resp), status=200, mimetype='application/json')
+
+
+class KeystoneShowAPIv3(Resource):
     """
     Entrypoint for all openstack clients.
     This returns all current entrypoints running on son-emu.
@@ -276,6 +340,135 @@ class KeystoneGetToken(Resource):
                 "impersonation": False
             }
             return Response(json.dumps(ret), status=200, mimetype='application/json')
+
+        except Exception as ex:
+            logging.exception("Keystone: Get token failed.")
+            return ex.message, 500
+
+class KeystoneGetTokenv3(Resource):
+    """
+    Returns a static keystone token.
+    We don't do any validation so we don't care.
+    """
+
+    def __init__(self, api):
+        self.api = api
+
+    def post(self):
+        """
+        List API entrypoints.
+
+        This is hardcoded. For a working "authentication" use these ENVVARS:
+
+        * OS_AUTH_URL=http://<ip>:<port>/v3
+        * OS_IDENTITY_API_VERSION=2.0
+        * OS_TENANT_ID=fc394f2ab2df4114bde39905f800dc57
+        * OS_REGION_NAME=RegionOne
+        * OS_USERNAME=bla
+        * OS_PASSWORD=bla
+
+        :return: Returns an openstack style response for all entrypoints.
+        :rtype: :class:`flask.response`
+        """
+
+        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        try:
+            ret = dict()
+            req = json.loads(request.data)
+            ret['token'] = dict()
+            token = ret['token']
+
+            token['issued_at'] = "2014-01-30T15:30:58.819Z"
+            token['expires_at'] = "2999-01-30T15:30:58.819Z"
+            token['methods'] = ["password"]
+            token['extras'] = dict()
+            token['user'] = dict()
+            user = token['user']
+            user['id'] = req['auth'].get('token', {'id': 'fc394f2ab2df4114bde39905f800dc57'}).get('id')
+            user['name'] = "tenantName"
+            user['password_expires_at'] = None
+            user['domain'] = {"id": "default", "name": "Default"}
+            token['audit_ids'] = ["ZzZwkUflQfygX7pdYDBCQQ"]
+
+            # project
+            token['project'] = {
+                "domain": {
+                    "id" : "default",
+                    "name": "Default"
+                },
+                "id": "8538a3f13f9541b28c2620eb19065e45",
+                "name": "tenantName"
+            }
+
+            # catalog
+            token['catalog'] = [{
+                "endpoints": [
+                    {
+                        "url": "http://%s:%s/v2.1/%s" % (self.api.ip, self.api.port + 3774, user['id']),
+                        "region": "RegionOne",
+                        "interface": "public",
+                        "id": "2dad48f09e2a447a9bf852bcd93548ef"
+                    }
+                ],
+                "id": "2dad48f09e2a447a9bf852bcd93548ef",
+                "type": "compute",
+                "name": "nova"
+            },
+                {
+                    "endpoints": [
+                        {
+                            "url": "http://%s:%s/v2.0" % (self.api.ip, self.api.port),
+                            "region": "RegionOne",
+                            "interface": "public",
+                            "id": "2dad48f09e2a447a9bf852bcd93543fc"
+                        }
+                    ],
+                    "id": "2dad48f09e2a447a9bf852bcd93543fc",
+                    "type": "identity",
+                    "name": "keystone"
+                },
+                {
+                    "endpoints": [
+                        {
+                            "url": "http://%s:%s" % (self.api.ip, self.api.port + 4696),
+                            "region": "RegionOne",
+                            "interface": "public",
+                            "id": "2dad48f09e2a447a9bf852bcd93548cf"
+                        }
+                    ],
+                    "id": "2dad48f09e2a447a9bf852bcd93548cf",
+                    "type": "network",
+                    "name": "neutron"
+                },
+                {
+                    "endpoints": [
+                        {
+                            "url": "http://%s:%s" % (self.api.ip, self.api.port + 4242),
+                            "region": "RegionOne",
+                            "interface": "public",
+                            "id": "2dad48f09e2a447a9bf852bcd93548cf"
+                        }
+                    ],
+                    "id": "2dad48f09e2a447a9bf852bcd93548cf",
+                    "type": "image",
+                    "name": "glance"
+                },
+                {
+                    "endpoints": [
+                        {
+                            "url": "http://%s:%s/v1/%s" % (self.api.ip, self.api.port + 3004, user['id']),
+                            "region": "RegionOne",
+                            "interface": "public",
+                            "id": "2dad48f09e2a447a9bf852bcd93548bf"
+                        }
+                    ],
+                    "id": "2dad48f09e2a447a9bf852bcd93548bf",
+                    "type": "orchestration",
+                    "name": "heat"
+                }
+            ]
+            
+            return Response(json.dumps(ret), status=201, mimetype='application/json')
 
         except Exception as ex:
             logging.exception("Keystone: Get token failed.")
