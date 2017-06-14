@@ -64,7 +64,10 @@ class HeatParser:
 
         if len(self.bufferResource) > 0:
             print(str(len(self.bufferResource)) +
-                  ' classes could not be created, because the dependencies could not be found.')
+                  ' classes of the HOT could not be created, because the dependencies could not be found.')
+            print("the problem classes are:")
+            for br in self.bufferResource:
+                print("class: %s" % str(br))
             return False
         return True
 
@@ -125,7 +128,7 @@ class HeatParser:
                 else:
                     port = stack.ports[port_name]
 
-                if resource['properties']['network']['get_resource'] in stack.nets:
+                if str(resource['properties']['network']['get_resource']) in stack.nets:
                     net = stack.nets[resource['properties']['network']['get_resource']]
                     if net.subnet_id is not None:
                         port.net_name = net.name
