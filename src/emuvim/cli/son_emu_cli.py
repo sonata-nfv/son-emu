@@ -43,11 +43,19 @@ from emuvim.cli.rest import datacenter as restdc
 from emuvim.cli.rest import monitor as restmon
 from emuvim.cli.rest import network as restnetw
 
+def help():
+    print("Missing arguments.\n")
+    print("Usage: son-emu-cli compute|datacenter|network|monitor <arguments>\n")
+    print("Get more help:")
+    print("\tson-emu-cli compute --help")
+    print("\tson-emu-cli datacenter --help")
+    print("\tson-emu-cli network --help")
+    print("\tson-emu-cli monitor --help")
+    exit(0)
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: son-emu-cli compute|datacenter|network|monitor <arguments>")
-        exit(0)
+        help()
     elif sys.argv[1] == "monitor":
         restmon.main(sys.argv[2:])
     elif sys.argv[1] == "network":
@@ -56,6 +64,8 @@ def main():
         restcom.main(sys.argv[2:])
     elif sys.argv[1] == "datacenter":
         restdc.main(sys.argv[2:])
+    else:
+        help()
 
 
 if __name__ == '__main__':
