@@ -44,6 +44,8 @@ class NovaDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
         self.api.add_resource(NovaListImageById, "/v2.1/<id>/images/<imageid>",
                               resource_class_kwargs={'api': self})
+        self.api.add_resource(NovaLimits, "/v2.1/<id>/limits",
+                              resource_class_kwargs={'api': self})
 
     def _start_flask(self):
         LOG.info("Starting %s endpoint @ http://%s:%d" % ("NovaDummyApi", self.ip, self.port))
@@ -844,4 +846,57 @@ class NovaShowAndDeleteInterfaceAtServer(Resource):
 
         except Exception as ex:
             LOG.exception(u"%s: Could not detach interface from the server." % __name__)
+            return ex.message, 500
+
+
+class NovaLimits(Resource):
+    def __init__(self, api):
+        self.api = api
+
+    def get(self, id):
+        """
+        Returns the resource limits of the emulated cloud.
+        https://developer.openstack.org/api-ref/compute/?expanded=show-rate-and-absolute-limits-detail#limits-limits
+
+        TODO: For now we only return fixed limits, not based on the real deployment.
+
+        :param id: tenant id, used for the 'href' link
+        :type id: ``str``
+        :return: Returns the resource limits.
+        :rtype: :class:`flask.response`
+        """
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        try:
+            resp = {
+                "limits": {
+                    "absolute": {
+                        "maxImageMeta": 12800,
+                        "maxPersonality": 500,
+                        "maxPersonalitySize": 1024000,
+                        "maxSecurityGroupRules": 2000,
+                        "maxSecurityGroups": 1000,
+                        "maxServerMeta": 12800,
+                        "maxTotalCores": 2000,
+                        "maxTotalFloatingIps": 1000,
+                        "maxTotalInstances": 1000,
+                        "maxTotalKeypairs": 1000,
+                        "maxTotalRAMSize": 5120000,
+                        "maxServerGroups": 1000,
+                        "maxServerGroupMembers": 1000,
+                        "totalCoresUsed": 0,
+                        "totalInstancesUsed": 0,
+                        "totalRAMUsed": 0,
+                        "totalSecurityGroupsUsed": 0,
+                        "totalFloatingIpsUsed": 0,
+                        "totalServerGroupsUsed": 0
+                    },
+                    "rate": []
+                }
+            }
+            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            return response
+
+        except Exception as ex:
+            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
