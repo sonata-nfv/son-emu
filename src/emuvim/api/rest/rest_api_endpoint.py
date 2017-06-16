@@ -46,7 +46,7 @@ from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction
 import pkg_resources
 from os import path
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 
 
 class RestApiEndpoint(object):

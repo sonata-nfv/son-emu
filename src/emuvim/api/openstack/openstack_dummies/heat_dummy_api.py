@@ -8,6 +8,9 @@ import logging
 import json
 
 
+LOG = logging.getLogger("api.openstack.heat")
+
+
 class HeatDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port, compute):
         super(HeatDummyApi, self).__init__(in_ip, in_port)
@@ -35,7 +38,7 @@ class HeatDummyApi(BaseOpenstackDummy):
 
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
+        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
         if self.app is not None:
             self.app.before_request(self.dump_playbook)
             self.app.run(self.ip, self.port, debug=True, use_reloader=False)
@@ -47,7 +50,7 @@ class Shutdown(Resource):
     """
 
     def get(self):
-        logging.debug(("%s is beeing shut down") % (__name__))
+        LOG.debug(("%s is beeing shut down") % (__name__))
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
@@ -59,7 +62,7 @@ class HeatListAPIVersions(Resource):
         self.api = api
 
     def get(self):
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         resp = dict()
 
         resp['versions'] = dict()
@@ -91,7 +94,7 @@ class HeatCreateStack(Resource):
             500, if any exception occurred while creation.
             201, if everything worked out.
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
 
         try:
             stack_dict = json.loads(request.data)
@@ -124,7 +127,7 @@ class HeatCreateStack(Resource):
             return Response(json.dumps(return_dict), status=201, mimetype="application/json")
 
         except Exception as ex:
-            logging.exception("Heat: Create Stack exception.")
+            LOG.exception("Heat: Create Stack exception.")
             return ex.message, 500
 
     def get(self, tenant_id):
@@ -136,7 +139,7 @@ class HeatCreateStack(Resource):
             500, if any exception occurred.
             200, if everything worked out.
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             return_stacks = dict()
             return_stacks['stacks'] = list()
@@ -155,7 +158,7 @@ class HeatCreateStack(Resource):
 
             return Response(json.dumps(return_stacks), status=200, mimetype="application/json")
         except Exception as ex:
-            logging.exception("Heat: List Stack exception.")
+            LOG.exception("Heat: List Stack exception.")
             return ex.message, 500
 
 
@@ -174,7 +177,7 @@ class HeatShowStack(Resource):
             500, if any exception occurred.
             200, if everything worked out.
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             stack = None
             if stack_name_or_id in self.api.compute.stacks:
@@ -223,7 +226,7 @@ class HeatShowStack(Resource):
             return Response(json.dumps(return_stack), status=200, mimetype="application/json")
 
         except Exception as ex:
-            logging.exception("Heat: Show stack exception.")
+            LOG.exception("Heat: Show stack exception.")
             return ex.message, 500
 
 
@@ -243,7 +246,7 @@ class HeatUpdateStack(Resource):
             500, if any exception occurred while updating.
             202, if everything worked out.
         """
-        logging.debug("API CALL: %s PUT" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s PUT" % str(self.__class__.__name__))
         try:
             old_stack = None
             if stack_name_or_id in self.api.compute.stacks:
@@ -276,7 +279,7 @@ class HeatUpdateStack(Resource):
             return Response(status=202, mimetype="application/json")
 
         except Exception as ex:
-            logging.exception("Heat: Update Stack exception")
+            LOG.exception("Heat: Update Stack exception")
             return ex.message, 500
 
 
@@ -294,7 +297,7 @@ class HeatDeleteStack(Resource):
         :return: 500, if any exception occurred while deletion.
             204, if everything worked out.
         """
-        logging.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
         try:
             if stack_name_or_id in self.api.compute.stacks:
                 self.api.compute.delete_stack(stack_name_or_id)
@@ -306,5 +309,5 @@ class HeatDeleteStack(Resource):
                     return Response('Deleted Stack: ' + stack_name_or_id, 204)
 
         except Exception as ex:
-            logging.exception("Heat: Delete Stack exception")
+            LOG.exception("Heat: Delete Stack exception")
             return ex.message, 500

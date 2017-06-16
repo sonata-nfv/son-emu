@@ -7,6 +7,9 @@ import uuid
 from mininet.link import Link
 
 
+LOG = logging.getLogger("api.openstack.nova")
+
+
 class NovaDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port, compute):
         super(NovaDummyApi, self).__init__(in_ip, in_port)
@@ -43,7 +46,7 @@ class NovaDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % ("NovaDummyApi", self.ip, self.port))
+        LOG.info("Starting %s endpoint @ http://%s:%d" % ("NovaDummyApi", self.ip, self.port))
         # add some flavors for good measure
         self.compute.add_flavor('m1.tiny', 1, 512, "MB", 1, "GB")
         self.compute.add_flavor('m1.nano', 1, 64, "MB", 0, "GB")
@@ -60,7 +63,7 @@ class Shutdown(Resource):
     """
 
     def get(self):
-        logging.debug(("%s is beeing shut doen") % (__name__))
+        LOG.debug(("%s is beeing shut doen") % (__name__))
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
@@ -78,7 +81,7 @@ class NovaVersionsList(Resource):
         :return: Returns a json with API versions.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = """
                 {
@@ -105,7 +108,7 @@ class NovaVersionsList(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not show list of versions." % __name__)
+            LOG.exception(u"%s: Could not show list of versions." % __name__)
             return ex.message, 500
 
 
@@ -122,7 +125,7 @@ class NovaVersionShow(Resource):
         :return: Returns a json with API details.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
         try:
             resp = """
@@ -159,7 +162,7 @@ class NovaVersionShow(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not show list of versions." % __name__)
+            LOG.exception(u"%s: Could not show list of versions." % __name__)
             return ex.message, 500
 
 
@@ -176,7 +179,7 @@ class NovaListServersApi(Resource):
         :return: Returns a json response with a dictionary that contains the server information.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
         try:
             resp = dict()
@@ -195,7 +198,7 @@ class NovaListServersApi(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
     def post(self, id):
@@ -207,7 +210,7 @@ class NovaListServersApi(Resource):
         :return: Returns a flask response, with detailed information about the just created server.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             server_dict = json.loads(request.data)['server']
             networks = server_dict.get('networks', None)
@@ -244,7 +247,7 @@ class NovaListServersApi(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not create the server." % __name__)
+            LOG.exception(u"%s: Could not create the server." % __name__)
             return ex.message, 500
 
 
@@ -262,7 +265,7 @@ class NovaListServersAndPortsApi(Resource):
         :return: Returns a json response with a dictionary that contains the server information.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
         try:
             resp = dict()
@@ -291,7 +294,7 @@ class NovaListServersAndPortsApi(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
 
@@ -309,7 +312,7 @@ class NovaListServersDetailed(Resource):
         :return: Returns a flask response, with detailed information aboit the servers and their flavor and image.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
         try:
             resp = {"servers": list()}
@@ -353,7 +356,7 @@ class NovaListServersDetailed(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
 
@@ -370,7 +373,7 @@ class NovaListFlavors(Resource):
         :return: Returns a flask response with a list of all flavors.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
             resp['flavors'] = list()
@@ -389,13 +392,13 @@ class NovaListFlavors(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
     def post(self, id):
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         data = json.loads(request.data).get("flavor")
-        logging.warning("Create Flavor: %s" % str(data))
+        LOG.warning("Create Flavor: %s" % str(data))
         # add to internal dict
         f = self.api.compute.add_flavor(
             data.get("name"),
@@ -425,7 +428,7 @@ class NovaListFlavorsDetails(Resource):
         :return: Returns a flask response with a list of all flavors with additional information.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
             resp['flavors'] = list()
@@ -453,13 +456,13 @@ class NovaListFlavorsDetails(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
     def post(self, id):
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         data = json.loads(request.data).get("flavor")
-        logging.warning("Create Flavor: %s" % str(data))
+        LOG.warning("Create Flavor: %s" % str(data))
         # add to internal dict
         f = self.api.compute.add_flavor(
             data.get("name"),
@@ -491,7 +494,7 @@ class NovaListFlavorById(Resource):
         :return: Returns a flask response with detailed information about the flavor.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
             resp['flavor'] = dict()
@@ -512,7 +515,7 @@ class NovaListFlavorById(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve flavor with id %s" % (__name__, flavorid))
+            LOG.exception(u"%s: Could not retrieve flavor with id %s" % (__name__, flavorid))
             return ex.message, 500
 
 
@@ -529,7 +532,7 @@ class NovaListImages(Resource):
         :return: Returns a flask response with a list of available images.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
             resp['images'] = list()
@@ -547,7 +550,7 @@ class NovaListImages(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
 
 
@@ -564,7 +567,7 @@ class NovaListImagesDetails(Resource):
         :return: Returns a flask response with a list of images and their metadata.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
             resp['images'] = list()
@@ -591,7 +594,7 @@ class NovaListImagesDetails(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
 
 
@@ -610,7 +613,7 @@ class NovaListImageById(Resource):
         :return: Returns a flask response with the information about one image.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
             i = resp['image'] = dict()
@@ -626,7 +629,7 @@ class NovaListImageById(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve image with id %s." % (__name__, imageid))
+            LOG.exception(u"%s: Could not retrieve image with id %s." % (__name__, imageid))
             return ex.message, 500
 
 
@@ -645,7 +648,7 @@ class NovaShowServerDetails(Resource):
         :return: Returns a flask response with details about the server.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
@@ -688,7 +691,7 @@ class NovaShowServerDetails(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the server details." % __name__)
+            LOG.exception(u"%s: Could not retrieve the server details." % __name__)
             return ex.message, 500
 
     def delete(self, id, serverid):
@@ -702,7 +705,7 @@ class NovaShowServerDetails(Resource):
         :return: Returns 200 if everything is fine.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
@@ -715,7 +718,7 @@ class NovaShowServerDetails(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not create the server." % __name__)
+            LOG.exception(u"%s: Could not create the server." % __name__)
             return ex.message, 500
 
 
@@ -734,14 +737,14 @@ class NovaInterfaceToServer(Resource):
         :return: Returns a flask response with information about the attached interface.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
                 return Response("Server with id or name %s does not exists." % serverid, status=404)
 
             if server.emulator_compute is None:
-                logging.error("The targeted container does not exist.")
+                LOG.error("The targeted container does not exist.")
                 return Response("The targeted container of %s does not exist." % serverid, status=404)
             data = json.loads(request.data).get("interfaceAttachment")
             resp = dict()
@@ -798,7 +801,7 @@ class NovaInterfaceToServer(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not add interface to the server." % __name__)
+            LOG.exception(u"%s: Could not add interface to the server." % __name__)
             return ex.message, 500
 
 
@@ -820,7 +823,7 @@ class NovaShowAndDeleteInterfaceAtServer(Resource):
          error message.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
@@ -840,5 +843,5 @@ class NovaShowAndDeleteInterfaceAtServer(Resource):
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not detach interface from the server." % __name__)
+            LOG.exception(u"%s: Could not detach interface from the server." % __name__)
             return ex.message, 500
