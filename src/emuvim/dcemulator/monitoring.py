@@ -40,7 +40,7 @@ import docker
 import json
 from copy import deepcopy
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 
 """
 class to read openflow stats from the Ryu controller of the DCNetwork
