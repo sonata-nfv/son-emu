@@ -306,9 +306,11 @@ class HeatUpdateStack(Resource):
         self.api = api
 
     def put(self, tenant_id, stack_name_or_id, stack_id=None):
+        LOG.debug("API CALL: %s PUT" % str(self.__class__.__name__))
         return self.update_stack(tenant_id, stack_name_or_id, stack_id)
 
     def patch(self, tenant_id, stack_name_or_id, stack_id=None):
+        LOG.debug("API CALL: %s PATCH" % str(self.__class__.__name__))
         return self.update_stack(tenant_id, stack_name_or_id, stack_id)
     
     def update_stack(self, tenant_id, stack_name_or_id, stack_id=None):
@@ -323,7 +325,6 @@ class HeatUpdateStack(Resource):
             500, if any exception occurred while updating.
             202, if everything worked out.
         """
-        LOG.debug("API CALL: %s PUT" % str(self.__class__.__name__))
         try:
             old_stack = None
             if stack_name_or_id in self.api.compute.stacks:
