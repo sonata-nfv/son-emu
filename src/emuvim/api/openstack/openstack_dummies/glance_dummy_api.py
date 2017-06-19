@@ -5,6 +5,9 @@ import logging
 import json
 
 
+LOG = logging.getLogger("api.openstack.glance")
+
+
 class GlanceDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port, compute):
         super(GlanceDummyApi, self).__init__(in_ip, in_port)
@@ -29,7 +32,7 @@ class GlanceDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % ("GlanceDummyApi", self.ip, self.port))
+        LOG.info("Starting %s endpoint @ http://%s:%d" % ("GlanceDummyApi", self.ip, self.port))
         if self.app is not None:
             self.app.before_request(self.dump_playbook)
             self.app.run(self.ip, self.port, debug=True, use_reloader=False)
@@ -37,7 +40,7 @@ class GlanceDummyApi(BaseOpenstackDummy):
 
 class Shutdown(Resource):
     def get(self):
-        logging.debug(("%s is beeing shut down") % (__name__))
+        LOG.debug(("%s is beeing shut down") % (__name__))
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
@@ -46,7 +49,7 @@ class Shutdown(Resource):
 
 class GlanceListApiVersions(Resource):
     def get(self):
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         resp = dict()
         resp['versions'] = dict()
         versions = [{
@@ -65,7 +68,7 @@ class GlanceListApiVersions(Resource):
 
 class GlanceSchema(Resource):
     def get(self):
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         resp = dict()
         resp['name'] = 'someImageName'
         resp['properties'] = dict()
@@ -78,7 +81,7 @@ class GlanceListImagesApi(Resource):
         self.api = api
 
     def get(self):
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:           
             resp = dict()
             resp['next'] = None
@@ -117,7 +120,7 @@ class GlanceListImagesApi(Resource):
             return Response(json.dumps(resp), status=200, mimetype="application/json")
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
 
     def post(self):
@@ -126,20 +129,28 @@ class GlanceListImagesApi(Resource):
         should already be registered with Docker. However, this function returns a reply that looks
         like the image was just created to make orchestrators, like OSM, happy.
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        body_data = json.loads(request.data)
         # lets see what we should create
         img_name = request.headers.get("X-Image-Meta-Name")
         img_size = request.headers.get("X-Image-Meta-Size")
         img_disk_format = request.headers.get("X-Image-Meta-Disk-Format")
         img_is_public = request.headers.get("X-Image-Meta-Is-Public")
         img_container_format = request.headers.get("X-Image-Meta-Container-Format")
+        # try to use body payload if header fields are empty
+        if img_name is None:
+            img_name = body_data.get("name")
+            img_size = 1234
+            img_disk_format = body_data.get("disk_format")
+            img_is_public = True if "public" in body_data.get("visibility") else False
+            img_container_format = body_data.get("container_format")
         # try to find ID of already existing image (matched by name)
         img_id=None
         for image in self.api.compute.images.values():
-            if img_name in image.name:
+            if str(img_name) in image.name:
                 img_id = image.id
-        logging.debug("Image name: %s" % img_name)
-        logging.debug("Image id: %s" % img_id)
+        LOG.debug("Image name: %s" % img_name)
+        LOG.debug("Image id: %s" % img_id)
         # build a response body that looks like a real one
         resp = dict()
         f = dict()
@@ -175,14 +186,14 @@ class GlanceImageByIdApi(Resource):
         self.api = api
 
     def get(self, id):
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         from emuvim.api.heat.openstack_dummies.nova_dummy_api import NovaListImages
         nova = NovaListImages(self.api)
         return nova.get(id)
 
     def put(self, id):
-        logging.debug("API CALL: %s " % str(self.__class__.__name__))
-        logging.warning("Endpoint not implemented")
+        LOG.debug("API CALL: %s " % str(self.__class__.__name__))
+        LOG.warning("Endpoint not implemented")
         return None
 
 

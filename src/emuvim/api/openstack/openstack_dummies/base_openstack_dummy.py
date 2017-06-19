@@ -2,6 +2,8 @@ from flask import Flask, request
 from flask_restful import Api, Resource
 import logging
 
+LOG = logging.getLogger("api.openstack.base")
+
 
 class BaseOpenstackDummy(Resource):
     """
@@ -22,7 +24,7 @@ class BaseOpenstackDummy(Resource):
         self.api = Api(self.app)
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
+        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
         if self.app is not None:
             self.app.before_request(self.dump_playbook)
             self.app.run(self.ip, self.port, debug=True, use_reloader=False)
