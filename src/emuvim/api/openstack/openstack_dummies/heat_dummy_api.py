@@ -24,6 +24,8 @@ class HeatDummyApi(BaseOpenstackDummy):
         self.api.add_resource(HeatShowStack, "/v1/<tenant_id>/stacks/<stack_name_or_id>",
                               "/v1/<tenant_id>/stacks/<stack_name_or_id>/<stack_id>",
                               resource_class_kwargs={'api': self})
+        self.api.add_resource(HeatShowStackTemplate, "/v1/<tenant_id>/stacks/<stack_name_or_id>/<stack_id>/template",
+                              resource_class_kwargs={'api': self})
         self.api.add_resource(HeatUpdateStack, "/v1/<tenant_id>/stacks/<stack_name_or_id>",
                               "/v1/<tenant_id>/stacks/<stack_name_or_id>/<stack_id>",
                               resource_class_kwargs={'api': self})
@@ -103,14 +105,15 @@ class HeatCreateStack(Resource):
                     return [], 409
             stack = Stack()
             stack.stack_name = stack_dict['stack_name']
-            reader = HeatParser(self.api.compute)
 
+            reader = HeatParser(self.api.compute)
             if isinstance(stack_dict['template'], str) or isinstance(stack_dict['template'], unicode):
                 stack_dict['template'] = json.loads(stack_dict['template'])
             if not reader.parse_input(stack_dict['template'], stack, self.api.compute.dc.label):
                 self.api.compute.clean_broken_stack(stack)
                 return 'Could not create stack.', 400
 
+            stack.template = stack_dict['template']
             stack.creation_time = str(datetime.now())
             stack.status = "CREATE_COMPLETE"
 
@@ -227,6 +230,38 @@ class HeatShowStack(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Show stack exception.")
+            return ex.message, 500
+
+        
+class HeatShowStackTemplate(Resource):
+    def __init__(self, api):
+        self.api = api
+
+    def get(self, tenant_id, stack_name_or_id, stack_id=None):
+        """
+        Returns template of given stack.
+
+        :param tenant_id:
+        :param stack_name_or_id:
+        :param stack_id:
+        :return: Returns a json response which contains the stack's template. 
+        """
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        try:
+            stack = None
+            if stack_name_or_id in self.api.compute.stacks:
+                stack = self.api.compute.stacks[stack_name_or_id]
+            else:
+                for tmp_stack in self.api.compute.stacks.values():
+                    if tmp_stack.stack_name == stack_name_or_id:
+                        stack = tmp_stack
+            if stack is None:
+                return 'Could not resolve Stack - ID', 404
+
+            return Response(json.dumps(stack.template), status=200, mimetype="application/json")
+
+        except Exception as ex:
+            LOG.exception("Heat: Show stack template exception.")
             return ex.message, 500
 
 
