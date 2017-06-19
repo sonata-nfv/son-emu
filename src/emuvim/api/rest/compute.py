@@ -31,7 +31,7 @@ from flask import request
 import json
 from copy import deepcopy
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 

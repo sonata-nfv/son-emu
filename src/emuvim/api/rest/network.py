@@ -38,7 +38,7 @@ from flask import request
 import json
 import networkx
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig()
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 

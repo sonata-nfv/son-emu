@@ -37,7 +37,7 @@ from flask_restful import Resource, reqparse
 from flask import request
 import json
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 

@@ -4,6 +4,8 @@ from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpen
 import logging
 import json
 
+LOG = logging.getLogger("api.openstack.keystone")
+
 
 class KeystoneDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port):
@@ -17,7 +19,7 @@ class KeystoneDummyApi(BaseOpenstackDummy):
         self.api.add_resource(KeystoneGetTokenv3, "/v3/auth/tokens", resource_class_kwargs={'api': self})
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
+        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
         if self.app is not None:
             self.app.before_request(self.dump_playbook)
             self.app.run(self.ip, self.port, debug=True, use_reloader=False)
@@ -29,7 +31,7 @@ class Shutdown(Resource):
     """
 
     def get(self):
-        logging.debug(("%s is beeing shut down") % (__name__))
+        LOG.debug(("%s is beeing shut down") % (__name__))
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
@@ -52,7 +54,7 @@ class KeystoneListVersions(Resource):
         :return: Returns the api versions.
         :rtype: :class:`flask.response` containing a static json encoded dict.
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         resp = dict()
         resp['versions'] = dict()
 
@@ -94,7 +96,7 @@ class KeystoneShowAPIv2(Resource):
         :return: Returns an openstack style response for all entrypoints.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
         neutron_port = self.api.port + 4696
         heat_port = self.api.port + 3004
@@ -156,7 +158,7 @@ class KeystoneShowAPIv3(Resource):
         :return: Returns an openstack style response for all entrypoints.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
         neutron_port = self.api.port + 4696
         heat_port = self.api.port + 3004
@@ -228,7 +230,7 @@ class KeystoneGetToken(Resource):
         :rtype: :class:`flask.response`
         """
 
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             ret = dict()
             req = json.loads(request.data)
@@ -371,7 +373,7 @@ class KeystoneGetTokenv3(Resource):
         :rtype: :class:`flask.response`
         """
 
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             ret = dict()
             req = json.loads(request.data)

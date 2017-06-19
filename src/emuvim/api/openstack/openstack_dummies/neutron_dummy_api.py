@@ -8,6 +8,9 @@ import uuid
 import copy
 
 
+LOG = logging.getLogger("api.openstack.neutron")
+
+
 class NeutronDummyApi(BaseOpenstackDummy):
     def __init__(self, ip, port, compute):
         super(NeutronDummyApi, self).__init__(ip, port)
@@ -50,7 +53,7 @@ class NeutronDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
+        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
         if self.app is not None:
             self.app.before_request(self.dump_playbook)
             self.app.run(self.ip, self.port, debug=True, use_reloader=False)
@@ -58,7 +61,7 @@ class NeutronDummyApi(BaseOpenstackDummy):
 
 class Shutdown(Resource):
     def get(self):
-        logging.debug(("%s is beeing shut down") % (__name__))
+        LOG.debug(("%s is beeing shut down") % (__name__))
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
@@ -73,7 +76,7 @@ class NeutronListAPIVersions(Resource):
         :return: Returns a json with API versions.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: Neutron - List API Versions")
+        LOG.debug("API CALL: Neutron - List API Versions")
         resp = dict()
         resp['versions'] = dict()
 
@@ -100,7 +103,7 @@ class NeutronShowAPIv2Details(Resource):
         :return: Returns a json with API details.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         resp = dict()
 
         resp['resources'] = dict()
@@ -151,7 +154,7 @@ class NeutronListNetworks(Resource):
         :return: Returns a json response, starting with 'networks' as root node.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             if request.args.get('name'):
                 tmp_network = NeutronShowNetwork(self.api)
@@ -181,7 +184,7 @@ class NeutronListNetworks(Resource):
             return Response(json.dumps(network_dict), status=200, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: List networks exception.")
+            LOG.exception("Neutron: List networks exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -198,7 +201,7 @@ class NeutronShowNetwork(Resource):
         :return: Returns a json response, starting with 'network' as root node and one network description.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         return self.get_network(network_id, False)
 
     def get_network(self, network_name_or_id, as_list):
@@ -245,7 +248,7 @@ class NeutronCreateNetwork(Resource):
             * 201, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             network_dict = json.loads(request.data)
             name = network_dict['network']['name']
@@ -256,7 +259,7 @@ class NeutronCreateNetwork(Resource):
             net = self.api.compute.create_network(name)
             return Response(json.dumps({"network": net.create_network_dict()}), status=201, mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Create network excepiton.")
+            LOG.exception("Neutron: Create network excepiton.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -275,7 +278,7 @@ class NeutronUpdateNetwork(Resource):
             * 200, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s PUT" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s PUT" % str(self.__class__.__name__))
         try:
             if network_id in self.api.compute.nets:
                 net = self.api.compute.nets[network_id]
@@ -300,7 +303,7 @@ class NeutronUpdateNetwork(Resource):
             return Response('Network not found.\n', status=404, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: Show networks exception.")
+            LOG.exception("Neutron: Show networks exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -319,7 +322,7 @@ class NeutronDeleteNetwork(Resource):
             * 204, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
         try:
             if network_id not in self.api.compute.nets:
                 return Response('Could not find network. (' + network_id + ')\n',
@@ -336,7 +339,7 @@ class NeutronDeleteNetwork(Resource):
 
             return Response('Network ' + str(network_id) + ' deleted.\n', status=204, mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Delete network exception.")
+            LOG.exception("Neutron: Delete network exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -352,7 +355,7 @@ class NeutronListSubnets(Resource):
         :return: Returns a json response, starting with 'subnets' as root node.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             if request.args.get('name'):
                 show_subnet = NeutronShowSubnet(self.api)
@@ -381,7 +384,7 @@ class NeutronListSubnets(Resource):
             return Response(json.dumps(subnet_dict), status=200, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: List subnets exception.")
+            LOG.exception("Neutron: List subnets exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -398,7 +401,7 @@ class NeutronShowSubnet(Resource):
         :return: Returns a json response, starting with 'subnet' as root node and one subnet description.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         return self.get_subnet(subnet_id, False)
 
     def get_subnet(self, subnet_name_or_id, as_list):
@@ -426,7 +429,7 @@ class NeutronShowSubnet(Resource):
             return Response('Subnet not found. (' + subnet_name_or_id + ')\n', status=404, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: Show subnet exception.")
+            LOG.exception("Neutron: Show subnet exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -445,7 +448,7 @@ class NeutronCreateSubnet(Resource):
             * 201, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             subnet_dict = json.loads(request.data)
             net = self.api.compute.find_network_by_name_or_id(subnet_dict['subnet']['network_id'])
@@ -478,7 +481,7 @@ class NeutronCreateSubnet(Resource):
             return Response(json.dumps({'subnet': net.create_subnet_dict()}), status=201, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: Create network excepiton.")
+            LOG.exception("Neutron: Create network excepiton.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -497,7 +500,7 @@ class NeutronUpdateSubnet(Resource):
             * 200, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s PUT" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s PUT" % str(self.__class__.__name__))
         try:
             for net in self.api.compute.nets.values():
                 if net.subnet_id == subnet_id:
@@ -529,7 +532,7 @@ class NeutronUpdateSubnet(Resource):
             return Response('Network not found.\n', status=404, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: Show networks exception.")
+            LOG.exception("Neutron: Show networks exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -548,7 +551,7 @@ class NeutronDeleteSubnet(Resource):
             * 204, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
         try:
             for net in self.api.compute.nets.values():
                 if net.subnet_id == subnet_id:
@@ -570,7 +573,7 @@ class NeutronDeleteSubnet(Resource):
 
             return Response('Could not find subnet.', status=404, mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Delete subnet exception.")
+            LOG.exception("Neutron: Delete subnet exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -586,7 +589,7 @@ class NeutronListPorts(Resource):
         :return: Returns a json response, starting with 'ports' as root node.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             if request.args.get('name'):
                 show_port = NeutronShowPort(self.api)
@@ -614,7 +617,7 @@ class NeutronListPorts(Resource):
             return Response(json.dumps(port_dict), status=200, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: List ports exception.")
+            LOG.exception("Neutron: List ports exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -631,7 +634,7 @@ class NeutronShowPort(Resource):
         :return: Returns a json response, starting with 'port' as root node and one network description.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         return self.get_port(port_id, False)
 
     def get_port(self, port_name_or_id, as_list):
@@ -657,7 +660,7 @@ class NeutronShowPort(Resource):
                 tmp_dict["port"] = tmp_port_dict
             return Response(json.dumps(tmp_dict), status=200, mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Show port exception.")
+            LOG.exception("Neutron: Show port exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -674,7 +677,7 @@ class NeutronCreatePort(Resource):
             * 201, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             port_dict = json.loads(request.data)
             net_id = port_dict['port']['network_id']
@@ -721,7 +724,7 @@ class NeutronCreatePort(Resource):
             return Response(json.dumps({'port': port.create_port_dict(self.api.compute)}), status=201,
                             mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Show port exception.")
+            LOG.exception("Neutron: Show port exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -740,7 +743,7 @@ class NeutronUpdatePort(Resource):
             * 200, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s PUT" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s PUT" % str(self.__class__.__name__))
         try:
             port_dict = json.loads(request.data)
             port = self.api.compute.find_port_by_name_or_id(port_id)
@@ -782,7 +785,7 @@ class NeutronUpdatePort(Resource):
             return Response(json.dumps({'port': port.create_port_dict(self.api.compute)}), status=200,
                             mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Update port exception.")
+            LOG.exception("Neutron: Update port exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -801,7 +804,7 @@ class NeutronDeletePort(Resource):
             * 204, if everything worked out.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
         try:
             port = self.api.compute.find_port_by_name_or_id(port_id)
             if port is None:
@@ -826,7 +829,7 @@ class NeutronDeletePort(Resource):
             return Response('Port ' + port_id + ' deleted.\n', status=204, mimetype='application/json')
 
         except Exception as ex:
-            logging.exception("Neutron: Delete port exception.")
+            LOG.exception("Neutron: Delete port exception.")
             return Response(ex.message, status=500, mimetype='application/json')
 
 
@@ -870,7 +873,7 @@ class NeutronAddFloatingIp(Resource):
         :return: Returns a floating network description.
         :rtype: :class:`flask.response`
         """
-        logging.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             # Fiddle with floating_network !
             req = json.loads(request.data)
@@ -911,5 +914,5 @@ class NeutronAddFloatingIp(Resource):
 
             return Response(json.dumps(response), status=200, mimetype='application/json')
         except Exception as ex:
-            logging.exception("Neutron: Create FloatingIP exception %s.", ex)
+            LOG.exception("Neutron: Create FloatingIP exception %s.", ex)
             return Response(ex.message, status=500, mimetype='application/json')
