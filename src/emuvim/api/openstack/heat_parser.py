@@ -217,6 +217,16 @@ class HeatParser:
                 print('Could not create Router: ' + e.message)
             return
 
+        if 'OS::Heat::ResourceGroup' in resource['type']:
+            try:
+                embedded_resource = resource['properties']['resource_def']
+                LOG.debug("Found resource in resource group: {}".format(embedded_resource))
+                # recursively parse embedded resource
+                self.handle_resource(embedded_resource, stack, dc_label, stack_update)
+            except Exception as e:
+                print('Could not create Router: ' + e.message)
+            return
+
         LOG.warning('Could not determine resource type: {}'.format(resource['type']))
         return
 
