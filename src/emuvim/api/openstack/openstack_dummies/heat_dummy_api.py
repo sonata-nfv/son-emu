@@ -26,6 +26,8 @@ class HeatDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
         self.api.add_resource(HeatShowStackTemplate, "/v1/<tenant_id>/stacks/<stack_name_or_id>/<stack_id>/template",
                               resource_class_kwargs={'api': self})
+        self.api.add_resource(HeatShowStackResources, "/v1/<tenant_id>/stacks/<stack_name_or_id>/<stack_id>/resources",
+                              resource_class_kwargs={'api': self})
         self.api.add_resource(HeatUpdateStack, "/v1/<tenant_id>/stacks/<stack_name_or_id>",
                               "/v1/<tenant_id>/stacks/<stack_name_or_id>/<stack_id>",
                               resource_class_kwargs={'api': self})
@@ -265,11 +267,51 @@ class HeatShowStackTemplate(Resource):
             return ex.message, 500
 
 
+class HeatShowStackResources(Resource):
+    def __init__(self, api):
+        self.api = api
+
+    def get(self, tenant_id, stack_name_or_id, stack_id=None):
+        """
+        Returns template of given stack.
+
+        :param tenant_id:
+        :param stack_name_or_id:
+        :param stack_id:
+        :return: Returns a json response which contains the stack's template. 
+        """
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        try:
+            stack = None
+            if stack_name_or_id in self.api.compute.stacks:
+                stack = self.api.compute.stacks[stack_name_or_id]
+            else:
+                for tmp_stack in self.api.compute.stacks.values():
+                    if tmp_stack.stack_name == stack_name_or_id:
+                        stack = tmp_stack
+            if stack is None:
+                return 'Could not resolve Stack - ID', 404
+
+            response = {"resources": []}
+
+            return Response(json.dumps(response), status=200, mimetype="application/json")
+
+        except Exception as ex:
+            LOG.exception("Heat: Show stack template exception.")
+            return ex.message, 500
+
+
 class HeatUpdateStack(Resource):
     def __init__(self, api):
         self.api = api
 
     def put(self, tenant_id, stack_name_or_id, stack_id=None):
+        return self.update_stack(tenant_id, stack_name_or_id, stack_id)
+
+    def patch(self, tenant_id, stack_name_or_id, stack_id=None):
+        return self.update_stack(tenant_id, stack_name_or_id, stack_id)
+    
+    def update_stack(self, tenant_id, stack_name_or_id, stack_id=None):
         """
         Updates an existing stack with a new heat template.
 
