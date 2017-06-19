@@ -130,16 +130,24 @@ class GlanceListImagesApi(Resource):
         like the image was just created to make orchestrators, like OSM, happy.
         """
         LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        body_data = json.loads(request.data)
         # lets see what we should create
         img_name = request.headers.get("X-Image-Meta-Name")
         img_size = request.headers.get("X-Image-Meta-Size")
         img_disk_format = request.headers.get("X-Image-Meta-Disk-Format")
         img_is_public = request.headers.get("X-Image-Meta-Is-Public")
         img_container_format = request.headers.get("X-Image-Meta-Container-Format")
+        # try to use body payload if header fields are empty
+        if img_name is None:
+            img_name = body_data.get("name")
+            img_size = 1234
+            img_disk_format = body_data.get("disk_format")
+            img_is_public = True if "public" in body_data.get("visibility") else False
+            img_container_format = body_data.get("container_format")
         # try to find ID of already existing image (matched by name)
         img_id=None
         for image in self.api.compute.images.values():
-            if img_name in image.name:
+            if str(img_name) in image.name:
                 img_id = image.id
         LOG.debug("Image name: %s" % img_name)
         LOG.debug("Image id: %s" % img_id)
