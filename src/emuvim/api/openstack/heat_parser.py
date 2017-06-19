@@ -8,6 +8,9 @@ import logging
 import ip_handler as IP
 
 
+LOG = logging.getLogger("api.openstack.heat.parser")
+
+
 class HeatParser:
     """
     The HeatParser will parse a heat dictionary and create a stack and its components, to instantiate it within son-emu.
@@ -96,7 +99,7 @@ class HeatParser:
                     stack.nets[net_name] = self.compute.create_network(net_name, True)
 
             except Exception as e:
-                logging.warning('Could not create Net: ' + e.message)
+                LOG.warning('Could not create Net: ' + e.message)
             return
 
         if 'OS::Neutron::Subnet' in resource['type'] and "Net" not in resource['type']:
@@ -116,7 +119,7 @@ class HeatParser:
                 if not stack_update:
                     net.set_cidr(IP.get_new_cidr(net.subnet_id))
             except Exception as e:
-                logging.warning('Could not create Subnet: ' + e.message)
+                LOG.warning('Could not create Subnet: ' + e.message)
             return
 
         if 'OS::Neutron::Port' in resource['type']:
@@ -135,7 +138,7 @@ class HeatParser:
                         port.ip_address = net.get_new_ip_address(port.name)
                         return
             except Exception as e:
-                logging.warning('Could not create Port: ' + e.message)
+                LOG.warning('Could not create Port: ' + e.message)
             self.bufferResource.append(resource)
             return
 
@@ -168,7 +171,7 @@ class HeatParser:
                     server.port_names.append(port_name)
                 return
             except Exception as e:
-                logging.warning('Could not create Server: ' + e.message)
+                LOG.warning('Could not create Server: ' + e.message)
             return
 
         if 'OS::Neutron::RouterInterface' in resource['type']:
@@ -189,7 +192,7 @@ class HeatParser:
                         stack.routers[router_name].add_subnet(subnet_name)
                         return
             except Exception as e:
-                logging.warning('Could not create RouterInterface: ' + e.__repr__())
+                LOG.warning('Could not create RouterInterface: ' + e.__repr__())
             self.bufferResource.append(resource)
             return
 
@@ -202,7 +205,7 @@ class HeatParser:
 
                 stack.ports[port_name].floating_ip = floating_network_id
             except Exception as e:
-                logging.warning('Could not create FloatingIP: ' + e.message)
+                LOG.warning('Could not create FloatingIP: ' + e.message)
             return
 
         if 'OS::Neutron::Router' in resource['type']:
@@ -214,7 +217,7 @@ class HeatParser:
                 print('Could not create Router: ' + e.message)
             return
 
-        logging.warning('Could not determine resource type!')
+        LOG.warning('Could not determine resource type: {}'.format(resource['type']))
         return
 
     def shorten_server_name(self, server_name, stack):

@@ -8,6 +8,9 @@ import time
 import ip_handler as IP
 
 
+LOG = logging.getLogger("api.openstack.compute")
+
+
 class HeatApiStackInvalidException(Exception):
     """
     Exception thrown when a submitted stack is invalid.
@@ -95,25 +98,25 @@ class OpenstackCompute(object):
         for server in stack.servers.values():
             for port_name in server.port_names:
                 if port_name not in stack.ports:
-                    logging.warning("Server %s of stack %s has a port named %s that is not known." %
+                    LOG.warning("Server %s of stack %s has a port named %s that is not known." %
                                     (server.name, stack.stack_name, port_name))
                     everything_ok = False
             if server.image is None:
-                logging.warning("Server %s holds no image." % (server.name))
+                LOG.warning("Server %s holds no image." % (server.name))
                 everything_ok = False
             if server.command is None:
-                logging.warning("Server %s holds no command." % (server.name))
+                LOG.warning("Server %s holds no command." % (server.name))
                 everything_ok = False
         for port in stack.ports.values():
             if port.net_name not in stack.nets:
-                logging.warning("Port %s of stack %s has a network named %s that is not known." %
+                LOG.warning("Port %s of stack %s has a network named %s that is not known." %
                                 (port.name, stack.stack_name, port.net_name))
                 everything_ok = False
             if port.intf_name is None:
-                logging.warning("Port %s has no interface name." % (port.name))
+                LOG.warning("Port %s has no interface name." % (port.name))
                 everything_ok = False
             if port.ip_address is None:
-                logging.warning("Port %s has no IP address." % (port.name))
+                LOG.warning("Port %s has no IP address." % (port.name))
                 everything_ok = False
         for router in stack.routers.values():
             for subnet_name in router.subnet_names:
@@ -123,7 +126,7 @@ class OpenstackCompute(object):
                         found = True
                         break
                 if not found:
-                    logging.warning("Router %s of stack %s has a network named %s that is not known." %
+                    LOG.warning("Router %s of stack %s has a network named %s that is not known." %
                                     (router.name, stack.stack_name, subnet_name))
                     everything_ok = False
         return everything_ok
@@ -208,6 +211,7 @@ class OpenstackCompute(object):
             * *False*: else
         :rtype: ``bool``
         """
+        LOG.debug("updating stack {} with new_stack {}".format(old_stack_id, new_stack))
         if old_stack_id not in self.stacks:
             return False
         old_stack = self.stacks[old_stack_id]
@@ -399,7 +403,7 @@ class OpenstackCompute(object):
         :param server: Specifies the compute resource.
         :type server: :class:`heat.resources.server`
         """
-        logging.debug("Starting new compute resources %s" % server.name)
+        LOG.debug("Starting new compute resources %s" % server.name)
         network = list()
 
         for port_name in server.port_names:
@@ -447,7 +451,7 @@ class OpenstackCompute(object):
         :param server: The server that should be removed
         :type server: ``heat.resources.server``
         """
-        logging.debug("Stopping container %s with full name %s" % (server.name, server.full_name))
+        LOG.debug("Stopping container %s with full name %s" % (server.name, server.full_name))
         link_names = list()
         for port_name in server.port_names:
             link_names.append(self.find_port_by_name_or_id(port_name).intf_name)
@@ -553,9 +557,9 @@ class OpenstackCompute(object):
         :type stack_operation: ``bool``
         :return: :class:`heat.resources.net`
         """
-        logging.debug("Creating network with name %s" % name)
+        LOG.debug("Creating network with name %s" % name)
         if self.find_network_by_name_or_id(name) is not None and not stack_operation:
-            logging.warning("Creating network with name %s failed, as it already exists" % name)
+            LOG.warning("Creating network with name %s failed, as it already exists" % name)
             raise Exception("Network with name %s already exists." % name)
         network = Net(name)
         network.id = str(uuid.uuid4())
@@ -593,9 +597,9 @@ class OpenstackCompute(object):
         """
         port = self.find_port_by_name_or_id(name)
         if port is not None and not stack_operation:
-            logging.warning("Creating port with name %s failed, as it already exists" % name)
+            LOG.warning("Creating port with name %s failed, as it already exists" % name)
             raise Exception("Port with name %s already exists." % name)
-        logging.debug("Creating port with name %s" % name)
+        LOG.debug("Creating port with name %s" % name)
         port = Port(name)
         if not stack_operation:
             self.ports[port.id] = port
