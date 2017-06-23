@@ -480,8 +480,15 @@ class OpenstackCompute(object):
         if name_or_id in self.computeUnits:
             return self.computeUnits[name_or_id]
 
+        if self._shorten_server_name(name_or_id) in self.computeUnits:
+            return self.computeUnits[name_or_id]
+
         for server in self.computeUnits.values():
             if server.name == name_or_id or server.template_name == name_or_id or server.full_name == name_or_id:
+                return server
+            if (server.name == self._shorten_server_name(name_or_id)
+                or server.template_name ==  self._shorten_server_name(name_or_id)
+                or server.full_name == self._shorten_server_name(name_or_id)):
                 return server
         return None
 
@@ -499,11 +506,24 @@ class OpenstackCompute(object):
         """
         if self.find_server_by_name_or_id(name) is not None and not stack_operation:
             raise Exception("Server with name %s already exists." % name)
-        server = Server(name)
+        safe_name = self._shorten_server_name(name)
+        server = Server(safe_name)
         server.id = str(uuid.uuid4())
         if not stack_operation:
             self.computeUnits[server.id] = server
         return server
+
+    def _shorten_server_name(self, name, char_limit=64):
+        """
+        Docker does not like too long instance names.
+        This function provides a shorter name if needed
+        """
+        LOG.debug("Long server name: {}".format(name))
+        if len(name) > char_limit:
+            # construct a short name
+            name = name[-char_limit:].strip("-_ .")
+        LOG.debug("Short server name: {}".format(name))
+        return name
 
     def delete_server(self, server):
         """
