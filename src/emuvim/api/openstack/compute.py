@@ -522,7 +522,6 @@ class OpenstackCompute(object):
         LOG.debug("Long server name: {}".format(name))
         if len(name) > char_limit:
             # construct a short name
-            parts = name.split("_")
             name = name.replace("_vnf", "")
             name = name[-char_limit:].strip("-_ .")
         LOG.debug("Short server name: {}".format(name))
