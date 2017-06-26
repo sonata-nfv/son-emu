@@ -513,14 +513,17 @@ class OpenstackCompute(object):
             self.computeUnits[server.id] = server
         return server
 
-    def _shorten_server_name(self, name, char_limit=64):
+    def _shorten_server_name(self, name, char_limit=9):
         """
         Docker does not like too long instance names.
         This function provides a shorter name if needed
         """
+        # TODO this is a ugly hack and needs to be fixed
         LOG.debug("Long server name: {}".format(name))
         if len(name) > char_limit:
             # construct a short name
+            parts = name.split("_")
+            name = name.replace("_vnf", "")
             name = name[-char_limit:].strip("-_ .")
         LOG.debug("Short server name: {}".format(name))
         return name
