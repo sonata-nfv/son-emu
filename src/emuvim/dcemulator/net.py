@@ -249,11 +249,11 @@ class DCNetwork(Containernet):
         try:
             self.DCNetwork_graph.remove_edge(node2.name, node1.name)
         except:
-            LOG.warning("%s not found in DCNetwork_graph." % ((node2.name, node1.name)))
+            LOG.warning("%s, %s not found in DCNetwork_graph." % ((node2.name, node1.name)))
         try:
             self.DCNetwork_graph.remove_edge(node1.name, node2.name)
         except:
-            LOG.warning("%s not found in DCNetwork_graph." % ((node1.name, node2.name)))
+            LOG.warning("%s, %s not found in DCNetwork_graph." % ((node1.name, node2.name)))
 
     def addDocker( self, label, **params ):
         """
