@@ -130,7 +130,10 @@ class GlanceListImagesApi(Resource):
         like the image was just created to make orchestrators, like OSM, happy.
         """
         LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
-        body_data = json.loads(request.data)
+        try:
+            body_data = json.loads(request.data)
+        except:
+            body_data = dict()
         # lets see what we should create
         img_name = request.headers.get("X-Image-Meta-Name")
         img_size = request.headers.get("X-Image-Meta-Size")
