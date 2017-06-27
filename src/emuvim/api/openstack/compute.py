@@ -414,7 +414,9 @@ class OpenstackCompute(object):
                 network_dict['ip'] = port.ip_address
                 network_dict[network_dict['id']] = self.find_network_by_name_or_id(port.net_name).name
                 network.append(network_dict)
+
         self.compute_nets[server.name] = network
+        LOG.debug(network)
         c = self.dc.startCompute(server.name, image=server.image, command=server.command,
                                  network=network, flavor_name=server.flavor)
         server.emulator_compute = c
@@ -518,14 +520,18 @@ class OpenstackCompute(object):
         Docker does not like too long instance names.
         This function provides a shorter name if needed
         """
-        # TODO this is a ugly hack and needs to be fixed
-        LOG.debug("Long server name: {}".format(name))
+        # this is a ugly fix, but we cannot do better for now (interface names are to long)
         if len(name) > char_limit:
+            LOG.info("Long server name: {}".format(name))
             # construct a short name
             name = name.replace("_vnf", "")
+            p = name.split("_")
+            if len(p) > 0:
+                name = p[len(p)-1]
             name = name[-char_limit:].strip("-_ .")
-        LOG.debug("Short server name: {}".format(name))
+            LOG.info("Short server name: {}".format(name))
         return name
+
 
     def delete_server(self, server):
         """
