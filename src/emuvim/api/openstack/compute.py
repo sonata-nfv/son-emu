@@ -1,4 +1,5 @@
 from mininet.link import Link
+
 from resources import *
 from docker import DockerClient
 import logging
@@ -41,6 +42,10 @@ class OpenstackCompute(object):
         self._images = dict()
         self.nets = dict()
         self.ports = dict()
+        self.port_pairs = dict()
+        self.port_pair_groups = dict()
+        self.flow_classifiers = dict()
+        self.port_chains = dict()
         self.compute_nets = dict()
         self.dcli = DockerClient(base_url='unix://var/run/docker.sock')
 
@@ -416,7 +421,8 @@ class OpenstackCompute(object):
                 network.append(network_dict)
         self.compute_nets[server.name] = network
         c = self.dc.startCompute(server.name, image=server.image, command=server.command,
-                                 network=network, flavor_name=server.flavor)
+                                 network=network, flavor_name=server.flavor,
+                                 properties=server.properties)
         server.emulator_compute = c
 
         for intf in c.intfs.values():
@@ -644,6 +650,214 @@ class OpenstackCompute(object):
         self.ports.pop(port.id, None)
         for stack in self.stacks.values():
             stack.ports.pop(port.name, None)
+
+    def create_port_pair(self, name, stack_operation=False):
+        """
+        Creates a new port pair with the given name. Raises an exception when a port pair with the given name already
+        exists!
+
+        :param name: Name of the new port pair.
+        :type name: ``str``
+        :param stack_operation: Allows the heat parser to create modules without adapting the current emulation.
+        :type stack_operation: ``bool``
+        :return: Returns the created port pair.
+        :rtype: :class:`openstack.resources.port_pair`
+        """
+        port_pair = self.find_port_pair_by_name_or_id(name)
+        if port_pair is not None and not stack_operation:
+            logging.warning("Creating port pair with name %s failed, as it already exists" % name)
+            raise Exception("Port pair with name %s already exists." % name)
+        logging.debug("Creating port pair with name %s" % name)
+        port_pair = PortPair(name)
+        if not stack_operation:
+            self.port_pairs[port_pair.id] = port_pair
+        return port_pair
+
+    def find_port_pair_by_name_or_id(self, name_or_id):
+        """
+        Tries to find the port pair by ID and if this does not succeed then tries to find it via name.
+
+        :param name_or_id: UUID or name of the port pair.
+        :type name_or_id: ``str``
+        :return: Returns the port pair reference if it was found or None
+        :rtype: :class:`openstack.resources.port_pair`
+        """
+        if name_or_id in self.port_pairs:
+            return self.port_pairs[name_or_id]
+        for port_pair in self.port_pairs.values():
+            if port_pair.name == name_or_id:
+                return port_pair
+
+        return None
+
+    def delete_port_pair(self, name_or_id):
+        """
+        Deletes the given port pair. Raises an exception when the port pair was not found!
+
+        :param name_or_id:  UUID or name of the port pair.
+        :type name_or_id: ``str``
+        """
+        port_pair = self.find_port_pair_by_name_or_id(name_or_id)
+        if port_pair is None:
+            raise Exception("Port pair with name or id %s does not exists." % name_or_id)
+
+        self.port_pairs.pop(port_pair.id, None)
+
+    def create_port_pair_group(self, name, stack_operation=False):
+        """
+        Creates a new port pair group with the given name. Raises an exception when a port pair group
+        with the given name already exists!
+
+        :param name: Name of the new port pair group.
+        :type name: ``str``
+        :param stack_operation: Allows the heat parser to create modules without adapting the current emulation.
+        :type stack_operation: ``bool``
+        :return: Returns the created port pair group .
+        :rtype: :class:`openstack.resources.port_pair_group`
+        """
+        port_pair_group = self.find_port_pair_group_by_name_or_id(name)
+        if port_pair_group is not None and not stack_operation:
+            logging.warning("Creating port pair group with name %s failed, as it already exists" % name)
+            raise Exception("Port pair group with name %s already exists." % name)
+        logging.debug("Creating port pair group with name %s" % name)
+        port_pair_group = PortPairGroup(name)
+        if not stack_operation:
+            self.port_pair_groups[port_pair_group.id] = port_pair_group
+        return port_pair_group
+
+    def find_port_pair_group_by_name_or_id(self, name_or_id):
+        """
+        Tries to find the port pair group by ID and if this does not succeed then tries to find it via name.
+
+        :param name_or_id: UUID or name of the port pair group.
+        :type name_or_id: ``str``
+        :return: Returns the port pair group reference if it was found or None
+        :rtype: :class:`openstack.resources.port_pair_group`
+        """
+        if name_or_id in self.port_pair_groups:
+            return self.port_pair_groups[name_or_id]
+        for port_pair_group in self.port_pair_groups.values():
+            if port_pair_group.name == name_or_id:
+                return port_pair_group
+
+        return None
+
+    def delete_port_pair_group(self, name_or_id):
+        """
+        Deletes the given port pair group. Raises an exception when the port pair group was not found!
+
+        :param name_or_id:  UUID or name of the port pair group.
+        :type name_or_id: ``str``
+        """
+        port_pair_group = self.find_port_pair_group_by_name_or_id(name_or_id)
+        if port_pair_group is None:
+            raise Exception("Port pair with name or id %s does not exists." % name_or_id)
+
+        self.port_pair_groups.pop(port_pair_group.id, None)
+
+    def create_port_chain(self, name, stack_operation=False):
+        """
+        Creates a new port chain with the given name. Raises an exception when a port chain with the given name already
+        exists!
+
+        :param name: Name of the new port chain
+        :type name: ``str``
+        :param stack_operation: Allows the heat parser to create modules without adapting the current emulation.
+        :type stack_operation: ``bool``
+        :return: Returns the created port chain.
+        :rtype: :class:`openstack.resources.port_chain.PortChain`
+        """
+        port_chain = self.find_port_chain_by_name_or_id(name)
+        if port_chain is not None and not stack_operation:
+            logging.warning("Creating port chain with name %s failed, as it already exists" % name)
+            raise Exception("Port chain with name %s already exists." % name)
+        logging.debug("Creating port chain with name %s" % name)
+        port_chain = PortChain(name)
+        if not stack_operation:
+            self.port_chains[port_chain.id] = port_chain
+        return port_chain
+
+    def find_port_chain_by_name_or_id(self, name_or_id):
+        """
+        Tries to find the port chain by ID and if this does not succeed then tries to find it via name.
+
+        :param name_or_id: UUID or name of the port chain.
+        :type name_or_id: ``str``
+        :return: Returns the port chain reference if it was found or None
+        :rtype: :class:`openstack.resources.port_chain.PortChain`
+        """
+        if name_or_id in self.port_chains:
+            return self.port_chains[name_or_id]
+        for port_chain in self.port_chains.values():
+            if port_chain.name == name_or_id:
+                return port_chain
+        return None
+
+    def delete_port_chain(self, name_or_id):
+        """
+        Deletes the given port chain. Raises an exception when the port chain was not found!
+
+        :param name_or_id:  UUID or name of the port chain.
+        :type name_or_id: ``str``
+        """
+        port_chain = self.find_port_chain_by_name_or_id(name_or_id)
+        port_chain.uninstall(self)
+        if port_chain is None:
+            raise Exception("Port chain with name or id %s does not exists." % name_or_id)
+
+        self.port_chains.pop(port_chain.id, None)
+
+    def create_flow_classifier(self, name, stack_operation=False):
+        """
+        Creates a new flow classifier with the given name. Raises an exception when a flow classifier with the given name already
+        exists!
+
+        :param name: Name of the new flow classifier.
+        :type name: ``str``
+        :param stack_operation: Allows the heat parser to create modules without adapting the current emulation.
+        :type stack_operation: ``bool``
+        :return: Returns the created flow classifier.
+        :rtype: :class:`openstack.resources.flow_classifier`
+        """
+        flow_classifier = self.find_flow_classifier_by_name_or_id(name)
+        if flow_classifier is not None and not stack_operation:
+            logging.warning("Creating flow classifier with name %s failed, as it already exists" % name)
+            raise Exception("Flow classifier with name %s already exists." % name)
+        logging.debug("Creating flow classifier with name %s" % name)
+        flow_classifier = FlowClassifier(name)
+        if not stack_operation:
+            self.flow_classifiers[flow_classifier.id] = flow_classifier
+        return flow_classifier
+
+    def find_flow_classifier_by_name_or_id(self, name_or_id):
+        """
+        Tries to find the flow classifier by ID and if this does not succeed then tries to find it via name.
+
+        :param name_or_id: UUID or name of the flow classifier.
+        :type name_or_id: ``str``
+        :return: Returns the flow classifier reference if it was found or None
+        :rtype: :class:`openstack.resources.flow_classifier`
+        """
+        if name_or_id in self.flow_classifiers:
+            return self.flow_classifiers[name_or_id]
+        for flow_classifier in self.flow_classifiers.values():
+            if flow_classifier.name == name_or_id:
+                return flow_classifier
+
+        return None
+
+    def delete_flow_classifier(self, name_or_id):
+        """
+        Deletes the given flow classifier. Raises an exception when the flow classifier was not found!
+
+        :param name_or_id:  UUID or name of the flow classifier.
+        :type name_or_id: ``str``
+        """
+        flow_classifier = self.find_flow_classifier_by_name_or_id(name_or_id)
+        if flow_classifier is None:
+            raise Exception("Flow classifier with name or id %s does not exists." % name_or_id)
+
+        self.flow_classifiers.pop(flow_classifier.id, None)
 
     def _add_link(self, node_name, ip_address, link_name, net_name):
         """

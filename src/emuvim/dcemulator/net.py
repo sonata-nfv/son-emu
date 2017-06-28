@@ -568,7 +568,7 @@ class DCNetwork(Containernet):
                 pass
 
 
-        cmd = kwargs.get('cmd')
+        cmd = kwargs.get('cmd', 'add-flow')
         if cmd == 'add-flow' or cmd == 'del-flows':
             ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
             if kwargs.get('bidirectional'):

@@ -2,6 +2,10 @@ from instance_flavor import InstanceFlavor
 from model import Model
 from net import Net
 from port import Port
+from port_pair import PortPair
+from port_pair_group import PortPairGroup
+from flow_classifier import FlowClassifier
+from port_chain import PortChain
 from resource import Resource
 from router import Router
 from server import Server

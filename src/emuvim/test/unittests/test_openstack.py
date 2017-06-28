@@ -1166,6 +1166,203 @@ class testRestApi(ApiBaseOpenStack):
         self.assertEqual(getintfs.status_code, 202)
         print(" ")
 
+    def testNeutronSFC(self):
+        """
+        Tests the Neutron Service Function Chaining implementation. As Some functions build up on others, a
+        complete environment is created here:
+
+        Ports:              p1, p2, p3, p4
+        Port Pairs:         pp1(p1, p2), pp2(p3, p4)
+        Port Pair Groups:   ppg1(pp1, pp2)
+        Flow Classifiers:   fc1
+        Port Chain:         pc1(ppg1, fc1)
+        """
+
+        headers = {'Content-type': 'application/json'}
+
+        print('->>>>>>> Create ports p1 - p4 ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        # Get network id
+        network_resp = requests.get("http://0.0.0.0:19696/v2.0/networks?name=default", headers=headers)
+        self.assertEqual(network_resp.status_code, 200)
+        network_id = json.loads(network_resp.content)["networks"][0]["id"]
+
+        url = "http://0.0.0.0:19696/v2.0/ports"
+        port_request = '{"port": {"name": "%s", "network_id": "%s"}}'
+        p1_resp = requests.post(url, data=port_request % ("p1", network_id), headers=headers)
+        self.assertEqual(p1_resp.status_code, 201)
+        p2_resp = requests.post(url, data=port_request % ("p2", network_id), headers=headers)
+        self.assertEqual(p2_resp.status_code, 201)
+        p3_resp = requests.post(url, data=port_request % ("p3", network_id), headers=headers)
+        self.assertEqual(p3_resp.status_code, 201)
+        p4_resp = requests.post(url, data=port_request % ("p4", network_id), headers=headers)
+        self.assertEqual(p4_resp.status_code, 201)
+
+        p1_id = json.loads(p1_resp.content)["port"]["id"]
+        p2_id = json.loads(p2_resp.content)["port"]["id"]
+        p3_id = json.loads(p3_resp.content)["port"]["id"]
+        p4_id = json.loads(p4_resp.content)["port"]["id"]
+
+        print('->>>>>>> test Neutron SFC Port Pair Create ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs"
+        pp1_resp = requests.post(url, data='{"port_pair": {"name": "pp1", "ingress": "%s", "egress": "%s"}}' % (p1_id, p2_id), headers=headers)
+        self.assertEqual(pp1_resp.status_code, 201)
+        pp2_resp = requests.post(url, data='{"port_pair": {"name": "pp2", "ingress": "%s", "egress": "%s"}}' % (p3_id, p4_id), headers=headers)
+        self.assertEqual(pp2_resp.status_code, 201)
+        pp3_resp = requests.post(url, data='{"port_pair": {"name": "pp3", "ingress": "%s", "egress": "%s"}}' % (p3_id, p4_id), headers=headers)
+        self.assertEqual(pp3_resp.status_code, 201)
+
+        pp1_id = json.loads(pp1_resp.content)["port_pair"]["id"]
+        pp2_id = json.loads(pp2_resp.content)["port_pair"]["id"]
+        pp3_id = json.loads(pp3_resp.content)["port_pair"]["id"]
+
+        print('->>>>>>> test Neutron SFC Port Pair Update ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs/%s" % pp3_id
+        pp3_update_resp = requests.put(url, data='{"port_pair": {"description": "port_pair_update"}}', headers=headers)
+        self.assertEqual(pp3_update_resp.status_code, 200)
+        self.assertEqual(json.loads(pp3_update_resp.content)["port_pair"]["description"], "port_pair_update")
+
+        print('->>>>>>> test Neutron SFC Port Pair Delete ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs/%s" % pp3_id
+        pp3_delete_resp = requests.delete(url, headers=headers)
+        self.assertEqual(pp3_delete_resp.status_code, 204)
+
+        print('->>>>>>> test Neutron SFC Port Pair List ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs"
+        pp_list_resp = requests.get(url, headers=headers)
+        self.assertEqual(pp_list_resp.status_code, 200)
+        self.assertEqual(len(json.loads(pp_list_resp.content)["port_pairs"]), 2)  # only pp1 and pp2 should be left
+
+        print('->>>>>>> test Neutron SFC Port Pair Show ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs/%s" % pp2_id
+        pp2_show_resp = requests.get(url, headers=headers)
+        self.assertEqual(pp2_show_resp.status_code, 200)
+        self.assertEqual(json.loads(pp2_show_resp.content)["port_pair"]["name"], "pp2")
+
+
+        print('->>>>>>> test Neutron SFC Port Pair Group Create ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pair_groups"
+        ppg1_resp = requests.post(url, data='{"port_pair_group": {"name": "ppg1", "port_pairs": ["%s"]}}' % (pp1_id), headers=headers)
+        self.assertEqual(ppg1_resp.status_code, 201)
+        ppg2_resp = requests.post(url, data='{"port_pair_group": {"name": "ppg2", "port_pairs": ["%s"]}}' % (pp2_id), headers=headers)
+        self.assertEqual(ppg2_resp.status_code, 201)
+        ppg3_resp = requests.post(url, data='{"port_pair_group": {"name": "ppg3", "port_pairs": ["%s"]}}' % (pp2_id), headers=headers)
+        self.assertEqual(ppg3_resp.status_code, 201)
+
+        ppg1_id = json.loads(ppg1_resp.content)["port_pair_group"]["id"]
+        ppg2_id = json.loads(ppg2_resp.content)["port_pair_group"]["id"]
+        ppg3_id = json.loads(ppg3_resp.content)["port_pair_group"]["id"]
+
+        print('->>>>>>> test Neutron SFC Port Pair Group Update ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pair_groups/%s" % ppg3_id
+        ppg3_update_resp = requests.put(url, data='{"port_pair_group": {"description": "port_pair_group_update"}}', headers=headers)
+        self.assertEqual(ppg3_update_resp.status_code, 200)
+        self.assertEqual(json.loads(ppg3_update_resp.content)["port_pair_group"]["description"], "port_pair_group_update")
+
+        print('->>>>>>> test Neutron SFC Port Pair Group Delete ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pair_groups/%s" % ppg3_id
+        ppg3_delete_resp = requests.delete(url, headers=headers)
+        self.assertEqual(ppg3_delete_resp.status_code, 204)
+
+        print('->>>>>>> test Neutron SFC Port Pair Group List ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pair_groups"
+        ppg_list_resp = requests.get(url, headers=headers)
+        self.assertEqual(ppg_list_resp.status_code, 200)
+        self.assertEqual(len(json.loads(ppg_list_resp.content)["port_pair_groups"]), 2)  # only ppg1 and ppg2 should be left
+
+        print('->>>>>>> test Neutron SFC Port Pair Group Show ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pair_groups/%s" % ppg2_id
+        ppg2_show_resp = requests.get(url, headers=headers)
+        self.assertEqual(ppg2_show_resp.status_code, 200)
+        self.assertEqual(json.loads(ppg2_show_resp.content)["port_pair_group"]["name"], "ppg2")
+
+
+        print('->>>>>>> test Neutron SFC Flow Classifier Create ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/flow_classifiers"
+        fc1_resp = requests.post(url, data='{"flow_classifier": {"name": "fc1", "source_port_range_min": 22, "source_port_range_max": 4000}}', headers=headers)
+        self.assertEqual(fc1_resp.status_code, 201)
+        fc2_resp = requests.post(url, data='{"flow_classifier": {"name": "fc2", "source_port_range_min": 22, "source_port_range_max": 4000}}', headers=headers)
+        self.assertEqual(fc2_resp.status_code, 201)
+
+        fc1_id = json.loads(fc1_resp.content)["flow_classifier"]["id"]
+        fc2_id = json.loads(fc2_resp.content)["flow_classifier"]["id"]
+
+        print('->>>>>>> test Neutron SFC Flow Classifier Update ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/flow_classifiers/%s" % fc2_id
+        fc2_update_resp = requests.put(url, data='{"flow_classifier": {"description": "flow_classifier_update"}}', headers=headers)
+        self.assertEqual(fc2_update_resp.status_code, 200)
+        self.assertEqual(json.loads(fc2_update_resp.content)["flow_classifier"]["description"], "flow_classifier_update")
+
+        print('->>>>>>> test Neutron SFC Flow Classifier Delete ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/flow_classifiers/%s" % fc2_id
+        fc2_delete_resp = requests.delete(url, headers=headers)
+        self.assertEqual(fc2_delete_resp.status_code, 204)
+
+        print('->>>>>>> test Neutron SFC Flow Classifier List ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/flow_classifiers"
+        fc_list_resp = requests.get(url, headers=headers)
+        self.assertEqual(fc_list_resp.status_code, 200)
+        self.assertEqual(len(json.loads(fc_list_resp.content)["flow_classifiers"]), 1)  # only fc1
+
+        print('->>>>>>> test Neutron SFC Flow Classifier Show ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/flow_classifiers/%s" % fc1_id
+        fc1_show_resp = requests.get(url, headers=headers)
+        self.assertEqual(fc1_show_resp.status_code, 200)
+        self.assertEqual(json.loads(fc1_show_resp.content)["flow_classifier"]["name"], "fc1")
+
+
+        print('->>>>>>> test Neutron SFC Port Chain Create ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_chains"
+        pc1_resp = requests.post(url, data='{"port_chain": {"name": "pc1", "port_pair_groups": ["%s"], "flow_classifiers": ["%s"]}}' % (ppg1_id, fc1_id), headers=headers)
+        self.assertEqual(pc1_resp.status_code, 201)
+        pc2_resp = requests.post(url, data='{"port_chain": {"name": "pc2", "port_pair_groups": ["%s"], "flow_classifiers": ["%s"]}}' % (ppg1_id, fc1_id), headers=headers)
+        self.assertEqual(pc2_resp.status_code, 201)
+
+        pc1_id = json.loads(pc1_resp.content)["port_chain"]["id"]
+        pc2_id = json.loads(pc2_resp.content)["port_chain"]["id"]
+
+        print('->>>>>>> test Neutron SFC Port Chain Update ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_chains/%s" % pc2_id
+        pc2_update_resp = requests.put(url, data='{"port_chain": {"description": "port_chain_update"}}', headers=headers)
+        self.assertEqual(pc2_update_resp.status_code, 200)
+        self.assertEqual(json.loads(pc2_update_resp.content)["port_chain"]["description"], "port_chain_update")
+
+        print('->>>>>>> test Neutron SFC Port Chain Delete ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_chains/%s" % pc2_id
+        pc2_delete_resp = requests.delete(url, headers=headers)
+        self.assertEqual(pc2_delete_resp.status_code, 204)
+
+        print('->>>>>>> test Neutron SFC Port Chain List ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_chains"
+        pc_list_resp = requests.get(url, headers=headers)
+        self.assertEqual(pc_list_resp.status_code, 200)
+        self.assertEqual(len(json.loads(pc_list_resp.content)["port_chains"]), 1)  # only pc1
+
+        print('->>>>>>> test Neutron SFC Port Chain Show ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_chains/%s" % pc1_id
+        pc1_show_resp = requests.get(url, headers=headers)
+        self.assertEqual(pc1_show_resp.status_code, 200)
+        self.assertEqual(json.loads(pc1_show_resp.content)["port_chain"]["name"], "pc1")
 
 if __name__ == '__main__':
     unittest.main()
