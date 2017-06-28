@@ -2,11 +2,11 @@ from flask_restful import Resource
 from flask import request, Response
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
 from datetime import datetime
+import neutron_sfc_dummy_api as SFC
 import logging
 import json
 import uuid
 import copy
-
 
 LOG = logging.getLogger("api.openstack.neutron")
 
@@ -50,6 +50,63 @@ class NeutronDummyApi(BaseOpenstackDummy):
         self.api.add_resource(NeutronDeletePort, "/v2.0/ports/<port_id>.json", "/v2.0/ports/<port_id>",
                               resource_class_kwargs={'api': self})
         self.api.add_resource(NeutronAddFloatingIp, "/v2.0/floatingips.json", "/v2.0/floatingips",
+                              resource_class_kwargs={'api': self})
+
+        # Service Function Chaining (SFC) API
+        self.api.add_resource(SFC.PortPairsCreate, "/v2.0/sfc/port_pairs.json", "/v2.0/sfc/port_pairs",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairsUpdate, "/v2.0/sfc/port_pairs/<pair_id>.json",
+                              "/v2.0/sfc/port_pairs/<pair_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairsDelete, "/v2.0/sfc/port_pairs/<pair_id>.json",
+                              "/v2.0/sfc/port_pairs/<pair_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairsList, "/v2.0/sfc/port_pairs.json", "/v2.0/sfc/port_pairs",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairsShow, "/v2.0/sfc/port_pairs/<pair_id>.json",
+                              "/v2.0/sfc/port_pairs/<pair_id>",
+                              resource_class_kwargs={'api': self})
+
+        self.api.add_resource(SFC.PortPairGroupCreate, "/v2.0/sfc/port_pair_groups.json", "/v2.0/sfc/port_pair_groups",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairGroupUpdate, "/v2.0/sfc/port_pair_groups/<group_id>.json",
+                              "/v2.0/sfc/port_pair_groups/<group_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairGroupDelete, "/v2.0/sfc/port_pair_groups/<group_id>.json",
+                              "/v2.0/sfc/port_pair_groups/<group_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairGroupList, "/v2.0/sfc/port_pair_groups.json", "/v2.0/sfc/port_pair_groups",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortPairGroupShow, "/v2.0/sfc/port_pair_groups/<group_id>.json",
+                              "/v2.0/sfc/port_pair_groups/<group_id>",
+                              resource_class_kwargs={'api': self})
+
+        self.api.add_resource(SFC.FlowClassifierCreate, "/v2.0/sfc/flow_classifiers.json", "/v2.0/sfc/flow_classifiers",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.FlowClassifierUpdate, "/v2.0/sfc/flow_classifiers/<flow_classifier_id>.json",
+                              "/v2.0/sfc/flow_classifiers/<flow_classifier_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.FlowClassifierDelete, "/v2.0/sfc/flow_classifiers/<flow_classifier_id>.json",
+                              "/v2.0/sfc/flow_classifiers/<flow_classifier_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.FlowClassifierList, "/v2.0/sfc/flow_classifiers.json", "/v2.0/sfc/flow_classifiers",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.FlowClassifierShow, "/v2.0/sfc/flow_classifiers/<flow_classifier_id>.json",
+                              "/v2.0/sfc/flow_classifiers/<flow_classifier_id>",
+                              resource_class_kwargs={'api': self})
+
+        self.api.add_resource(SFC.PortChainCreate, "/v2.0/sfc/port_chains.json", "/v2.0/sfc/port_chains",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortChainUpdate, "/v2.0/sfc/port_chains/<chain_id>.json",
+                              "/v2.0/sfc/port_chains/<chain_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortChainDelete, "/v2.0/sfc/port_chains/<chain_id>.json",
+                              "/v2.0/sfc/port_chains/<chain_id>",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortChainList, "/v2.0/sfc/port_chains.json", "/v2.0/sfc/port_chains",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(SFC.PortChainShow, "/v2.0/sfc/port_chains/<chain_id>.json",
+                              "/v2.0/sfc/port_chains/<chain_id>",
                               resource_class_kwargs={'api': self})
 
     def _start_flask(self):
@@ -848,7 +905,7 @@ class NeutronAddFloatingIp(Resource):
         resp["floatingips"] = list()
         # create a list of floting IP definitions and return it
         for i in range(100, 110):
-            ip=dict()
+            ip = dict()
             ip["router_id"] = "router_id"
             ip["description"] = "hardcoded in api"
             ip["created_at"] = "router_id"
@@ -864,7 +921,6 @@ class NeutronAddFloatingIp(Resource):
             ip["fixed_ip_address"] = "10.0.0.%d" % i
             resp["floatingips"].append(ip)
         return Response(json.dumps(resp), status=200, mimetype='application/json')
-
 
     def post(self):
         """
