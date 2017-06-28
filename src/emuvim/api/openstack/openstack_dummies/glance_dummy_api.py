@@ -30,6 +30,10 @@ class GlanceDummyApi(BaseOpenstackDummy):
                               "/v1/images/<id>",
                               "/v2/images/<id>",
                               resource_class_kwargs={'api': self})
+        self.api.add_resource(GlanceImageByDockerNameApi,
+                              "/v1/images/<owner>/<container>",
+                              "/v2/images/<owner>/<container>",
+                              resource_class_kwargs={'api': self})
 
     def _start_flask(self):
         LOG.info("Starting %s endpoint @ http://%s:%d" % ("GlanceDummyApi", self.ip, self.port))
@@ -112,7 +116,7 @@ class GlanceListImagesApi(Resource):
                 f['virtual_size'] = 1
                 f['marker'] = None
                 resp['images'].append(f)
-                c+=1
+                c += 1
                 if c > limit:  # ugly hack to stop buggy glance client to do infinite requests
                     break
             if "marker" in request.args:  # ugly hack to fix pageination of openstack client
@@ -145,7 +149,7 @@ class GlanceListImagesApi(Resource):
             img_is_public = True if "public" in body_data.get("visibility") else False
             img_container_format = body_data.get("container_format")
         # try to find ID of already existing image (matched by name)
-        img_id=None
+        img_id = None
         for image in self.api.compute.images.values():
             if str(img_name) in image.name:
                 img_id = image.id
@@ -187,9 +191,22 @@ class GlanceImageByIdApi(Resource):
 
     def get(self, id):
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
-        from emuvim.api.heat.openstack_dummies.nova_dummy_api import NovaListImages
-        nova = NovaListImages(self.api)
-        return nova.get(id)
+        try:
+            resp = dict()
+            for image in self.api.compute.images.values():
+                if image.id == id or image.name == id:
+                    resp['id'] = image.id
+                    resp['name'] = image.name
+
+                    return Response(json.dumps(resp), status=200, mimetype="application/json")
+
+            response = Response("Image with id or name %s does not exists." % id, status=404)
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            return response
+
+        except Exception as ex:
+            LOG.exception(u"%s: Could not retrieve image with id %s." % (__name__, id))
+            return Response(ex.message, status=500, mimetype='application/json')
 
     def put(self, id):
         LOG.debug("API CALL: %s " % str(self.__class__.__name__))
@@ -197,3 +214,25 @@ class GlanceImageByIdApi(Resource):
         return None
 
 
+class GlanceImageByDockerNameApi(Resource):
+    def __init__(self, api):
+        self.api = api
+
+    def get(self, owner, container):
+        logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        try:
+            name = "%s/%s" % (owner, container)
+            if name in self.api.compute.images:
+                image = self.api.compute.images[name]
+                resp = dict()
+                resp['id'] = image.id
+                resp['name'] = image.name
+                return Response(json.dumps(resp), status=200, mimetype="application/json")
+
+            response = Response("Image with id or name %s does not exists." % id, status=404)
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            return response
+
+        except Exception as ex:
+            logging.exception(u"%s: Could not retrieve image with id %s." % (__name__, id))
+            return Response(ex.message, status=500, mimetype='application/json')

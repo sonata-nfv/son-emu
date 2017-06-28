@@ -226,6 +226,8 @@ class NovaListServersApi(Resource):
             server = self.api.compute.create_server(name)
             server.full_name = str(self.api.compute.dc.label) + "_man_" + server_dict["name"]
             server.template_name = server_dict["name"]
+            if "metadata" in server_dict:
+                server.properties = server_dict["metadata"]
 
             for flavor in self.api.compute.flavors.values():
                 if flavor.id == server_dict.get('flavorRef', ''):
