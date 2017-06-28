@@ -7,6 +7,7 @@ class Server(object):
         self.image = image
         self.command = command
         self.port_names = list()
+        self.properties = dict()
         self.flavor = flavor
         self.son_emu_command = None
         self.emulator_compute = None

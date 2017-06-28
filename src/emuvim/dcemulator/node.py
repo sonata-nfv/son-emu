@@ -208,7 +208,7 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny", **params):
+    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny", properties=dict(), **params):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -217,6 +217,7 @@ class Datacenter(object):
         :param command: command (string)
         :param network: networks list({"ip": "10.0.0.254/8"}, {"ip": "11.0.0.254/24"})
         :param flavor_name: name of the flavor for this compute container
+        :param properties: dictionary of properties (key-value) that will be passed as environment variables
         :return:
         """
         assert name is not None
@@ -240,6 +241,8 @@ class Datacenter(object):
             params['cpu_period'] = self.net.cpu_period
             params['cpu_quota'] = self.net.cpu_period * float(cpu_percentage)
 
+        env = properties
+        properties['VNF_NAME'] = name
         # create the container
         d = self.net.addDocker(
             "%s" % (name),
@@ -247,7 +250,7 @@ class Datacenter(object):
             dcmd=command,
             datacenter=self,
             flavor_name=flavor_name,
-            environment = {'VNF_NAME':name},
+            environment = env,
             **params
         )
 
