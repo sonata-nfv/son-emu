@@ -520,6 +520,14 @@ class NovaListFlavorById(Resource):
             LOG.exception(u"%s: Could not retrieve flavor with id %s" % (__name__, flavorid))
             return ex.message, 500
 
+    def delete(self, id, flavorid):
+        """
+        Removes the given flavor.
+        Does not really remove anything from the machine, just fakes an OK.
+        """
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        return Response("{}", status=204, mimetype="application/json")
+
 
 class NovaListImages(Resource):
     def __init__(self, api):
@@ -633,6 +641,14 @@ class NovaListImageById(Resource):
         except Exception as ex:
             LOG.exception(u"%s: Could not retrieve image with id %s." % (__name__, imageid))
             return ex.message, 500
+
+    def delete(self, id, imageid):
+        """
+        Removes the given image.
+        Does not really remove anything from the machine, just fakes an OK.
+        """
+        LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        return Response("{}", status=204, mimetype="application/json")
 
 
 class NovaShowServerDetails(Resource):
