@@ -410,6 +410,7 @@ class OpenstackCompute(object):
         """
         LOG.debug("Starting new compute resources %s" % server.name)
         network = list()
+        network_dict = dict()
 
         for port_name in server.port_names:
             network_dict = dict()
@@ -419,9 +420,14 @@ class OpenstackCompute(object):
                 network_dict['ip'] = port.ip_address
                 network_dict[network_dict['id']] = self.find_network_by_name_or_id(port.net_name).name
                 network.append(network_dict)
+        # default network dict
+        if len(network) < 1:
+            network_dict['id'] = server.name + "-eth0"
+            network_dict[network_dict['id']] = network_dict['id']
+            network.append(network_dict)
 
         self.compute_nets[server.name] = network
-        LOG.debug(network)
+        LOG.debug("Network dict: {}".format(network))
         c = self.dc.startCompute(server.name, image=server.image, command=server.command,
                                  network=network, flavor_name=server.flavor,
                                  properties=server.properties)
