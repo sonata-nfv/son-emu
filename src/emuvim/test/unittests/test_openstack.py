@@ -1112,7 +1112,7 @@ class testRestApi(ApiBaseOpenStack):
         url = "http://0.0.0.0:19696/v2.0/ports"
         listportsesponse = requests.get(url, headers=headers)
         self.assertEqual(listportsesponse.status_code, 200)
-        self.assertEqual(len(json.loads(listportsesponse.content)["ports"]), 18)
+        self.assertEqual(len(json.loads(listportsesponse.content)["ports"]), 9)
         for port in json.loads(listportsesponse.content)["ports"]:
             self.assertEqual(len(str(port['fixed_ips'][0]['subnet_id'])), 36)
         print(" ")

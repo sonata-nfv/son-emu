@@ -468,7 +468,9 @@ class OpenstackCompute(object):
         LOG.debug("Stopping container %s with full name %s" % (server.name, server.full_name))
         link_names = list()
         for port_name in server.port_names:
-            link_names.append(self.find_port_by_name_or_id(port_name).intf_name)
+            prt = self.find_port_by_name_or_id(port_name)
+            if prt is not None:
+                link_names.append(prt.intf_name)
         my_links = self.dc.net.links
         for link in my_links:
             if str(link.intf1) in link_names:
@@ -681,7 +683,8 @@ class OpenstackCompute(object):
         """
         port = self.find_port_by_name_or_id(name_or_id)
         if port is None:
-            raise Exception("Port with name or id %s does not exists." % name_or_id)
+            LOG.warning("Port with name or id %s does not exist. Can't delete it." % name_or_id)
+            return
 
         my_links = self.dc.net.links
         for link in my_links:
