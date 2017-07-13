@@ -211,7 +211,9 @@ class Service(object):
             self._start_sap(self.saps[sap], instance_uuid)
 
         # 5. Deploy E-Line and E_LAN links
-        if "virtual_links" in self.nsd:
+        # Attention: Only done if ""forwarding_graphs" section in NSD exists,
+        # even if "forwarding_graphs" are not used directly.
+        if "virtual_links" in self.nsd and "forwarding_graphs" in self.nsd:
             vlinks = self.nsd["virtual_links"]
             # constituent virtual links are not checked
             #fwd_links = self.nsd["forwarding_graphs"][0]["constituent_virtual_links"]
