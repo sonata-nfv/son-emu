@@ -51,7 +51,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.net.addLink(self.dc[0], self.dc[1])
         self.net.addLink(self.h[1], self.dc[1])
         # connect dummy GK to data centers
-        sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 55000)
+        sdkg1 = SonataDummyGatekeeperEndpoint("127.0.0.1", 55000)
         sdkg1.connectDatacenter(self.dc[0])
         sdkg1.connectDatacenter(self.dc[1])
         # run the dummy gatekeeper (in another thread, don't block)
@@ -157,7 +157,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         self.net.addLink(self.dc[0], self.dc[1])
         self.net.addLink(self.h[1], self.dc[1])
         # connect dummy GK to data centers
-        sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 55001)
+        sdkg1 = SonataDummyGatekeeperEndpoint("127.0.0.1", 55001)
         sdkg1.connectDatacenter(self.dc[0])
         sdkg1.connectDatacenter(self.dc[1])
         # run the dummy gatekeeper (in another thread, don't block)
@@ -213,7 +213,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         # create network
         self.createNet(ndatacenter=2, nhosts=2)
         # connect dummy GK to data centers
-        sdkg1 = SonataDummyGatekeeperEndpoint("0.0.0.0", 55002)
+        sdkg1 = SonataDummyGatekeeperEndpoint("127.0.0.1", 55002)
         sdkg1.connectDatacenter(self.dc[0])
         sdkg1.connectDatacenter(self.dc[1])
         # run the dummy gatekeeper (in another thread, don't block)
