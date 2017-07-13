@@ -259,7 +259,8 @@ class HeatShowStackTemplate(Resource):
                         stack = tmp_stack
             if stack is None:
                 return 'Could not resolve Stack - ID', 404
-
+            #LOG.debug("STACK: {}".format(stack))
+            #LOG.debug("TEMPLATE: {}".format(stack.template))
             return Response(json.dumps(stack.template), status=200, mimetype="application/json")
 
         except Exception as ex:
@@ -350,6 +351,7 @@ class HeatUpdateStack(Resource):
                 stack_dict['template'] = json.loads(stack_dict['template'])
             if not reader.parse_input(stack_dict['template'], stack, self.api.compute.dc.label, stack_update=True):
                 return 'Could not create stack.', 400
+            stack.template = stack_dict['template']
 
             if not self.api.compute.update_stack(old_stack.id, stack):
                 return 'Could not update stack.', 400

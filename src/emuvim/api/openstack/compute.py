@@ -410,6 +410,7 @@ class OpenstackCompute(object):
         """
         LOG.debug("Starting new compute resources %s" % server.name)
         network = list()
+        network_dict = dict()
 
         for port_name in server.port_names:
             network_dict = dict()
@@ -419,7 +420,14 @@ class OpenstackCompute(object):
                 network_dict['ip'] = port.ip_address
                 network_dict[network_dict['id']] = self.find_network_by_name_or_id(port.net_name).name
                 network.append(network_dict)
+        # default network dict
+        if len(network) < 1:
+            network_dict['id'] = server.name + "-eth0"
+            network_dict[network_dict['id']] = network_dict['id']
+            network.append(network_dict)
+
         self.compute_nets[server.name] = network
+        LOG.debug("Network dict: {}".format(network))
         c = self.dc.startCompute(server.name, image=server.image, command=server.command,
                                  network=network, flavor_name=server.flavor,
                                  properties=server.properties)
@@ -460,7 +468,9 @@ class OpenstackCompute(object):
         LOG.debug("Stopping container %s with full name %s" % (server.name, server.full_name))
         link_names = list()
         for port_name in server.port_names:
-            link_names.append(self.find_port_by_name_or_id(port_name).intf_name)
+            prt = self.find_port_by_name_or_id(port_name)
+            if prt is not None:
+                link_names.append(prt.intf_name)
         my_links = self.dc.net.links
         for link in my_links:
             if str(link.intf1) in link_names:
@@ -486,8 +496,15 @@ class OpenstackCompute(object):
         if name_or_id in self.computeUnits:
             return self.computeUnits[name_or_id]
 
+        if self._shorten_server_name(name_or_id) in self.computeUnits:
+            return self.computeUnits[name_or_id]
+
         for server in self.computeUnits.values():
             if server.name == name_or_id or server.template_name == name_or_id or server.full_name == name_or_id:
+                return server
+            if (server.name == self._shorten_server_name(name_or_id)
+                or server.template_name ==  self._shorten_server_name(name_or_id)
+                or server.full_name == self._shorten_server_name(name_or_id)):
                 return server
         return None
 
@@ -505,11 +522,39 @@ class OpenstackCompute(object):
         """
         if self.find_server_by_name_or_id(name) is not None and not stack_operation:
             raise Exception("Server with name %s already exists." % name)
-        server = Server(name)
+        safe_name = self._shorten_server_name(name)
+        server = Server(safe_name)
         server.id = str(uuid.uuid4())
         if not stack_operation:
             self.computeUnits[server.id] = server
         return server
+
+    def _shorten_server_name(self, name, char_limit=9):
+        """
+        Docker does not like too long instance names.
+        This function provides a shorter name if needed
+        """
+        # fix for NetSoft'17 demo
+        # TODO remove this after the demo
+        #if "http" in name or "apache" in name:
+        #    return "http"
+        #elif "l4fw" in name or "socat" in name:
+        #    return "l4fw"
+        #elif "proxy" in name or "squid" in name:
+        #    return "proxy"
+        # this is a ugly fix, but we cannot do better for now (interface names are to long)
+        if len(name) > char_limit:
+            LOG.info("Long server name: {}".format(name))
+            # construct a short name
+         #   name = name.strip("-_ .")
+         #   name = name.replace("_vnf", "")
+         #   p = name.split("_")
+         #   if len(p) > 0:
+         #       name = p[len(p)-1]
+            name = name[-char_limit:].strip("-_ .")
+            LOG.info("Short server name: {}".format(name))
+        return name
+
 
     def delete_server(self, server):
         """
@@ -638,7 +683,8 @@ class OpenstackCompute(object):
         """
         port = self.find_port_by_name_or_id(name_or_id)
         if port is None:
-            raise Exception("Port with name or id %s does not exists." % name_or_id)
+            LOG.warning("Port with name or id %s does not exist. Can't delete it." % name_or_id)
+            return
 
         my_links = self.dc.net.links
         for link in my_links:

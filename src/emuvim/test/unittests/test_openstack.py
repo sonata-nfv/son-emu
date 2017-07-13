@@ -58,317 +58,6 @@ class testRestApi(ApiBaseOpenStack):
 
         # start Mininet network
         self.startNet()
-        
-    @unittest.skip("temporarily disabled")
-    def testChainingDummy(self):
-        print('->>>>>>> test Chaining Class->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        print(" ")
-
-        headers = {'Content-type': 'application/json'}
-        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "test_heatapi_template_chaining.json")).read()
-        url = "http://0.0.0.0:8004/v1/tenantabc123/stacks"
-        requests.post(url, data=json.dumps(json.loads(test_heatapi_template_create_stack)), headers=headers)
-
-
-        print('->>>>>>> test Chaining Versions ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/"
-        listapiversionstackresponse = requests.get(url, headers=headers)
-        self.assertEqual(listapiversionstackresponse.status_code, 200)
-        self.assertEqual(json.loads(listapiversionstackresponse.content)["versions"][0]["id"], "v1")
-        print(" ")
-
-        print('->>>>>>> test Chaining List ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/list"
-        chainlistresponse = requests.get(url, headers=headers)
-        self.assertEqual(chainlistresponse.status_code, 200)
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"], [])
-        print(" ")
-
-        print('->>>>>>> test Loadbalancing List ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/list"
-        lblistresponse = requests.get(url, headers=headers)
-        self.assertEqual(lblistresponse.status_code, 200)
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"], [])
-        print(" ")
-
-        testchain = "dc0_s1_firewall1/fire-out-0/dc0_s1_iperf1/iper-in-0"
-        print('->>>>>>> test Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" %(testchain)
-        chainvnfresponse = requests.put(url)
-        self.assertEqual(chainvnfresponse.status_code, 200)
-        self.assertGreaterEqual(json.loads(chainvnfresponse.content)["cookie"], 0)
-        print(" ")
-
-        print('->>>>>>> test Chaining List ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/list"
-        chainlistresponse = requests.get(url, headers=headers)
-        self.assertEqual(chainlistresponse.status_code, 200)
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["dst_vnf"], "dc0_s1_firewall1")
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["dst_intf"], "fire-out-0")
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["src_vnf"], "dc0_s1_iperf1")
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["src_intf"], "iper-in-0")
-        print(" ")
-
-        print('->>>>>>> test Chain VNF Delete Chain ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        deletechainvnfresponse = requests.delete(url)
-        self.assertEqual(deletechainvnfresponse.status_code, 200)
-        self.assertEqual(deletechainvnfresponse.content, "true")
-        print(" ")
-
-        print('->>>>>>> test Chaining List If Empty Again ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/list"
-        chainlistresponse = requests.get(url, headers=headers)
-        self.assertEqual(chainlistresponse.status_code, 200)
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"], [])
-        print(" ")
-
-        testchain = "dc0_s1_firewall1/fire-out-0/dc0_s1_iperf1/iper-in-0"
-        print('->>>>>>> test Stack Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        stackchainvnfresponse = requests.post(url, data=json.dumps(json.loads('{"path":["dc1.s1", "s1","s2","s3","s1","dc1.s1"]}')), headers=headers)
-        self.assertEqual(stackchainvnfresponse.status_code, 200)
-        print (stackchainvnfresponse.content)
-        self.assertGreaterEqual(json.loads(stackchainvnfresponse.content)["cookie"], 0)
-        print(" ")
-
-
-        print('->>>>>>> test Stack Chaining List ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/list"
-        chainlistresponse = requests.get(url, headers=headers)
-        self.assertEqual(chainlistresponse.status_code, 200)
-        print (chainlistresponse.content)
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["dst_vnf"], "dc0_s1_firewall1")
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["dst_intf"], "fire-out-0")
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["src_vnf"], "dc0_s1_iperf1")
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"][0]["src_intf"], "iper-in-0")
-        self.assertItemsEqual(json.loads(chainlistresponse.content)["chains"][0]["path"],['dc1.s1', 's1', 's2', 's3', 's1', 'dc1.s1'])
-        print(" ")
-
-        print('->>>>>>> test Chain VNF Delete Chain ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        deletechainvnfresponse = requests.delete(url)
-        self.assertEqual(deletechainvnfresponse.status_code, 200)
-        self.assertEqual(deletechainvnfresponse.content, "true")
-        print(" ")
-
-        print('->>>>>>> test Chaining List If Empty Again ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/list"
-        chainlistresponse = requests.get(url, headers=headers)
-        self.assertEqual(chainlistresponse.status_code, 200)
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"], [])
-        print(" ")
-
-
-        testchain = "dc0_s1_firewall1/non-existing-interface/dc0_s1_iperf1/iper-in-0"
-        print('->>>>>>> test Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        chainvnfresponse = requests.put(url)
-        self.assertEqual(chainvnfresponse.status_code, 501)
-        print(" ")
-
-        testchain = "dc0_s1_firewall1/fire-out-0/dc0_s1_iperf1/non-existing-interface"
-        print('->>>>>>> test Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        chainvnfresponse = requests.put(url)
-        self.assertEqual(chainvnfresponse.status_code, 501)
-        print(" ")
-
-        testchain = "dc0_s1_firewall1/non-existing-interface/dc0_s1_iperf1/iper-in-0"
-        print('->>>>>>> test Chain VNF Delete Chain ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        deletechainvnfresponse = requests.delete(url)
-        self.assertEqual(deletechainvnfresponse.status_code, 501)
-        print(" ")
-
-        testchain = "dc0_s1_firewall1/fire-out-0/dc0_s1_iperf1/non-existing-interface"
-        print('->>>>>>> test Chain VNF Delete Chain ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        deletechainvnfresponse = requests.delete(url)
-        self.assertEqual(deletechainvnfresponse.status_code, 501)
-        print(" ")
-
-        testchain = "non-existent-dc/s1/firewall1/firewall1:cp03:output/dc0/s1/iperf1/iperf1:cp02:input"
-        print('->>>>>>> test Chain VNF Non-Existing DC ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        chainvnfresponse = requests.put(url)
-        self.assertEqual(chainvnfresponse.status_code, 500)
-        print(" ")
-
-
-        testchain = "dc0/s1/firewall1/non-existent:cp03:output/dc0/s1/iperf1/iperf1:cp02:input"
-        print('->>>>>>> test Chain VNF Non-Existing Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        chainvnfresponse = requests.put(url)
-        self.assertEqual(chainvnfresponse.status_code, 500)
-        print(" ")
-
-        testchain = "dc0/s1/firewall1/firewall1:cp03:output/dc0/s1/iperf1/non-existent:cp02:input"
-        print('->>>>>>> test Chain VNF Non-Existing Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        chainvnfresponse = requests.put(url)
-        self.assertEqual(chainvnfresponse.status_code, 500)
-        print(" ")
-
-        testchain = "dc0/s1/firewall1/firewall1:cp03:output/dc0/s1/iperf1/iperf1:cp02:input"
-        print('->>>>>>> test Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        chainvnfresponse = requests.put(url)
-        print (chainvnfresponse.content)
-        self.assertEqual(chainvnfresponse.status_code, 200)
-        self.assertGreaterEqual(json.loads(chainvnfresponse.content)["cookie"], 0)
-        print(" ")
-
-        print('->>>>>>> test Chain VNF Delete Chain ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        deletechainvnfresponse = requests.delete(url)
-        self.assertEqual(deletechainvnfresponse.status_code, 200)
-        self.assertEqual(deletechainvnfresponse.content, "true")
-        print(" ")
-
-        print('->>>>>>> test Chaining List If Empty Again ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/list"
-        chainlistresponse = requests.get(url, headers=headers)
-        self.assertEqual(chainlistresponse.status_code, 200)
-        self.assertEqual(json.loads(chainlistresponse.content)["chains"], [])
-        print(" ")
-
-        testchain = "dc0/s1/firewall1/firewall1:cp03:output/dc0/s1/iperf1/iperf1:cp02:input"
-        print('->>>>>>> test Stack Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        stackchainvnfresponse = requests.post(url, data=json.dumps(
-            json.loads('{"path":["dc1.s1", "s1","s2","s3","s1","dc1.s1"]}')), headers=headers)
-        self.assertEqual(stackchainvnfresponse.status_code, 200)
-        print (stackchainvnfresponse.content)
-        self.assertGreaterEqual(json.loads(stackchainvnfresponse.content)["cookie"], 0)
-        print(" ")
-
-        testchain = "dc0/s1/firewall1/firewall1:cp03:output/dc0/s1/iperf1/iperf1:cp02:input"
-        print('->>>>>>> test Stack Chain VNF Interfaces ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/chain/%s" % (testchain)
-        stackchainvnfresponse = requests.delete(url, headers=headers)
-        self.assertEqual(stackchainvnfresponse.status_code, 200)
-        print(" ")
-
-
-        print('->>>>>>> test Loadbalancing ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/dc0/s1/firewall1/firewall1:cp03:output"
-        lblistresponse = requests.post(url, data=json.dumps(
-            {"dst_vnf_interfaces":[{"pop":"dc0","stack":"s1","server":"iperf1","port":"iperf1:cp02:input"}]})
-            , headers=headers)
-        print (lblistresponse.content)
-        self.assertEqual(lblistresponse.status_code, 200)
-        self.assertIn("dc0_s1_firewall1:fire-out-0", lblistresponse.content)
-        print(" ")
-
-        print('->>>>>>> test Loadbalancing List ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/list"
-        lblistresponse = requests.get(url, headers=headers)
-        self.assertEqual(lblistresponse.status_code, 200)
-        print (lblistresponse.content )
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["paths"][0]["dst_vnf"], "dc0_s1_iperf1")
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["paths"][0]["dst_intf"], "iper-in-0")
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["src_vnf"], "dc0_s1_firewall1")
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["src_intf"],"fire-out-0")
-        print(" ")
-
-        print('->>>>>>> test delete Loadbalancing ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/dc0/s1/firewall1/firewall1:cp03:output"
-        lbdeleteresponse = requests.delete(url, headers=headers)
-        print (lbdeleteresponse.content)
-        self.assertEqual(lbdeleteresponse.status_code, 200)
-        print(" ")
-
-        print('->>>>>>> testFloatingLoadbalancer ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/dc0/floating/bla/blubb"
-        lblistresponse = requests.post(url, data=json.dumps(
-            {"dst_vnf_interfaces":[{"pop":"dc0","stack":"s1","server":"iperf1","port":"iperf1:cp02:input"}]})
-            , headers=headers)
-        print (lblistresponse.content)
-        self.assertEqual(lblistresponse.status_code, 200)
-        resp = json.loads(lblistresponse.content)
-        self.assertIsNotNone(resp.get('cookie'))
-        self.assertIsNotNone(resp.get('floating_ip'))
-        cookie = resp.get('cookie')
-        print(" ")
-
-        print('->>>>>>> testDeleteFloatingLoadbalancer ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/dc0/floating/%s/blubb" % cookie
-        lblistresponse = requests.delete(url, headers=headers)
-        print (lblistresponse.content)
-        self.assertEqual(lblistresponse.status_code, 200)
-        print(" ")
-
-        print('->>>>>>> testLoadbalancingCustomPath ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/dc0_s1_firewall1/fire-out-0"
-        lblistresponse = requests.post(url, data=json.dumps(
-            {"dst_vnf_interfaces":{"dc0_s1_iperf1":"iper-in-0"},
-             "path": {"dc0_s1_iperf1": {"iper-in-0": ["dc1.s1", "s1","s2","s3","s1","dc1.s1"]}}}), headers=headers)
-        print (lblistresponse.content)
-        self.assertEqual(lblistresponse.status_code, 200)
-        self.assertIn("dc0_s1_firewall1:fire-out-0", lblistresponse.content)
-        print(" ")
-
-        print('->>>>>>> testLoadbalancingListCustomPath ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/list"
-        lblistresponse = requests.get(url, headers=headers)
-        self.assertEqual(lblistresponse.status_code, 200)
-        print (lblistresponse.content )
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["paths"][0]["dst_vnf"], "dc0_s1_iperf1")
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["paths"][0]["dst_intf"], "iper-in-0")
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["paths"][0]["path"],
-                         ["dc1.s1", "s1","s2","s3","s1","dc1.s1"] )
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["src_vnf"], "dc0_s1_firewall1")
-        self.assertEqual(json.loads(lblistresponse.content)["loadbalancers"][0]["src_intf"],"fire-out-0")
-        print(" ")
-
-
-        print('->>>>>>> test Delete Loadbalancing ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/lb/dc0_s1_firewall1/fire-out-0"
-        lblistresponse = requests.delete(url, headers=headers)
-        self.assertEqual(lblistresponse.status_code, 200)
-        print(" ")
-
-        print('->>>>>>> test Query Topology ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:4000/v1/topo"
-        topolistresponse = requests.get(url, headers=headers)
-        print(topolistresponse.content)
-        self.assertEqual(topolistresponse.status_code, 200)
-        print(" ")
-
 
     def testNovaDummy(self):
         print('->>>>>>> test Nova Dummy Class->>>>>>>>>>>>>>>')
@@ -531,8 +220,6 @@ class testRestApi(ApiBaseOpenStack):
             if image["name"] == "ubuntu:trusty":
                 ubuntu_image_id = image["id"]
 
-
-
         print('->>>>>>> test Nova Create Server Instance ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:18774/v2.1/id_bla/servers"
@@ -572,8 +259,6 @@ class testRestApi(ApiBaseOpenStack):
         listnonexistingserverdetailsresponse = requests.get(url, headers=headers)
         self.assertEqual(listnonexistingserverdetailsresponse.status_code, 404)
         print(" ")
-
-
 
     def testNeutronDummy(self):
         print('->>>>>>> test Neutron Dummy Class->>>>>>>>>>>>>>>')
@@ -780,8 +465,6 @@ class testRestApi(ApiBaseOpenStack):
         self.assertEqual(updatenonexistingsubnetresponse.status_code, 404)
         print(" ")
 
-
-
         print('->>>>>>> test Neutron List Ports ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:19696/v2.0/ports"
@@ -963,7 +646,6 @@ class testRestApi(ApiBaseOpenStack):
         self.assertEqual(json.loads(gettokenstackresponse.content)["access"]["user"]["name"], "tenantName")
         print(" ")
 
-
     def testHeatDummy(self):
         print('->>>>>>> test Heat Dummy Class->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -1051,119 +733,6 @@ class testRestApi(ApiBaseOpenStack):
               json.loads(createstackresponse.content)['stack']['id']
         deletestackdetailsresponse = requests.delete(url, headers=headers)
         self.assertEqual(deletestackdetailsresponse.status_code, 204)
-        print(" ")
-
-
-    def test_CombinedTesting(self):
-        print('->>>>>>> test Combinded tests->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        print(" ")
-
-        headers = {'Content-type': 'application/json'}
-        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__),
-                                                               "test_heatapi_template_create_stack.json")).read()
-        test_heatapi_template_update_stack = open(os.path.join(os.path.dirname(__file__),
-                                                               "test_heatapi_template_update_stack.json")).read()
-
-        print('->>>>>>> test Combined Create Stack ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:18004/v1/tenantabc123/stacks"
-        createstackresponse = requests.post(url,
-                                            data=json.dumps(json.loads(test_heatapi_template_create_stack)),
-                                            headers=headers)
-        self.assertEqual(createstackresponse.status_code, 201)
-        self.assertNotEqual(json.loads(createstackresponse.content)["stack"]["id"], "")
-        print(" ")
-
-        print('->>>>>>> test Combined Neutron List Ports ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:19696/v2.0/ports"
-        listportsesponse = requests.get(url, headers=headers)
-        self.assertEqual(listportsesponse.status_code, 200)
-        self.assertEqual(len(json.loads(listportsesponse.content)["ports"]), 9)
-        for port in json.loads(listportsesponse.content)["ports"]:
-            self.assertEqual(len(str(port['fixed_ips'][0]['subnet_id'])), 36)
-        print(" ")
-
-        print('->>>>>>> test Combined Neutron List Networks ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:19696/v2.0/networks"
-        listnetworksesponse = requests.get(url, headers=headers)
-        self.assertEqual(listnetworksesponse.status_code, 200)
-        self.assertEqual(len(json.loads(listnetworksesponse.content)["networks"]), 10)
-        for net in json.loads(listnetworksesponse.content)["networks"]:
-            self.assertEqual(len(str(net['subnets'][0])), 36)
-        print(" ")
-
-        print('->>>>>>> test Combined Update Stack ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:18004/v1/tenantabc123updateStack/stacks/%s"% \
-              json.loads(createstackresponse.content)['stack']['id']
-        updatestackresponse = requests.put(url,
-                                           data=json.dumps(json.loads(test_heatapi_template_update_stack)),
-                                           headers=headers)
-        self.assertEqual(updatestackresponse.status_code, 202)
-        liststackdetailsresponse = requests.get(url, headers=headers)
-        self.assertEqual(json.loads(liststackdetailsresponse.content)["stack"]["stack_status"], "UPDATE_COMPLETE")
-        print(" ")
-
-        print('->>>>>>> test Combined Neutron List Ports ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:19696/v2.0/ports"
-        listportsesponse = requests.get(url, headers=headers)
-        self.assertEqual(listportsesponse.status_code, 200)
-        self.assertEqual(len(json.loads(listportsesponse.content)["ports"]), 18)
-        for port in json.loads(listportsesponse.content)["ports"]:
-            self.assertEqual(len(str(port['fixed_ips'][0]['subnet_id'])), 36)
-        print(" ")
-
-        print('->>>>>>> test Combined Neutron List Networks ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:19696/v2.0/networks"
-        listnetworksesponse = requests.get(url, headers=headers)
-        self.assertEqual(listnetworksesponse.status_code, 200)
-        self.assertEqual(len(json.loads(listnetworksesponse.content)["networks"]), 14)
-        for net in json.loads(listnetworksesponse.content)["networks"]:
-            self.assertEqual(len(str(net['subnets'][0])), 36)
-        print(" ")
-
-
-        # workflow create floating ip and assign it to a server
-
-        print('->>>>>>> CombinedNeutronCreateFloatingIP ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:19696/v2.0/floatingips"
-        createflip = requests.post(url, headers=headers,
-                                            data='{"floatingip":{"floating_network_id":"default"}}')
-        self.assertEqual(createflip.status_code, 200)
-        self.assertIsNotNone(json.loads(createflip.content)["floatingip"].get("port_id"))
-        port_id = json.loads(createflip.content)["floatingip"].get("port_id")
-        print(" ")
-
-        print('->>>>>>> CombinedNovaGetServer ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:18774/v2.1/id_bla/servers/detail"
-        listserverapisdetailedresponse = requests.get(url, headers=headers)
-        self.assertEqual(listserverapisdetailedresponse.status_code, 200)
-        self.assertEqual(json.loads(listserverapisdetailedresponse.content)["servers"][0]["status"], "ACTIVE")
-        server_id = json.loads(listserverapisdetailedresponse.content)["servers"][0]["id"]
-        print(" ")
-
-        print('->>>>>>> CombinedNovaAssignInterface ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:18774/v2.1/id_bla/servers/%s/os-interface" % server_id
-        assign = requests.post(url, headers=headers,
-                                            data='{"interfaceAttachment":{"net_id": "default"}}')
-        self.assertEqual(assign.status_code, 202)
-        self.assertIsNotNone(json.loads(assign.content)["interfaceAttachment"].get("port_id"))
-        port_id = json.loads(assign.content)["interfaceAttachment"].get("port_id")
-        print(" ")
-
-        print('->>>>>>> CombinedNovaDeleteInterface ->>>>>>>>>>>>>>>')
-        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        url = "http://0.0.0.0:18774/v2.1/id_bla/servers/%s/os-interface/%s" % (server_id, port_id)
-        getintfs = requests.delete(url, headers=headers)
-        self.assertEqual(getintfs.status_code, 202)
         print(" ")
 
     def testNeutronSFC(self):
@@ -1285,7 +854,6 @@ class testRestApi(ApiBaseOpenStack):
         ppg2_show_resp = requests.get(url, headers=headers)
         self.assertEqual(ppg2_show_resp.status_code, 200)
         self.assertEqual(json.loads(ppg2_show_resp.content)["port_pair_group"]["name"], "ppg2")
-
 
         print('->>>>>>> test Neutron SFC Flow Classifier Create ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
