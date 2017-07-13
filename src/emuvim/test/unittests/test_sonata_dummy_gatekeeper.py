@@ -59,7 +59,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         time.sleep(3)
         # start Mininet network
         self.startNet()
-        time.sleep(1)
+        time.sleep(3)
 
         print "starting tests"
         # board package
@@ -165,7 +165,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         time.sleep(3)
         # start Mininet network
         self.startNet()
-        time.sleep(1)
+        time.sleep(3)
 
         print "starting tests"
         # board package
@@ -221,7 +221,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         time.sleep(3)
         # start Mininet network
         self.startNet()
-        time.sleep(1)
+        time.sleep(3)
 
         print "starting tests"
         # board package
