@@ -113,7 +113,7 @@ class DCNetwork(Containernet):
         self.DCNetwork_graph = nx.MultiDiGraph()
 
         # initialize pool of vlan tags to setup the SDN paths
-        self.vlans = range(1, 4096)[::-1]
+        self.vlans = range(1, 4095)[::-1]
 
         # link to Ryu REST_API
         ryu_ip = 'localhost'
