@@ -64,7 +64,7 @@
      pip: name=prometheus_client state=latest
 
    - name: install latest urllib3 (fix error urllib3.connection.match_hostname = match_hostname)
-     pip: name=urllib3 state=1.21.1
+     pip: name=urllib3 version=1.21.1
 
    - name: install iptc
      pip: name=python-iptables state=latest
