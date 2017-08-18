@@ -141,7 +141,7 @@ class testRestApi(SimpleTestTopology):
         output = subprocess.check_output("son-emu-cli datacenter status -d datacenter0", shell=True)
         # check datacenter status result
         self.assertTrue("datacenter0" in output)
-
+        self.stopApi()
         self.stopNet()
 
 
