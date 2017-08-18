@@ -68,6 +68,7 @@ def create_topology1():
     # start the emulation platform
     net.start()
     net.CLI()
+    rapi1.stop()
     net.stop()
 
 
