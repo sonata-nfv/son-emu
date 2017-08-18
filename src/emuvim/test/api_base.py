@@ -97,6 +97,9 @@ class SimpleTestTopology(unittest.TestCase):
     def startApi(self):
         self.api.start()
 
+    def stopApi(self):
+        self.api.stop()
+        
     def startNet(self):
         self.net.start()
 
