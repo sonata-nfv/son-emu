@@ -127,17 +127,21 @@ class RestApiEndpoint(object):
             self.__class__.__name__, self.ip, self.port))
 
     def start(self):
-        thread = threading.Thread(target=self._start_flask, args=())
-        thread.daemon = True
-        thread.start()
+        self.thread = threading.Thread(target=self._start_flask, args=())
+        self.thread.daemon = True
+        self.thread.start()
         logging.info("Started API endpoint @ http://%s:%d" % (self.ip, self.port))
+
+    def stop(self):
+        if self.http_server:
+            self.http_server.close()
 
     def _start_flask(self):
         #self.app.run(self.ip, self.port, debug=False, use_reloader=False)
         #this should be a more production-fit http-server
         #self.app.logger.setLevel(logging.ERROR)
-        http_server = WSGIServer((self.ip, self.port),
+        self.http_server = WSGIServer((self.ip, self.port),
                                  self.app,
                                  log=open("/dev/null", "w")  # This disables HTTP request logs to not mess up the CLI when e.g. the auto-updated dashboard is used
         )
-        http_server.serve_forever()
+        self.http_server.serve_forever()
