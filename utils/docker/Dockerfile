@@ -65,5 +65,5 @@ RUN echo 'Done'
 
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 
-# dummy GK, cAdvisor, Prometheus Push Gateway, son-emu REST API
-EXPOSE 5000 8081 9091 5001
+# dummy GK, cAdvisor, Prometheus Push Gateway, son-emu REST API, OpenStack-fake APIs
+EXPOSE 5000 8081 9091 5001 6001 6002 6003 6004
