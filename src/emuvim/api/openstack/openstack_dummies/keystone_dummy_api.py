@@ -116,30 +116,10 @@ class KeystoneShowAPIv2(Resource):
                 {
                     "href": "http://%s:%d/v2.0" % (get_host(request), self.api.port),
                     "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/tokens" % (get_host(request), self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/networks" % (get_host(request), neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/subnets" % (get_host(request), neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/ports" % (get_host(request), neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v1/<tenant_id>/stacks" % (get_host(request), heat_port),
-                    "rel": "self"
                 }
             ]
         }
-
+        LOG.debug(json.dumps(resp))
         return Response(json.dumps(resp), status=200, mimetype='application/json')
 
 
@@ -177,26 +157,6 @@ class KeystoneShowAPIv3(Resource):
             "links": [
                 {
                     "href": "http://%s:%d/v2.0" % (get_host(request), self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/tokens" % (get_host(request), self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/networks" % (get_host(request), neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/subnets" % (get_host(request), neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/ports" % (get_host(request), neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v1/<tenant_id>/stacks" % (get_host(request), heat_port),
                     "rel": "self"
                 }
             ]
@@ -470,7 +430,6 @@ class KeystoneGetTokenv3(Resource):
                     "name": "heat"
                 }
             ]
-            
             return Response(json.dumps(ret), status=201, mimetype='application/json')
 
         except Exception as ex:
