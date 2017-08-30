@@ -28,21 +28,37 @@ partner consortium (www.sonata-nfv.eu).
 import logging
 from mininet.log import setLogLevel
 from emuvim.dcemulator.net import DCNetwork
-
+from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
 
 logging.basicConfig(level=logging.INFO)
+setLogLevel('info')  # set Mininet loglevel
+logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.base').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.compute').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.keystone').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.nova').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.neutron').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.heat').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.heat.parser').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.glance').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.helper').setLevel(logging.DEBUG)
 
 
 def create_topology():
     net = DCNetwork(monitor=False, enable_learning=False)
 
     dc1 = net.addDatacenter("dc1")
-
+    # add OpenStack-like APIs to the emulated DC
     api1 = OpenstackApiEndpoint("0.0.0.0", 6001)
     api1.connect_datacenter(dc1)
     api1.start()
     api1.connect_dc_network(net)
+    # add the command line interface endpoint to the emulated DC (REST API)
+    rapi1 = RestApiEndpoint("0.0.0.0", 5001)
+    rapi1.connectDCNetwork(net)
+    rapi1.connectDatacenter(dc1)
+    rapi1.start()
 
     net.start()
     net.CLI()
@@ -51,7 +67,6 @@ def create_topology():
 
 
 def main():
-    setLogLevel('info')  # set Mininet loglevel
     create_topology()
 
 
