@@ -16,8 +16,8 @@ class KeystoneDummyApi(BaseOpenstackDummy):
         self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(KeystoneShowAPIv2, "/v2.0", resource_class_kwargs={'api': self})
         self.api.add_resource(KeystoneGetToken, "/v2.0/tokens", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneShowAPIv3, "/v3", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneGetTokenv3, "/v3/auth/tokens", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneShowAPIv3, "/v3.0", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneGetTokenv3, "/v3.0/auth/tokens", resource_class_kwargs={'api': self})
 
     def _start_flask(self):
         LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
@@ -150,13 +150,13 @@ class KeystoneShowAPIv3(Resource):
             "media-types": [
                 {
                     "base": "application/json",
-                    "type": "application/vnd.openstack.identity-v2.0+json"
+                    "type": "application/vnd.openstack.identity-v3.0+json"
                 }
             ],
-            "id": "v2.0",
+            "id": "v3.0",
             "links": [
                 {
-                    "href": "http://%s:%d/v2.0" % (get_host(request), self.api.port),
+                    "href": "http://%s:%d/v3.0" % (get_host(request), self.api.port),
                     "rel": "self"
                 }
             ]
