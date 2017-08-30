@@ -32,6 +32,17 @@ from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
 
 logging.basicConfig(level=logging.INFO)
+setLogLevel('info')  # set Mininet loglevel
+logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.base').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.compute').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.keystone').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.nova').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.neutron').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.heat').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.heat.parser').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.glance').setLevel(logging.DEBUG)
+logging.getLogger('api.openstack.helper').setLevel(logging.DEBUG)
 
 
 def create_topology():
@@ -56,7 +67,6 @@ def create_topology():
 
 
 def main():
-    setLogLevel('info')  # set Mininet loglevel
     create_topology()
 
 
