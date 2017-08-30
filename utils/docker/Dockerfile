@@ -52,7 +52,7 @@ RUN make develop
 # install son-emu
 RUN echo 'install son-emu'
 RUN apt-get install -y  python-dev python-zmq libzmq-dev libffi-dev libssl-dev
-RUN pip install -U zerorpc tabulate argparse networkx six ryu oslo.config pytest Flask flask_restful requests prometheus_client pyaml
+RUN pip install -U zerorpc tabulate argparse networkx six ryu oslo.config pytest Flask flask_restful requests urllib prometheus_client pyaml
 WORKDIR /
 #avoid pulling not the latest git, copy the current dir, to run this from Jenkins
 #RUN git clone https://github.com/sonata-nfv/son-emu.git
@@ -66,4 +66,4 @@ RUN echo 'Done'
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 
 # dummy GK, cAdvisor, Prometheus Push Gateway, son-emu REST API, OpenStack-fake APIs
-EXPOSE 5000 8081 9091 5001 6001 6002 6003 6004
+EXPOSE 5000 8081 9091 5001 4000 10243 9005 6001 9775 10697

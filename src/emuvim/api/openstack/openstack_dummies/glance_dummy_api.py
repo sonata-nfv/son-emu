@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask import Response, request
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
+from emuvim.api.openstack.helper import get_host
 import logging
 import json
 
@@ -182,7 +183,7 @@ class GlanceListImagesApi(Resource):
         resp['image'] = f
         # build actual response with headers and everything
         r = Response(json.dumps(resp), status=201, mimetype="application/json")
-        r.headers.add("Location", "http://%s:%d/v1/images/%s" % (self.api.ip,
+        r.headers.add("Location", "http://%s:%d/v1/images/%s" % (get_host(request),
                                                                  self.api.port,
                                                                  img_id))
         return r

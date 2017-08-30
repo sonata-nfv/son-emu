@@ -2,6 +2,7 @@ from flask import request, Response
 from flask_restful import Resource
 from emuvim.api.openstack.resources import Stack
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
+from emuvim.api.openstack.helper import get_host
 from datetime import datetime
 from emuvim.api.openstack.heat_parser import HeatParser
 import logging
@@ -75,7 +76,7 @@ class HeatListAPIVersions(Resource):
             "id": "v1.0",
             "links": [
                 {
-                    "href": "http://%s:%d/v2.0" % (self.api.ip, self.api.port),
+                    "href": "http://%s:%d/v2.0" % (get_host(request), self.api.port),
                     "rel": "self"
                 }
             ]
@@ -123,7 +124,7 @@ class HeatCreateStack(Resource):
                                      "links": [
                                          {
                                              "href": "http://%s:%s/v1/%s/stacks/%s"
-                                                     % (self.api.ip, self.api.port, tenant_id, stack.id),
+                                                     % (get_host(request), self.api.port, tenant_id, stack.id),
                                              "rel": "self"
                                          }]}}
 
@@ -204,7 +205,7 @@ class HeatShowStack(Resource):
                     "links": [
                         {
                             "href": "http://%s:%s/v1/%s/stacks/%s"
-                                    % (self.api.ip, self.api.port, tenant_id, stack.id),
+                                    % (get_host(request), self.api.port, tenant_id, stack.id),
                             "rel": "self"
                         }
                     ],

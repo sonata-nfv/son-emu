@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask import Response, request
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
+from emuvim.api.openstack.helper import get_host
 import logging
 import json
 import uuid
@@ -103,7 +104,7 @@ class NovaVersionsList(Resource):
                         }
                     ]
                 }
-            """ % (self.api.ip, self.api.port)
+            """ % (get_host(request), self.api.port)
 
             response = Response(resp, status=200, mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
@@ -157,7 +158,7 @@ class NovaVersionShow(Resource):
                     "updated": "2013-07-23T11:33:21Z"
                 }
             }
-            """ % (self.api.ip, self.api.port)
+            """ % (get_host(request), self.api.port)
 
             response = Response(resp, status=200, mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
@@ -188,7 +189,7 @@ class NovaListServersApi(Resource):
             resp['servers'] = list()
             for server in self.api.compute.computeUnits.values():
                 s = server.create_server_dict(self.api.compute)
-                s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (self.api.ip,
+                s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (get_host(request),
                                                                             self.api.port,
                                                                             id,
                                                                             server.id)}]
@@ -276,7 +277,7 @@ class NovaListServersAndPortsApi(Resource):
             resp['servers'] = list()
             for server in self.api.compute.computeUnits.values():
                 s = server.create_server_dict(self.api.compute)
-                s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (self.api.ip,
+                s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (get_host(request),
                                                                             self.api.port,
                                                                             id,
                                                                             server.id)}]
@@ -322,7 +323,7 @@ class NovaListServersDetailed(Resource):
             resp = {"servers": list()}
             for server in self.api.compute.computeUnits.values():
                 s = server.create_server_dict(self.api.compute)
-                s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (self.api.ip,
+                s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (get_host(request),
                                                                             self.api.port,
                                                                             id,
                                                                             server.id)}]
@@ -331,7 +332,7 @@ class NovaListServersDetailed(Resource):
                     "id": flavor.id,
                     "links": [
                         {
-                            "href": "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+                            "href": "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                          self.api.port,
                                                                          id,
                                                                          flavor.id),
@@ -344,7 +345,7 @@ class NovaListServersDetailed(Resource):
                     "id": image.id,
                     "links": [
                         {
-                            "href": "http://%s:%d/v2.1/%s/images/%s" % (self.api.ip,
+                            "href": "http://%s:%d/v2.1/%s/images/%s" % (get_host(request),
                                                                         self.api.port,
                                                                         id,
                                                                         image.id),
@@ -385,7 +386,7 @@ class NovaListFlavors(Resource):
                 f = flavor.__dict__.copy()
                 f['id'] = flavor.id
                 f['name'] = flavor.name
-                f['links'] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+                f['links'] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                             self.api.port,
                                                                             id,
                                                                             flavor.id)}]
@@ -411,7 +412,7 @@ class NovaListFlavors(Resource):
             data.get("disk"), "GB")
         # create response based on incoming data
         data["id"] = f.id
-        data["links"] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+        data["links"] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                        self.api.port,
                                                                        id,
                                                                        f.id)}]
@@ -441,7 +442,7 @@ class NovaListFlavorsDetails(Resource):
                 # but use a copy so we don't modifiy the original
                 f = flavor.__dict__.copy()
                 # add additional expected stuff stay openstack compatible
-                f['links'] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+                f['links'] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                             self.api.port,
                                                                             id,
                                                                             flavor.id)}]
@@ -475,7 +476,7 @@ class NovaListFlavorsDetails(Resource):
             data.get("disk"), "GB")
         # create response based on incoming data
         data["id"] = f.id
-        data["links"] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+        data["links"] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                        self.api.port,
                                                                        id,
                                                                        f.id)}]
@@ -510,7 +511,7 @@ class NovaListFlavorById(Resource):
                         break
             resp['flavor']['id'] = flavor.id
             resp['flavor']['name'] = flavor.name
-            resp['flavor']['links'] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+            resp['flavor']['links'] = [{'href': "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                                      self.api.port,
                                                                                      id,
                                                                                      flavor.id)}]
@@ -552,7 +553,7 @@ class NovaListImages(Resource):
                 f = dict()
                 f['id'] = image.id
                 f['name'] = str(image.name).replace(":latest", "")
-                f['links'] = [{'href': "http://%s:%d/v2.1/%s/images/%s" % (self.api.ip,
+                f['links'] = [{'href': "http://%s:%d/v2.1/%s/images/%s" % (get_host(request),
                                                                            self.api.port,
                                                                            id,
                                                                            image.id)}]
@@ -589,7 +590,7 @@ class NovaListImagesDetails(Resource):
                 f = image.__dict__.copy()
                 # add additional expected stuff stay openstack compatible
                 f['name'] = str(image.name).replace(":latest", "")
-                f['links'] = [{'href': "http://%s:%d/v2.1/%s/images/%s" % (self.api.ip,
+                f['links'] = [{'href': "http://%s:%d/v2.1/%s/images/%s" % (get_host(request),
                                                                            self.api.port,
                                                                            id,
                                                                            image.id)}]
@@ -674,7 +675,7 @@ class NovaShowServerDetails(Resource):
             if server is None:
                 return Response("Server with id or name %s does not exists." % serverid, status=404)
             s = server.create_server_dict()
-            s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (self.api.ip,
+            s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (get_host(request),
                                                                         self.api.port,
                                                                         id,
                                                                         server.id)}]
@@ -684,7 +685,7 @@ class NovaShowServerDetails(Resource):
                 "id": flavor.id,
                 "links": [
                     {
-                        "href": "http://%s:%d/v2.1/%s/flavors/%s" % (self.api.ip,
+                        "href": "http://%s:%d/v2.1/%s/flavors/%s" % (get_host(request),
                                                                      self.api.port,
                                                                      id,
                                                                      flavor.id),
@@ -697,7 +698,7 @@ class NovaShowServerDetails(Resource):
                 "id": image.id,
                 "links": [
                     {
-                        "href": "http://%s:%d/v2.1/%s/images/%s" % (self.api.ip,
+                        "href": "http://%s:%d/v2.1/%s/images/%s" % (get_host(request),
                                                                     self.api.port,
                                                                     id,
                                                                     image.id),
