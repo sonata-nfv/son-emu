@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask import request, Response
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
+from emuvim.api.openstack.helper import get_host
 from datetime import datetime
 import neutron_sfc_dummy_api as SFC
 import logging

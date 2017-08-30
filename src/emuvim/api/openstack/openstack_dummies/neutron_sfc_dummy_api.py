@@ -5,6 +5,7 @@ import json
 import uuid
 
 from emuvim.api.openstack.resources.port_chain import PortChain
+from emuvim.api.openstack.helper import get_host
 
 
 class SFC(Resource):

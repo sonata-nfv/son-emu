@@ -1,6 +1,7 @@
 from flask_restful import Resource
 from flask import request, Response
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
+from emuvim.api.openstack.helper import get_host
 import logging
 import json
 
@@ -15,8 +16,8 @@ class KeystoneDummyApi(BaseOpenstackDummy):
         self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(KeystoneShowAPIv2, "/v2.0", resource_class_kwargs={'api': self})
         self.api.add_resource(KeystoneGetToken, "/v2.0/tokens", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneShowAPIv3, "/v3", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneGetTokenv3, "/v3/auth/tokens", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneShowAPIv3, "/v3.0", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneGetTokenv3, "/v3.0/auth/tokens", resource_class_kwargs={'api': self})
 
     def _start_flask(self):
         LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
@@ -62,7 +63,7 @@ class KeystoneListVersions(Resource):
             "id": "v2.0",
             "links": [
                 {
-                    "href": "http://%s:%d/v2.0" % (self.api.ip, self.api.port),
+                    "href": "http://%s:%d/v2.0" % (get_host(request), self.api.port),
                     "rel": "self"
                 }
             ],
@@ -113,32 +114,12 @@ class KeystoneShowAPIv2(Resource):
             "id": "v2.0",
             "links": [
                 {
-                    "href": "http://%s:%d/v2.0" % (self.api.ip, self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/tokens" % (self.api.ip, self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/networks" % (self.api.ip, neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/subnets" % (self.api.ip, neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/ports" % (self.api.ip, neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v1/<tenant_id>/stacks" % (self.api.ip, heat_port),
+                    "href": "http://%s:%d/v2.0" % (get_host(request), self.api.port),
                     "rel": "self"
                 }
             ]
         }
-
+        LOG.debug(json.dumps(resp))
         return Response(json.dumps(resp), status=200, mimetype='application/json')
 
 
@@ -169,33 +150,13 @@ class KeystoneShowAPIv3(Resource):
             "media-types": [
                 {
                     "base": "application/json",
-                    "type": "application/vnd.openstack.identity-v2.0+json"
+                    "type": "application/vnd.openstack.identity-v3.0+json"
                 }
             ],
-            "id": "v2.0",
+            "id": "v3.0",
             "links": [
                 {
-                    "href": "http://%s:%d/v2.0" % (self.api.ip, self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/tokens" % (self.api.ip, self.api.port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/networks" % (self.api.ip, neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/subnets" % (self.api.ip, neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v2.0/ports" % (self.api.ip, neutron_port),
-                    "rel": "self"
-                },
-                {
-                    "href": "http://%s:%d/v1/<tenant_id>/stacks" % (self.api.ip, heat_port),
+                    "href": "http://%s:%d/v3.0" % (get_host(request), self.api.port),
                     "rel": "self"
                 }
             ]
@@ -260,11 +221,11 @@ class KeystoneGetToken(Resource):
             ret['access']['serviceCatalog'] = [{
                 "endpoints": [
                     {
-                        "adminURL": "http://%s:%s/v2.1/%s" % (self.api.ip, self.api.port + 3774, user['id']),
+                        "adminURL": "http://%s:%s/v2.1/%s" % (get_host(request), self.api.port + 3774, user['id']),
                         "region": "RegionOne",
-                        "internalURL": "http://%s:%s/v2.1/%s" % (self.api.ip, self.api.port + 3774, user['id']),
+                        "internalURL": "http://%s:%s/v2.1/%s" % (get_host(request), self.api.port + 3774, user['id']),
                         "id": "2dad48f09e2a447a9bf852bcd93548ef",
-                        "publicURL": "http://%s:%s/v2.1/%s" % (self.api.ip, self.api.port + 3774, user['id'])
+                        "publicURL": "http://%s:%s/v2.1/%s" % (get_host(request), self.api.port + 3774, user['id'])
                     }
                 ],
                 "endpoints_links": [],
@@ -274,11 +235,11 @@ class KeystoneGetToken(Resource):
                 {
                     "endpoints": [
                         {
-                            "adminURL": "http://%s:%s/v2.0" % (self.api.ip, self.api.port),
+                            "adminURL": "http://%s:%s/v2.0" % (get_host(request), self.api.port),
                             "region": "RegionOne",
-                            "internalURL": "http://%s:%s/v2.0" % (self.api.ip, self.api.port),
+                            "internalURL": "http://%s:%s/v2.0" % (get_host(request), self.api.port),
                             "id": "2dad48f09e2a447a9bf852bcd93543fc",
-                            "publicURL": "http://%s:%s/v2" % (self.api.ip, self.api.port)
+                            "publicURL": "http://%s:%s/v2" % (get_host(request), self.api.port)
                         }
                     ],
                     "endpoints_links": [],
@@ -288,11 +249,11 @@ class KeystoneGetToken(Resource):
                 {
                     "endpoints": [
                         {
-                            "adminURL": "http://%s:%s" % (self.api.ip, self.api.port + 4696),
+                            "adminURL": "http://%s:%s" % (get_host(request), self.api.port + 4696),
                             "region": "RegionOne",
-                            "internalURL": "http://%s:%s" % (self.api.ip, self.api.port + 4696),
+                            "internalURL": "http://%s:%s" % (get_host(request), self.api.port + 4696),
                             "id": "2dad48f09e2a447a9bf852bcd93548cf",
-                            "publicURL": "http://%s:%s" % (self.api.ip, self.api.port + 4696)
+                            "publicURL": "http://%s:%s" % (get_host(request), self.api.port + 4696)
                         }
                     ],
                     "endpoints_links": [],
@@ -302,11 +263,11 @@ class KeystoneGetToken(Resource):
                 {
                     "endpoints": [
                         {
-                            "adminURL": "http://%s:%s" % (self.api.ip, self.api.port + 4242),
+                            "adminURL": "http://%s:%s" % (get_host(request), self.api.port + 4242),
                             "region": "RegionOne",
-                            "internalURL": "http://%s:%s" % (self.api.ip, self.api.port + 4242),
+                            "internalURL": "http://%s:%s" % (get_host(request), self.api.port + 4242),
                             "id": "2dad48f09e2a447a9bf852bcd93548cf",
-                            "publicURL": "http://%s:%s" % (self.api.ip, self.api.port + 4242)
+                            "publicURL": "http://%s:%s" % (get_host(request), self.api.port + 4242)
                         }
                     ],
                     "endpoints_links": [],
@@ -316,11 +277,11 @@ class KeystoneGetToken(Resource):
                 {
                     "endpoints": [
                         {
-                            "adminURL": "http://%s:%s/v1/%s" % (self.api.ip, self.api.port + 3004, user['id']),
+                            "adminURL": "http://%s:%s/v1/%s" % (get_host(request), self.api.port + 3004, user['id']),
                             "region": "RegionOne",
-                            "internalURL": "http://%s:%s/v1/%s" % (self.api.ip, self.api.port + 3004, user['id']),
+                            "internalURL": "http://%s:%s/v1/%s" % (get_host(request), self.api.port + 3004, user['id']),
                             "id": "2dad48f09e2a447a9bf852bcd93548bf",
-                            "publicURL": "http://%s:%s/v1/%s" % (self.api.ip, self.api.port + 3004, user['id'])
+                            "publicURL": "http://%s:%s/v1/%s" % (get_host(request), self.api.port + 3004, user['id'])
                         }
                     ],
                     "endpoints_links": [],
@@ -406,7 +367,7 @@ class KeystoneGetTokenv3(Resource):
             token['catalog'] = [{
                 "endpoints": [
                     {
-                        "url": "http://%s:%s/v2.1/%s" % (self.api.ip, self.api.port + 3774, user['id']),
+                        "url": "http://%s:%s/v2.1/%s" % (get_host(request), self.api.port + 3774, user['id']),
                         "region": "RegionOne",
                         "interface": "public",
                         "id": "2dad48f09e2a447a9bf852bcd93548ef"
@@ -419,7 +380,7 @@ class KeystoneGetTokenv3(Resource):
                 {
                     "endpoints": [
                         {
-                            "url": "http://%s:%s/v2.0" % (self.api.ip, self.api.port),
+                            "url": "http://%s:%s/v2.0" % (get_host(request), self.api.port),
                             "region": "RegionOne",
                             "interface": "public",
                             "id": "2dad48f09e2a447a9bf852bcd93543fc"
@@ -432,7 +393,7 @@ class KeystoneGetTokenv3(Resource):
                 {
                     "endpoints": [
                         {
-                            "url": "http://%s:%s" % (self.api.ip, self.api.port + 4696),
+                            "url": "http://%s:%s" % (get_host(request), self.api.port + 4696),
                             "region": "RegionOne",
                             "interface": "public",
                             "id": "2dad48f09e2a447a9bf852bcd93548cf"
@@ -445,7 +406,7 @@ class KeystoneGetTokenv3(Resource):
                 {
                     "endpoints": [
                         {
-                            "url": "http://%s:%s" % (self.api.ip, self.api.port + 4242),
+                            "url": "http://%s:%s" % (get_host(request), self.api.port + 4242),
                             "region": "RegionOne",
                             "interface": "public",
                             "id": "2dad48f09e2a447a9bf852bcd93548cf"
@@ -458,7 +419,7 @@ class KeystoneGetTokenv3(Resource):
                 {
                     "endpoints": [
                         {
-                            "url": "http://%s:%s/v1/%s" % (self.api.ip, self.api.port + 3004, user['id']),
+                            "url": "http://%s:%s/v1/%s" % (get_host(request), self.api.port + 3004, user['id']),
                             "region": "RegionOne",
                             "interface": "public",
                             "id": "2dad48f09e2a447a9bf852bcd93548bf"
@@ -469,7 +430,6 @@ class KeystoneGetTokenv3(Resource):
                     "name": "heat"
                 }
             ]
-            
             return Response(json.dumps(ret), status=201, mimetype='application/json')
 
         except Exception as ex:
