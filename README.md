@@ -131,7 +131,7 @@ This simple example shows how to start the emulator with a simple topology (term
 
 
 ### Further Documentation
-* [Full CLI command documentation]https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
+* [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
 * [Requirements for Docker containers executed by the emulator](https://github.com/sonata-nfv/son-emu/wiki/Container-Requirements)
 * [REST API](https://github.com/sonata-nfv/son-emu/wiki/APIs)
 
