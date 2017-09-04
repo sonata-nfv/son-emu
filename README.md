@@ -1,18 +1,17 @@
-[![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu)](http://jenkins.sonata-nfv.eu/job/son-emu)
+[![Join the chat at https://gitter.im/containernet/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/containernet/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu)](http://jenkins.sonata-nfv.eu/job/son-emu)
 
 # son-emu
 This is the repository of [SONATA's](http://sonata-nfv.eu) emulation platform.
 
 This emulation platform was created to support network  service developers to locally prototype and test complete network service chains in realistic end-to-end multi-PoP scenarios. It allows the execution of real network functions, packaged as Docker containers, in emulated network topologies running locally on the network service developer's machine.
 
+The platform is based on [Containernet](https://containernet.github.io).
+
 ### Cite this work
 
 If you use son-emu for your research and/or other publications, please cite the following paper to reference our work:
 
-* M. Peuster, H. Karl and S. van Rossem, **"MeDICINE: Rapid prototyping of production-ready network services in multi-PoP environments,"** 2016 IEEE Conference on Network Function Virtualization and Software Defined Networks (NFV-SDN), Palo Alto, CA, USA, 2016, pp. 148-153.
-doi: 10.1109/NFV-SDN.2016.7919490
-  * Link: http://ieeexplore.ieee.org/document/7919490/
-  * Pre-print: http://arxiv.org/abs/1606.05995
+* M. Peuster, H. Karl, and S. v. Rossem: [MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments](http://ieeexplore.ieee.org/document/7919490/). IEEE Conference on Network Function Virtualization and Software Defined Networks (NFV-SDN), Palo Alto, CA, USA, pp. 148-153. doi: 10.1109/NFV-SDN.2016.7919490. (2016)
 
 A short demo that showcases son-emu together with its dummy gatekeeper is available [here](https://www.youtube.com/watch?v=ZANz97pV9ao).
 
@@ -53,7 +52,7 @@ Son-emu is entirely written in Python and does not require a special build proce
 
 ### Dependencies
 
-Son-emu requires the latest version of [Containernet](https://github.com/mpeuster/containernet) to be installed on the system.
+Son-emu requires the latest version of [Containernet](https://containernet.github.io) to be installed on the system.
 
 Despite of this son-emu has the following dependencies:
 
@@ -99,23 +98,20 @@ Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. 
 
 * Requires: Ubuntu 16.04 LTS
 * `sudo apt-get install ansible git aptitude`
-* `sudo vim /etc/ansible/hosts`
-* Add: `localhost ansible_connection=local`
 
 #### 1. Containernet
 
 * `cd`
 * `git clone https://github.com/containernet/containernet.git`
 * `cd ~/containernet/ansible`
-* `sudo ansible-playbook install.yml`
-* Wait (and have a coffee) ...
+* `sudo ansible-playbook -i "localhost," -c local install.yml`
 
 #### 2. Emulator
 
 * `cd`
 * `git clone https://github.com/sonata-nfv/son-emu.git`
 * `cd ~/son-emu/ansible`
-* `sudo ansible-playbook install.yml`
+* `sudo ansible-playbook -i "localhost," -c local install.yml`
 
 ## Usage
 
@@ -137,7 +133,7 @@ This simple example shows how to start the emulator with a simple topology (term
 ### Further Documentation
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
 * [Requirements for Docker containers executed by the emulator](https://github.com/sonata-nfv/son-emu/wiki/Container-Requirements)
-* [REST API](https://github.com/sonata-nfv/son-emu/wiki/REST-API-command-overview)
+* [REST API](https://github.com/sonata-nfv/son-emu/wiki/APIs)
 
 ## License
 
@@ -146,6 +142,8 @@ Son-emu is published under Apache 2.0 license. Please see the LICENSE file for m
 ## Useful Links
 
 * [Mininet](http://mininet.org)
+* [Containernet](https://containernet.github.io)
+* [Maxinet](https://maxinet.github.io)
 
 ---
 #### Lead Developers
