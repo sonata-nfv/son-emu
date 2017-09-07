@@ -24,9 +24,6 @@
    - name: install setuptools
      pip: name=setuptools state=latest
 
-   - name: install zerorpc
-     pip: name=zerorpc state=latest
-
    - name: install tabulate
      pip: name=tabulate state=latest
 
