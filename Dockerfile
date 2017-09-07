@@ -57,11 +57,9 @@ RUN ansible-playbook -i "localhost," -c local --skip-tags "notindocker" install.
 WORKDIR /son-emu
 RUN python setup.py develop
 
-WORKDIR /
-
 # Important: This entrypoint is required to start the OVS service
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
-CMD ["python", "son-emu/examples/default_single_dc_topology.py"]
+CMD ["python", "examples/default_single_dc_topology.py"]
 
 # open ports for emulator APIs
 # SONATA GK
