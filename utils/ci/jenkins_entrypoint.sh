@@ -26,44 +26,54 @@
 # partner consortium (www.sonata-nfv.eu).
 # 
 # This is the entry point for Jenkins.
-# Script has do be called from "son-emu" root directory, like: sudo ./utils/ci/jenkins_entrypoint.sh
+# Script has to be called from "son-emu" root directory, like: sudo ./utils/ci/jenkins_entrypoint.sh
 export DOCKER_HOST="unix:///var/run/docker.sock"
-
-# don't rely on Debian/Ubuntu Docker engine
-apt-get remove docker-engine
-# make sure we start from scratch
-pip uninstall docker-py
-pip uninstall docker
 
 set -e
 set -x
 
-SON_EMU_DIR=$(pwd)
-cd $SON_EMU_DIR/../
+# install docker
+#apt-get install curl apt-transport-https ca-certificates
+#curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+#add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+#apt-get -qq update
+#apt-get install docker-ce
+
+# build the container
+docker build -t test-son-emu-img .
+
+# launch the container and trigger the unit tests
+docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock test-son-emu-img py.test -v src/emuvim/test/unittests
+
+#
+# old way to call the tests directly on the host machine
+# 
+#SON_EMU_DIR=$(pwd)
+#cd $SON_EMU_DIR/../
 
 # prepare
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y git ansible aptitude
-echo "localhost ansible_connection=local" >> /etc/ansible/hosts
+#apt-get update
+#DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y git ansible aptitude
+#echo "localhost ansible_connection=local" >> /etc/ansible/hosts
 
 # install containernet
-git clone https://github.com/containernet/containernet.git
-CONTAINERNET_DIR=$(pwd)/containernet
-echo "Installing containernet (will take some time ~30 minutes) ..."
-cd $CONTAINERNET_DIR/ansible
-ansible-playbook install.yml
+#git clone https://github.com/containernet/containernet.git
+#CONTAINERNET_DIR=$(pwd)/containernet
+#echo "Installing containernet (will take some time ~30 minutes) ..."
+#cd $CONTAINERNET_DIR/ansible
+#ansible-playbook install.yml
 
 # install son-emu
-echo "Installing son-emu (will take some time) ..."
-cd $SON_EMU_DIR/ansible
-ansible-playbook install.yml
+#echo "Installing son-emu (will take some time) ..."
+#cd $SON_EMU_DIR/ansible
+#ansible-playbook install.yml
 
 # execute son-emu tests at the end to validate installation
-echo "Running son-emu unit tests to validate installation"
-cd $SON_EMU_DIR
-python setup.py develop
+#echo "Running son-emu unit tests to validate installation"
+#cd $SON_EMU_DIR
+#python setup.py develop
 
 # run the unit tests
-py.test -v src/emuvim/test/unittests
+#py.test -v src/emuvim/test/unittests
 
 
