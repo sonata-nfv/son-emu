@@ -1,25 +1,18 @@
 [![Join the chat at https://gitter.im/containernet/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/containernet/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu)](http://jenkins.sonata-nfv.eu/job/son-emu)
 
 # son-emu
-This is the repository of [SONATA's](http://sonata-nfv.eu) emulation platform.
+This is the repository of [SONATA's](http://sonata-nfv.eu) NFV multi-PoP emulation platform.
 
-This emulation platform was created to support network  service developers to locally prototype and test complete network service chains in realistic end-to-end multi-PoP scenarios. It allows the execution of real network functions, packaged as Docker containers, in emulated network topologies running locally on the network service developer's machine.
+This emulation platform was created to support network service developers to locally prototype and test complete network service chains in realistic end-to-end multi-PoP scenarios. It allows the execution of real network functions, packaged as Docker containers, in emulated network topologies running locally on the network service developer's machine.
 
-The platform is based on [Containernet](https://containernet.github.io).
+The emulation platform is based on [Containernet](https://containernet.github.io).
 
 ### Cite this work
 
-If you use son-emu for your research and/or other publications, please cite the following paper to reference our work:
+If you use the emulation platform for your research and/or other publications, please cite the following paper to reference our work:
 
 * M. Peuster, H. Karl, and S. v. Rossem: [MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments](http://ieeexplore.ieee.org/document/7919490/). IEEE Conference on Network Function Virtualization and Software Defined Networks (NFV-SDN), Palo Alto, CA, USA, pp. 148-153. doi: 10.1109/NFV-SDN.2016.7919490. (2016)
 
-A short demo that showcases son-emu together with its dummy gatekeeper is available [here](https://www.youtube.com/watch?v=ZANz97pV9ao).
-
-### Development
-
-To install the emulator package in development mode, do:
-
-* `python setup.py develop`
 
 #### Folder Structure
 
@@ -29,7 +22,7 @@ To install the emulator package in development mode, do:
     * `emuvim` Emulator components
         * `api` API endpoint implementations
             * `rest` REST API for son-emu-cli
-            * `sonata` Dummy gatekeeper API
+            * `sonata` SONATA dummy gatekeeper API
             * `openstack` OpenStack-like APIs for MANO integration
         * `cli` Command line client to control the emulator
         * `dashboard` A web-based dashboard to display the emulator's state
@@ -37,7 +30,7 @@ To install the emulator package in development mode, do:
             * `resourcemodel` Resource limitation models
         * `examples` Example topology scripts
         * `test` Test scripts
-* `utils` Helper scripts for SONATA's CI/CD setup
+* `utils` Helper scripts for CI/CD setup
 
 
 #### Run Unit Tests
@@ -48,13 +41,13 @@ To install the emulator package in development mode, do:
 
 ### Building
 
-Son-emu is entirely written in Python and does not require a special build process. Please check the [Installation](https://github.com/sonata-nfv/son-emu#installation) section for more details about the installation of son-emu.
+The emulation platform is entirely written in Python and does not require a special build process. Please check the [Installation](https://github.com/sonata-nfv/son-emu#installation) section for more details about the installation of the emulator.
 
 ### Dependencies
 
-Son-emu requires the latest version of [Containernet](https://containernet.github.io) to be installed on the system.
+The emulation platform requires the latest version of [Containernet](https://containernet.github.io) to be installed on the system.
 
-Despite of this son-emu has the following dependencies:
+Despite of this, the emulation platform has the following dependencies:
 
 * [argparse](https://pypi.python.org/pypi/argparse) >= 1.4.0 (Python software foundation License)
 * [docker-py](https://pypi.python.org/pypi/docker-py) == 1.7.1(Apache 2.0)
@@ -71,18 +64,17 @@ Despite of this son-emu has the following dependencies:
 * [six](https://pypi.python.org/pypi/six/) >=1.9 (MIT)
 * [tabulate](https://pypi.python.org/pypi/tabulate) >= 0.7.5 (public domain)
 * [urllib3](https://pypi.python.org/pypi/urllib3) >= 1.15 (MIT)
-* [zerorpc](http://www.zerorpc.io) >= 0.5.2 (MIT)
 
 ### Contributing
-Contributing to the son-emu is really easy. You must:
+Contributing to the the emulator is really easy. You must:
 
 1. Clone [this repository](http://github.com/sonata-nfv/son-emu);
-2. Work on your proposed changes, preferably through submiting [issues](https://github.com/sonata-nfv/son-emu/issues);
+2. Work on your proposed changes, preferably through submitting [issues](https://github.com/sonata-nfv/son-emu/issues);
 3. Submit a Pull Request;
 4. Follow/answer related [issues](https://github.com/sonata-nfv/son-emu/issues) (see Feedback-Chanel, below).
 
 ## Installation
-There are two ways to install and use son-emu. The simple one is to use Vagrant to create a VirtualBox-based VM on your machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 16.04 LTS and is done by a ansible playbook.
+There are two ways to install and use the emulation platform. The simple one is to use Vagrant to create a VirtualBox-based VM on your machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook.
 
 ### Vagrant Installation
 
@@ -137,7 +129,7 @@ This simple example shows how to start the emulator with a simple topology (term
 
 ## License
 
-Son-emu is published under Apache 2.0 license. Please see the LICENSE file for more details.
+The emulation platform is published under Apache 2.0 license. Please see the LICENSE file for more details.
 
 ## Useful Links
 
