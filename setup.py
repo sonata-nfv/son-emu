@@ -43,7 +43,6 @@ setup(name='emuvim',
       },
       install_requires=[
           'pyaml',
-          'zerorpc',
           'tabulate',
           'argparse',
           'networkx',

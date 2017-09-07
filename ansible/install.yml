@@ -89,6 +89,9 @@
    - name: install ipaddress
      pip: name=ipaddress state=latest
 
+   - name: install gevent
+     pip: name=gevent state=latest
+
    #- name: install urllib
    #  pip: name=urllib state=latest
 

@@ -74,9 +74,9 @@ Contributing to the the emulator is really easy. You must:
 4. Follow/answer related [issues](https://github.com/sonata-nfv/son-emu/issues) (see Feedback-Chanel, below).
 
 ## Installation
-There are two ways to install and use the emulation platform. The simple one is to use Vagrant to create a VirtualBox-based VM on your machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook.
+There are three ways to install and use the emulation platform. The simple one is to use Vagrant to create a VirtualBox-based VM on your machine that contains the pre-installed and configured emulator. The more complicated installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook. The third option is to use a nested Docker environment to run the emulator inside a Docker container.
 
-### Vagrant Installation
+### Option 1: Vagrant Installation
 
 * Request VirtualBox and Vagrant to be installed on the system.
 * `git clone https://github.com/sonata-nfv/son-emu.git`
@@ -86,7 +86,7 @@ There are two ways to install and use the emulation platform. The simple one is 
 
 Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. The dummy-gatekeeper's default port 5000 is forwarded to the host machine and can be accessed from it by using, e.g., curl http://127.0.0.1:5000/packages.
 
-### Ansible Installation
+### Option 2: Ansible Installation
 
 * Requires: Ubuntu 16.04 LTS
 * `sudo apt-get install ansible git aptitude`
@@ -104,6 +104,15 @@ Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. 
 * `git clone https://github.com/sonata-nfv/son-emu.git`
 * `cd ~/son-emu/ansible`
 * `sudo ansible-playbook -i "localhost," -c local install.yml`
+
+### Option 3: Nested Docker Deployment
+This option requires a Docker installation on the host machine on which the emulator should be deployed.
+
+* `git clone https://github.com/sonata-nfv/son-emu.git`
+* `cd ~/son-emu`
+* Build the container: `docker build -t son-emu-img .`
+* Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock son-emu-img /bin/bash`
+
 
 ## Usage
 

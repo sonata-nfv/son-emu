@@ -1,12 +1,31 @@
-#! /bin/bash -e
+#!/bin/bash
+# Copyright (c) 2017 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
+set -e
 set -x
 
-#cp /containernet/util/docker/entrypoint.sh /tmp/x.sh
-#cat /tmp/x.sh | awk 'NR==1{print; print "set -x"} NR!=1' > /conteinernet/util/docker/entrypoint.sh
-
-# this cannot be done from the Dockerfile since we have the socket not mounted during build
-# this image is needed for the monitoring in son-emu
-#echo 'Pulling the "google/cadvisor" image ... please wait'
-#docker pull 'google/cadvisor'
-
+# need to call containernet's entrypoint to enable OVS
 exec /containernet/util/docker/entrypoint.sh $*
