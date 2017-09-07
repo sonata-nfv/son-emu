@@ -1,5 +1,5 @@
 """
-Copyright (c) 2015 SONATA-NFV
+Copyright (c) 2015 SONATA-NFV and Paderborn University
 ALL RIGHTS RESERVED.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
+Neither the name of the SONATA-NFV, Paderborn University
 nor the names of its contributors may be used to endorse or promote
 products derived from this software without specific prior written
 permission.
@@ -31,7 +31,7 @@ Additional setup that installs 'son-emu-cli' in standalone mode.
 from setuptools import setup, find_packages
 
 setup(name='sonemucli',
-      version='0.9',
+      version='1.0',
       license='Apache 2.0',
       description='CLI client for son-emu',
       url='http://github.com/sonata-emu',
