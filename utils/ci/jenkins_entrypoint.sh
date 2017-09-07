@@ -29,12 +29,6 @@
 # Script has to be called from "son-emu" root directory, like: sudo ./utils/ci/jenkins_entrypoint.sh
 export DOCKER_HOST="unix:///var/run/docker.sock"
 
-# don't rely on Debian/Ubuntu Docker engine
-#apt-get remove docker-engine
-# make sure we start from scratch
-#pip uninstall docker-py
-#pip uninstall docker
-
 set -e
 set -x
 
@@ -46,10 +40,10 @@ set -x
 #apt-get install docker-ce
 
 # build the container
-docker build -t son-emu-img .
+docker build -t test-son-emu-img .
 
 # launch the container and trigger the unit tests
-docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock son-emu-img py.test -v src/emuvim/test/unittests
+docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock test-son-emu-img py.test -v src/emuvim/test/unittests
 
 #
 # old way to call the tests directly on the host machine
