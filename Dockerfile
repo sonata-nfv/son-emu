@@ -42,6 +42,7 @@ RUN apt-get update \
     ansible \
     curl \
     iptables \
+    iputils-ping \
     sudo
 
 # install containernet (using its Ansible playbook)
