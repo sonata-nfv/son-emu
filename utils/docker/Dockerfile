@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
+# Neither the name of the SONATA-NFV, Paderborn University
 # nor the names of its contributors may be used to endorse or promote
 # products derived from this software without specific prior written
 # permission.
