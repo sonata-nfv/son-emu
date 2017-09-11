@@ -43,7 +43,7 @@ set -x
 docker build -t test-son-emu-img .
 
 # launch the container and trigger the unit tests
-docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock test-son-emu-img py.test -v src/emuvim/test/unittests
+docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock test-son-emu-img py.test -v -s src/emuvim/test/unittests
 
 #
 # old way to call the tests directly on the host machine
