@@ -33,22 +33,22 @@ There are three ways to install and use the emulation platform. The bare-metal i
 #### 2. vim-emu
 
 * `cd`
-* `git clone https://github.com/sonata-nfv/son-emu.git`
-* `cd ~/son-emu/ansible`
+* `git clone https://osm.etsi.org/gerrit/osm/vim-emu.git`
+* `cd ~/vim-emu/ansible`
 * `sudo ansible-playbook -i "localhost," -c local install.yml`
 
-### Option 3: Nested Docker Deployment
+### Option 2: Nested Docker Deployment
 This option requires a Docker installation on the host machine on which the emulator should be deployed.
 
-* `git clone https://github.com/sonata-nfv/son-emu.git`
-* `cd ~/son-emu`
-* Build the container: `docker build -t son-emu-img .`
-* Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock son-emu-img /bin/bash`
+* `git clone https://osm.etsi.org/gerrit/osm/vim-emu.git`
+* `cd ~/vim-emu`
+* Build the container: `docker build -t vim-emu-img .`
+* Run the (interactive) container: `docker run --name vim-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock vim-emu-img /bin/bash`
 
 ### Option 3: Vagrant Installation
 * Request VirtualBox and Vagrant to be installed on the system.
-* `git clone https://github.com/sonata-nfv/son-emu.git`
-* `cd ~/son-emu`
+* `git clone https://osm.etsi.org/gerrit/osm/vim-emu.git`
+* `cd ~/vim-emu`
 * `vagrant up`
 * `vagrant ssh` to enter the new VM in which the emulator is installed.
 
@@ -56,17 +56,17 @@ This option requires a Docker installation on the host machine on which the emul
 
 ### Example
 
-This simple example shows how to start the emulator with a simple topology (terminal 1) and how to start (terminal 2) some empty VNF containers in the emulated datacenters (PoPs) by using the son-emu-cli.
+This simple example shows how to start the emulator with a simple topology (terminal 1) and how to start (terminal 2) some empty VNF containers in the emulated datacenters (PoPs) by using the vim-emu CLI.
 
 * First terminal (start the emulation platform):
- * `sudo python examples/simple_topology.py`
-* Second terminal:
- * `son-emu-cli compute start -d datacenter1 -n vnf1`
- * `son-emu-cli compute start -d datacenter1 -n vnf2`
- * `son-emu-cli compute list`
+    * `sudo python examples/default_single_dc_topology.py`
+* Second terminal (use `docker exec vim-emu <command>` for nested Docker deployment):
+    * `vim-emu compute start -d dc1 -n vnf1`
+    * `vim-emu compute start -d dc1 -n vnf2`
+    * `vim-emu compute list`
 * First terminal:
- * `containernet> vnf1 ifconfig`
- * `containernet> vnf1 ping -c 2 vnf2`
+    * `containernet> vnf1 ifconfig`
+    * `containernet> vnf1 ping -c 2 vnf2`
 
 ### Further documentation and useful links
 
@@ -87,7 +87,7 @@ Please check [this OSM wiki page](https://osm.etsi.org/wikipub/index.php/Workflo
 
 To run the unit tests do:
 
-* `cd ~/son-emu`
+* `cd ~/vim-emu`
 * `sudo py.test -v src/emuvim/test/unittests`
 (To force Python2: `python2 -m  pytest -v src/emuvim/test/unittests`)
 
