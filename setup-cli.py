@@ -30,12 +30,12 @@ Additional setup that installs 'son-emu-cli' in standalone mode.
 """
 from setuptools import setup, find_packages
 
-setup(name='sonemucli',
+setup(name='vimemucli',
       version='1.0',
       license='Apache 2.0',
-      description='CLI client for son-emu',
-      url='http://github.com/sonata-emu',
-      author_email='sonata-dev@sonata-nfv.eu',
+      description='vim-emu: A NFV multi-PoP emulation platform',
+      url='https://osm.etsi.org/gitweb/?p=osm/vim-emu.git',
+      author_email='manuel@peuster.de',
       package_dir={'': 'src'},
       packages=find_packages('src'),
       install_requires=[
@@ -49,7 +49,7 @@ setup(name='sonemucli',
       zip_safe=False,
       entry_points={
           'console_scripts': [
-              'son-emu-cli=emuvim.cli.son_emu_cli:main',
+              'vim-emu=emuvim.cli.son_emu_cli:main',
           ],
       },
       setup_requires=['pytest-runner'],
