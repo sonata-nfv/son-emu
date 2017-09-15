@@ -46,7 +46,7 @@ logging.getLogger('api.openstack.helper').setLevel(logging.DEBUG)
 
 
 def create_topology():
-    net = DCNetwork(monitor=False, enable_learning=False)
+    net = DCNetwork(monitor=False, enable_learning=True)
 
     dc1 = net.addDatacenter("dc1")
     # add OpenStack-like APIs to the emulated DC
