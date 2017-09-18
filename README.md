@@ -1,4 +1,4 @@
-# Attention: `son-emu` was adopted by OSM as `vim-emu`
+# News: `son-emu` was adopted by OSM as `vim-emu`
 
 We are happy to announce that SONATA's emulation platform was adopted by ETSI's [OSM project](https://osm.etsi.org) as part of their DevOps MDG under its new name `vim-emu` (Sep. 2017). The developments of the core emulator components will now take place in the [new project repository](https://osm.etsi.org/gitweb/?p=osm/vim-emu.git) hosted by OSM. This GitHub repository will act as a mirror until the [SONATA project](http://sonata-nfv.eu) has ended.
 
@@ -10,7 +10,7 @@ We are happy to announce that SONATA's emulation platform was adopted by ETSI's 
 
 ---
 
-[![Join the chat at https://gitter.im/containernet/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/containernet/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu)](http://jenkins.sonata-nfv.eu/job/son-emu)
+[![Join the chat at https://gitter.im/containernet/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/containernet/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu-pipeline)](http://jenkins.sonata-nfv.eu/job/son-emu-pipeline)
 
 # son-emu
 This is the repository of [SONATA's](http://sonata-nfv.eu) NFV multi-PoP emulation platform.

@@ -33,13 +33,13 @@ pipeline {
          success {
                  mail(from: "jenkins@sonata-nfv.eu", 
                  to: "manuel.peuster@upb.de", 
-                 subject: "PASSED: son-emu-pipeline",
+                 subject: "SUCCESS: son-emu-pipeline",
                  body: "Job ${env.BUILD_ID} on ${env.JENKINS_URL}")
          }
          failure {
                   mail(from: "jenkins@sonata-nfv.eu", 
                  to: "manuel.peuster@upb.de", 
-                 subject: "FAILED: son-emu-pipeline",
+                 subject: "FAILURE: son-emu-pipeline",
                  body: "Job ${env.BUILD_ID} on ${env.JENKINS_URL}")
          }
     }
