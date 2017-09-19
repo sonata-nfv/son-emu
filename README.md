@@ -125,7 +125,7 @@ This option requires a Docker installation on the host machine on which the emul
     * `cd ~/son-emu`
     * Build the container: `docker build -t son-emu-img .`
     * Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock son-emu-img /bin/bash`
-* **Option b)** Use latest pre-build container from [DockerHub](https://hub.docker.com/r/sonatanfv/son-emu/)
+* **Option b)** Use latest pre-build container from [DockerHub](https://hub.docker.com/r/sonatanfv/son-emu/):
     * Pull the container: `docker pull sonatanfv/son-emu:dev`
     * Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock sonatanfv/son-emu:dev /bin/bash`
 

@@ -39,14 +39,14 @@ pipeline {
          success {
                  mail(from: "jenkins@sonata-nfv.eu", 
                  to: "manuel.peuster@upb.de", 
-                 subject: "SUCCESS: ${env.JOB_NAME}/${env.BUILD_ID} building ${env.BRANCH_NAME}",
-                 body: "${env.JENKINS_URL}")
+                 subject: "SUCCESS: ${env.JOB_NAME}/${env.BUILD_ID} (${env.BRANCH_NAME})",
+                 body: "${env.JOB_URL}")
          }
          failure {
                   mail(from: "jenkins@sonata-nfv.eu", 
                  to: "manuel.peuster@upb.de", 
-                 subject: "FAILURE: ${env.JOB_NAME}/${env.BUILD_ID} building ${env.BRANCH_NAME}",
-                 body: "${env.JENKINS_URL}")
+                 subject: "FAILURE: ${env.JOB_NAME}/${env.BUILD_ID} (${env.BRANCH_NAME})",
+                 body: "${env.JOB_URL}")
          }
     }
 }
