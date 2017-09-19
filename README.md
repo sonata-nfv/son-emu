@@ -120,10 +120,14 @@ Follow the MOTD in the VM to run the example topology and the dummy-gatekeeper. 
 ### Option 3: Nested Docker Deployment
 This option requires a Docker installation on the host machine on which the emulator should be deployed.
 
-* `git clone https://github.com/sonata-nfv/son-emu.git`
-* `cd ~/son-emu`
-* Build the container: `docker build -t son-emu-img .`
-* Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock son-emu-img /bin/bash`
+* **Option a)** Build container manually:
+    * `git clone https://github.com/sonata-nfv/son-emu.git`
+    * `cd ~/son-emu`
+    * Build the container: `docker build -t son-emu-img .`
+    * Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock son-emu-img /bin/bash`
+* **Option b)** Use latest pre-build container from [DockerHub](https://hub.docker.com/r/sonatanfv/son-emu/):
+    * Pull the container: `docker pull sonatanfv/son-emu:dev`
+    * Run the (interactive) container: `docker run --name son-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock sonatanfv/son-emu:dev /bin/bash`
 
 
 ## Usage
