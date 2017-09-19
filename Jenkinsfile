@@ -12,19 +12,22 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building...'
-                sh "docker build -t test-son-emu-img ."
+                sh "docker build -t sonatanfv/son-emu:dev ."
             }
         }
         stage('Test') {
             steps {
                 echo 'Testing...'
-                sh "docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock test-son-emu-img 'py.test -v src/emuvim/test/unittests'"
+                sh "docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock sonatanfv/son-emu:dev 'py.test -v src/emuvim/test/unittests'"
             }
         }
         stage('Package') {
             steps {
                 echo 'Packaging (Docker-image)...'
-                sh "docker tag test-son-emu-img:latest registry.sonata-nfv.eu:5000/son-emu:latest"
+                // push to public Docker registry
+                sh "docker push sonatanfv/son-emu:dev"
+                // push to internal Docker registry
+                sh "docker tag sonatanfv/son-emu:dev registry.sonata-nfv.eu:5000/son-emu:latest"
                 sh "docker push registry.sonata-nfv.eu:5000/son-emu"        
             }
         }
