@@ -1,3 +1,4 @@
+---
 # Copyright (c) 2017 SONATA-NFV and Paderborn University
 # ALL RIGHTS RESERVED.
 # 
@@ -23,81 +24,8 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-#IDE
-.idea/
-
-# virtualenv
-venv
-
-# vagrant
-.vagrant/
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
-.hypothesis/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-#Ipython Notebook
-.ipynb_checkpoints
-
-#Pytest
-.pytest.restart
-
-# JUnit xml
-utils/ci/junit-xml/*.xml
+auth:
+  tenantName: demo
+  tenantId: fc394f2ab2df4114bde39905f800dc57
+  token:
+    id: cbc36478b0bd8e67e89469c7749d4127

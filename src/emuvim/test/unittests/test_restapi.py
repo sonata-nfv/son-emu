@@ -58,16 +58,16 @@ class testRestApi(SimpleTestTopology):
         # start Mininet network
         self.startNet()
 
-        print('->>>>>>> son-emu-cli compute start -d datacenter0 -n vnf1 ->>>>>>>>>>>>>>>')
+        print('->>>>>>> vim-emu compute start -d datacenter0 -n vnf1 ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli compute start -d datacenter0 -n vnf1", shell=True)
-        print('->>>>>>> son-emu-cli compute start -d datacenter0 -n vnf2 ->>>>>>>>>>>>>>>')
+        subprocess.call("vim-emu compute start -d datacenter0 -n vnf1", shell=True)
+        print('->>>>>>> vim-emu compute start -d datacenter0 -n vnf2 ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli compute start -d datacenter0 -n vnf2", shell=True)
-        print('->>>>>>> son-emu-cli compute start -d datacenter0 -n vnf3 ->>>>>>>>>>>>>>>')
+        subprocess.call("vim-emu compute start -d datacenter0 -n vnf2", shell=True)
+        print('->>>>>>> vim-emu compute start -d datacenter0 -n vnf3 ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        subprocess.call("son-emu-cli compute start -d datacenter1 -n vnf3", shell=True)
-        subprocess.call("son-emu-cli compute list", shell=True)
+        subprocess.call("vim-emu compute start -d datacenter1 -n vnf3", shell=True)
+        subprocess.call("vim-emu compute list", shell=True)
         print('->>>>>>> checking running nodes, compute list, and connectivity >>>>>>>>>>')
 
         # check number of running nodes
@@ -92,19 +92,19 @@ class testRestApi(SimpleTestTopology):
 
         print('network add vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli network add -src vnf1 -dst vnf2 -b -c 10", shell=True)
+        output = subprocess.check_output("vim-emu network add -src vnf1 -dst vnf2 -b -c 10", shell=True)
         self.assertTrue("add-flow" in output)
         self.assertTrue("success" in output)
 
         print('network remove vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli network remove -src vnf1 -dst vnf2 -b", shell=True)
+        output = subprocess.check_output("vim-emu network remove -src vnf1 -dst vnf2 -b", shell=True)
         self.assertTrue("del-flows" in output)
         self.assertTrue("success" in output)
 
-        print('>>>>> checking --> son-emu-cli compute stop -d datacenter0 -n vnf2 ->>>>>>')
+        print('>>>>> checking --> vim-emu compute stop -d datacenter0 -n vnf2 ->>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli compute stop -d datacenter0 -n vnf2", shell=True)
+        output = subprocess.check_output("vim-emu compute stop -d datacenter0 -n vnf2", shell=True)
 
         # check number of running nodes
         self.assertTrue(len(self.getContainernetContainers()) == 2)
@@ -114,31 +114,31 @@ class testRestApi(SimpleTestTopology):
         self.assertTrue(len(self.dc[0].listCompute()) == 1)
         self.assertTrue(len(self.dc[1].listCompute()) == 1)
 
-        print('>>>>> checking --> son-emu-cli compute list ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print('>>>>> checking --> vim-emu compute list ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli compute list", shell=True)
+        output = subprocess.check_output("vim-emu compute list", shell=True)
 
         # check datacenter list result
         self.assertTrue("datacenter0" in output)
 
-        print('>>>>> checking --> son-emu-cli compute status -d datacenter0 -n vnf1 ->>>>')
+        print('>>>>> checking --> vim-emu compute status -d datacenter0 -n vnf1 ->>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli compute status -d datacenter0 -n vnf1", shell=True)
+        output = subprocess.check_output("vim-emu compute status -d datacenter0 -n vnf1", shell=True)
         output = ast.literal_eval(output)
 
         # check compute status result
         self.assertTrue(output["name"] == "vnf1")
         self.assertTrue(output["state"]["Running"])
 
-        print('>>>>> checking --> son-emu-cli datacenter list ->>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print('>>>>> checking --> vim-emu datacenter list ->>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli datacenter list", shell=True)
+        output = subprocess.check_output("vim-emu datacenter list", shell=True)
         # check datacenter list result
         self.assertTrue("datacenter0" in output)
 
-        print('->>>>> checking --> son-emu-cli datacenter status -d datacenter0 ->>>>>>>>')
+        print('->>>>> checking --> vim-emu datacenter status -d datacenter0 ->>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        output = subprocess.check_output("son-emu-cli datacenter status -d datacenter0", shell=True)
+        output = subprocess.check_output("vim-emu datacenter status -d datacenter0", shell=True)
         # check datacenter status result
         self.assertTrue("datacenter0" in output)
         self.stopApi()

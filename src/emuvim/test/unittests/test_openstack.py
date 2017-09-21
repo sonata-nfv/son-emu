@@ -34,6 +34,7 @@ import os
 import unittest
 import requests
 import simplejson as json
+import yaml
 import time
 
 from emuvim.test.api_base_openstack import ApiBaseOpenStack
@@ -65,9 +66,9 @@ class testRestApi(ApiBaseOpenStack):
         print(" ")
 
         headers = {'Content-type': 'application/json'}
-        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "test_heatapi_template_create_stack.json")).read()
+        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "templates/test_heatapi_template_create_stack.yml")).read()
         url = "http://0.0.0.0:18004/v1/tenantabc123/stacks"
-        requests.post(url, data=json.dumps(json.loads(test_heatapi_template_create_stack)),
+        requests.post(url, data=json.dumps(yaml.load(test_heatapi_template_create_stack)),
                       headers=headers)
 
         print('->>>>>>> test Nova List Versions ->>>>>>>>>>>>>>>')
@@ -266,9 +267,9 @@ class testRestApi(ApiBaseOpenStack):
         print(" ")
 
         headers = {'Content-type': 'application/json'}
-        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "test_heatapi_template_create_stack.json")).read()
+        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "templates/test_heatapi_template_create_stack.yml")).read()
         url = "http://0.0.0.0:18004/v1/tenantabc123/stacks"
-        requests.post(url, data=json.dumps(json.loads(test_heatapi_template_create_stack)), headers=headers)
+        requests.post(url, data=json.dumps(yaml.load(test_heatapi_template_create_stack)), headers=headers)
         # test_heatapi_keystone_get_token = open("test_heatapi_keystone_get_token.json").read()
 
         print('->>>>>>> test Neutron List Versions ->>>>>>>>>>>>>>>')
@@ -620,7 +621,7 @@ class testRestApi(ApiBaseOpenStack):
         print(" ")
 
         headers = {'Content-type': 'application/json'}
-        test_heatapi_keystone_get_token = open(os.path.join(os.path.dirname(__file__), "test_heatapi_keystone_get_token.json")).read()
+        test_heatapi_keystone_get_token = open(os.path.join(os.path.dirname(__file__), "templates/test_heatapi_keystone_get_token.yml")).read()
 
         print('->>>>>>> test Keystone List Versions ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -641,7 +642,7 @@ class testRestApi(ApiBaseOpenStack):
         print('->>>>>>> test Keystone Get Token ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:15000/v2.0/tokens"
-        gettokenstackresponse = requests.post(url, data=json.dumps(json.loads(test_heatapi_keystone_get_token)), headers=headers)
+        gettokenstackresponse = requests.post(url, data=json.dumps(yaml.load(test_heatapi_keystone_get_token)), headers=headers)
         self.assertEqual(gettokenstackresponse.status_code, 200)
         self.assertEqual(json.loads(gettokenstackresponse.content)["access"]["user"]["name"], "tenantName")
         print(" ")
@@ -652,8 +653,8 @@ class testRestApi(ApiBaseOpenStack):
         print(" ")
 
         headers = {'Content-type': 'application/json'}
-        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "test_heatapi_template_create_stack.json")).read()
-        test_heatapi_template_update_stack = open(os.path.join(os.path.dirname(__file__), "test_heatapi_template_update_stack.json")).read()
+        test_heatapi_template_create_stack = open(os.path.join(os.path.dirname(__file__), "templates/test_heatapi_template_create_stack.yml")).read()
+        test_heatapi_template_update_stack = open(os.path.join(os.path.dirname(__file__), "templates/test_heatapi_template_update_stack.yml")).read()
 
         print('->>>>>>> test Heat List API Versions Stack ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -666,7 +667,7 @@ class testRestApi(ApiBaseOpenStack):
         print('->>>>>>> test Create Stack ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:18004/v1/tenantabc123/stacks"
-        createstackresponse = requests.post(url, data=json.dumps(json.loads(test_heatapi_template_create_stack)), headers=headers)
+        createstackresponse = requests.post(url, data=json.dumps(yaml.load(test_heatapi_template_create_stack)), headers=headers)
         self.assertEqual(createstackresponse.status_code, 201)
         self.assertNotEqual(json.loads(createstackresponse.content)["stack"]["id"], "")
         print(" ")
@@ -713,7 +714,7 @@ class testRestApi(ApiBaseOpenStack):
         print('->>>>>>> test Update Stack ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:18004/v1/tenantabc123updateStack/stacks/%s"% json.loads(createstackresponse.content)['stack']['id']
-        updatestackresponse = requests.put(url, data=json.dumps(json.loads(test_heatapi_template_update_stack)),
+        updatestackresponse = requests.put(url, data=json.dumps(yaml.load(test_heatapi_template_update_stack)),
                                             headers=headers)
         self.assertEqual(updatestackresponse.status_code, 202)
         liststackdetailsresponse = requests.get(url, headers=headers)
