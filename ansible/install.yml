@@ -51,7 +51,7 @@
      pip: name=argparse state=latest
 
    - name: install networkx
-     pip: name=networkx state=latest
+     pip: name=networkx version=1.11
 
    - name: install six
      pip: name=six state=latest

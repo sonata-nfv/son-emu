@@ -12,7 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building...'
-                sh "docker build -t sonatanfv/son-emu:dev ."
+                sh "docker build --no-cache -t sonatanfv/son-emu:dev ."
             }
         }
         stage('Test') {
