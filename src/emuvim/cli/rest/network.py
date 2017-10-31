@@ -73,6 +73,26 @@ class RestApiClient():
                           params=params)
         print(self._nice_print(response.text))
 
+    def addLAN(self, args):
+        params = self._create_dict(
+            vnf_name=self._parse_vnf_name(args.get("source")),
+            vnf_interface=self._parse_vnf_interface(args.get("source")),
+            vlan_tag=args.get("vlan"))
+
+        response = put("{0}/restapi/networkLAN".format(args.get("endpoint")),
+                       params=params)
+        print(self._nice_print(response.text))
+
+    def removeLAN(self, args):
+        params = self._create_dict(
+            vnf_src_name=self._parse_vnf_name(args.get("source")),
+            vnf_src_interface=self._parse_vnf_interface(args.get("source")),
+            vlan=args.get("vlan"))
+
+        response = delete("{0}/restapi/networkLAN".format(args.get("endpoint")),
+                       params=params)
+        print(self._nice_print(response.text))
+
     def _parse_vnf_name(self, vnf_name_str):
         vnf_name = vnf_name_str.split(':')[0]
         return vnf_name
@@ -97,17 +117,17 @@ class RestApiClient():
 parser = argparse.ArgumentParser(description='son-emu-cli network')
 parser.add_argument(
     "command",
-    choices=['add', 'remove'],
+    choices=['add', 'remove', 'addLAN', 'removeLAN'],
     help="Action to be executed.")
 parser.add_argument(
     "--datacenter", "-d", dest="datacenter",
     help="Data center to in which the network action should be initiated")
 parser.add_argument(
     "--source", "-src", dest="source",
-    help="vnf name of the source of the chain")
+    help="vnf name:interface of the source of the chain")
 parser.add_argument(
     "--destination", "-dst", dest="destination",
-    help="vnf name of the destination of the chain")
+    help="vnf name:interface of the destination of the chain")
 parser.add_argument(
     "--weight", "-w", dest="weight",
     help="weight edge attribute to calculate the path")
@@ -123,6 +143,9 @@ parser.add_argument(
 parser.add_argument(
     "--cookie", "-c", dest="cookie", default="10",
     help="cookie for this flow, as easy to use identifier (eg. per tenant/service)")
+parser.add_argument(
+    "--vlan", "-vl", dest="vlan",
+    help="vlan tag to be used with the specified LAN interface")
 parser.add_argument(
     "--endpoint", "-e", dest="endpoint",
     default="http://127.0.0.1:5001",

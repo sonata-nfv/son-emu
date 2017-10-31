@@ -38,7 +38,7 @@ from compute import dcs, ComputeList, Compute, ComputeResources, DatacenterList,
 
 # need to import total module to set its global variable net
 import network
-from network import NetworkAction, DrawD3jsgraph
+from network import NetworkAction, NetworkLAN, DrawD3jsgraph
 
 import monitor
 from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction, MonitorTerminal
@@ -88,6 +88,8 @@ class RestApiEndpoint(object):
         # network related actions (setup chaining between VNFs)
         self.api.add_resource(NetworkAction,
                               "/restapi/network")
+        self.api.add_resource(NetworkLAN,
+                              "/restapi/networkLAN")
         self.api.add_resource(DrawD3jsgraph,
                               "/restapi/network/d3jsgraph")
 
