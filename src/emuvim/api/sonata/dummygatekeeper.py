@@ -935,7 +935,7 @@ class CustomPlacementvCDN(object):
     """
     def place(self, nsd, vnfds, saps, dcs):
         vnfds['squid1']["dc"] = dcs['dc1']
-        vnfds['webserver']["dc"] = dcs['dc3']
+        vnfds['webserver1']["dc"] = dcs['dc3']
         saps['vCDN-SAP1']["dc"] = dcs['dc1']
         saps['vCDN-SAP2']["dc"] = dcs['dc2']
 
