@@ -42,10 +42,13 @@ class NovaDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port, compute):
         super(NovaDummyApi, self).__init__(in_ip, in_port)
         self.compute = compute
+        self.compute.add_flavor('m1.tiny', 1, 512, "MB", 1, "GB")
+        self.compute.add_flavor('m1.nano', 1, 64, "MB", 0, "GB")
+        self.compute.add_flavor('m1.micro', 1, 128, "MB", 0, "GB")
+        self.compute.add_flavor('m1.small', 1, 1024, "MB", 2, "GB")
 
         self.api.add_resource(NovaVersionsList, "/",
                               resource_class_kwargs={'api': self})
-        self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(NovaVersionShow, "/v2.1/<id>",
                               resource_class_kwargs={'api': self})
         self.api.add_resource(NovaListServersApi, "/v2.1/<id>/servers",
@@ -74,30 +77,6 @@ class NovaDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
         self.api.add_resource(NovaLimits, "/v2.1/<id>/limits",
                               resource_class_kwargs={'api': self})
-
-    def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % ("NovaDummyApi", self.ip, self.port))
-        # add some flavors for good measure
-        self.compute.add_flavor('m1.tiny', 1, 512, "MB", 1, "GB")
-        self.compute.add_flavor('m1.nano', 1, 64, "MB", 0, "GB")
-        self.compute.add_flavor('m1.micro', 1, 128, "MB", 0, "GB")
-        self.compute.add_flavor('m1.small', 1, 1024, "MB", 2, "GB")
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
-
-
-class Shutdown(Resource):
-    """
-    A get request to /shutdown will shut down this endpoint.
-    """
-
-    def get(self):
-        LOG.debug(("%s is beeing shut doen") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
 
 class NovaVersionsList(Resource):

@@ -27,6 +27,7 @@
 FROM ubuntu:xenial
 
 ENV SON_EMU_IN_DOCKER 1
+ENV PIP_DEFAULT_TIMEOUT=100
 
 # install required packages
 RUN apt-get clean

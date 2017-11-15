@@ -88,28 +88,26 @@ class OpenstackApiEndpoint():
         """
         Start all connected OpenStack endpoints that are connected to this API endpoint.
         """
-        for component in self.openstack_endpoints.values():
-            component.compute = self.compute
-            component.manage = self.manage
-            thread = threading.Thread(target=component._start_flask, args=())
-            thread.daemon = True
-            thread.name = component.__class__
-            thread.start()
+        for c in self.openstack_endpoints.values():
+            c.compute = self.compute
+            c.manage = self.manage
+            c.server_thread = threading.Thread(target=c._start_flask, args=())
+            c.server_thread.daemon = True
+            c.server_thread.name = c.__class__.__name__
+            c.server_thread.start()
             if wait_for_port:
-                self._wait_for_port(component.ip, component.port)
-                
-
+                self._wait_for_port(c.ip, c.port)
+       
     def stop(self):
         """
         Stop all connected OpenStack endpoints that are connected to this API endpoint.
         """
-        for component in self.openstack_endpoints.values():
-            url = "http://" + component.ip + ":" + str(component.port) + "/shutdown"
-            try:
-                requests.get(url)
-            except:
-                # seems to be stopped
-                pass
+        for c in self.openstack_endpoints.values():
+            c.stop()
+        #for c in self.openstack_endpoints.values():
+        #    if c.server_thread:
+        #        print("Waiting for WSGIServers to be stopped ...")
+        #        c.server_thread.join()
 
     def _wait_for_port(self, ip, port):
         for i in range(0, 10):

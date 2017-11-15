@@ -45,7 +45,6 @@ class NeutronDummyApi(BaseOpenstackDummy):
         self.compute = compute
 
         self.api.add_resource(NeutronListAPIVersions, "/")
-        self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(NeutronShowAPIv2Details, "/v2.0")
         self.api.add_resource(NeutronListNetworks, "/v2.0/networks.json", "/v2.0/networks",
                               resource_class_kwargs={'api': self})
@@ -136,21 +135,6 @@ class NeutronDummyApi(BaseOpenstackDummy):
         self.api.add_resource(SFC.PortChainShow, "/v2.0/sfc/port_chains/<chain_id>.json",
                               "/v2.0/sfc/port_chains/<chain_id>",
                               resource_class_kwargs={'api': self})
-
-    def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
-
-
-class Shutdown(Resource):
-    def get(self):
-        LOG.debug(("%s is beeing shut down") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
 
 class NeutronListAPIVersions(Resource):
