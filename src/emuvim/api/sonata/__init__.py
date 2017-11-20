@@ -47,7 +47,7 @@ class SonataDummyGatekeeperEndpoint(object):
     """
 
     def __init__(self, listenip, port, deploy_sap=False, docker_management=False,
-                 auto_deploy=False,  auto_delete=False, sap_vnfd_path=None):
+                 auto_deploy=False,  auto_delete=False, sap_vnfd_path=None, bidirectional=False, placement=None):
         self.dcs = {}
         self.ip = listenip
         self.port = port
@@ -56,6 +56,9 @@ class SonataDummyGatekeeperEndpoint(object):
         dgk.AUTO_DEPLOY = auto_deploy
         dgk.AUTO_DELETE = auto_delete
         dgk.SAP_VNFD = sap_vnfd_path
+        dgk.BIDIRECTIONAL_CHAIN = bidirectional
+        if placement is not None:
+            dgk.PLACEMENT_ALGORITHM = placement
         logging.debug("Created API endpoint %s" % self)
 
     def __repr__(self):

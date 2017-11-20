@@ -122,6 +122,64 @@ class NetworkAction(Resource):
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
 
+class NetworkLAN(Resource):
+    """
+    Add or remove VNF interfaces to an existing LAN, by manipulating the vlan tag of the connected datacenter interface
+    :param vnf_name: VNF name of the source of the link
+    :param vnf_interface: VNF interface name of the source of the link
+    :param vlan_tag: vlan tag (integer > 0) or thsi interface
+    """
+    global net
+
+    def put(self):
+        logging.debug("REST CALL: network LAN add")
+
+        try:
+
+            data = request.json
+            if data is None:
+                data = request.args
+            if data is None:
+                data = {}
+
+            vnf_name = data.get("vnf_name")
+            vnf_interface = data.get("vnf_interface")
+            vlan_tag = data.get("vlan_tag")
+
+            vnf_list = [{'name':vnf_name, 'interface':vnf_interface}]
+
+            c = net.setLAN(vnf_list, vlan=vlan_tag, action='add')
+            # return setChain response
+            return str(c), 200, CORS_HEADER
+
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500, CORS_HEADER
+
+    def delete(self):
+        logging.debug("REST CALL: network LAN remove")
+
+        try:
+
+            data = request.json
+            if data is None:
+                data = request.args
+            if data is None:
+                data = {}
+
+            vnf_name = data.get("vnf_name")
+            vnf_interface = data.get("vnf_interface")
+            vlan_tag = data.get("vlan_tag")
+
+            vnf_list = [{'name': vnf_name, 'interface': vnf_interface}]
+
+            c = net.setLAN(vnf_list, vlan=vlan_tag, action='delete')
+            # return setChain response
+            return str(c), 200, CORS_HEADER
+
+        except Exception as ex:
+            logging.exception("API error.")
+            return ex.message, 500, CORS_HEADER
 
 class DrawD3jsgraph(Resource):
 

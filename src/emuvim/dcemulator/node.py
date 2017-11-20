@@ -28,6 +28,7 @@ partner consortium (www.sonata-nfv.eu).
 from mininet.node import Docker, OVSBridge
 from mininet.link import Link
 from emuvim.dcemulator.resourcemodel import NotEnoughResourcesAvailable
+import threading
 import logging
 
 
@@ -66,8 +67,11 @@ class EmulatorCompute(Docker):
             vnf_name = self.name
             vnf_interface = str(i)
             dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
+            id = "{0}:{1}".format(vnf_name, vnf_interface)
+            vlan_tag = self.datacenter.net.vlan_dict.get(id)
             # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
-            intf_dict = {'intf_name': str(i), 'ip': "{0}/{1}".format(i.IP(), i.prefixLen), 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            intf_dict = {'intf_name': str(i), 'ip': "{0}/{1}".format(i.IP(), i.prefixLen), 'netmask': i.prefixLen,
+                         'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name, 'vlan': vlan_tag}
             networkStatusList.append(intf_dict)
 
         return networkStatusList
