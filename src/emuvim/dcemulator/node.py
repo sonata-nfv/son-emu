@@ -284,19 +284,6 @@ class Datacenter(object):
         # do bookkeeping
         self.containers[name] = d
 
-        # Execute SON_EMU_CMD
-        config = d.dcinfo.get("Config", dict())
-        env = config.get("Env", list())
-        for env_var in env:
-            var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
-            LOG.debug("%r = %r" % (var, cmd))
-            if var == "SON_EMU_CMD":
-                LOG.info("Executing entry point script in %r: %r" % (d.name, cmd))
-                # execute command in new thread to ensure that GK is not blocked by VNF
-                t = threading.Thread(target=d.cmdPrint, args=(cmd,))
-                t.daemon = True
-                t.start()
-
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):
