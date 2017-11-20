@@ -34,7 +34,7 @@ import re
 import requests
 import os
 import json
-import copy
+import distutils
 
 from mininet.net import Containernet
 from mininet.node import Controller, DefaultController, OVSSwitch, OVSKernelSwitch, Docker, RemoteController
@@ -557,6 +557,7 @@ class DCNetwork(Containernet):
         :param tag: vlan tag to be used for this chain (pre-defined or new one if none is specified)
         :param skip_vlan_tag: boolean to indicate if a vlan tag should be appointed to this flow or not
         :param path: custom path between the two VNFs (list of switches)
+        :param bidirectional: setup the chain in two directions or only one-way (src <-> dst)
         :return: output log string
         """
 
@@ -590,7 +591,10 @@ class DCNetwork(Containernet):
         cmd = kwargs.get('cmd', 'add-flow')
         if cmd == 'add-flow' or cmd == 'del-flows':
             ret = self._chainAddFlow(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface, **kwargs)
-            if kwargs.get('bidirectional'):
+            # this can be a boolean or a string value, as returned by the rest api
+            bidirectional = kwargs.get('bidirectional')
+            true_list = ['true', 'True', True, 1]
+            if bidirectional in true_list:
                 if kwargs.get('path') is not None:
                     kwargs['path'] = list(reversed(kwargs.get('path')))
                 ret = ret +'\n' + self._chainAddFlow(vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
@@ -740,6 +744,7 @@ class DCNetwork(Containernet):
         return "success: {2} between {0} and {1} with options: {3}".format(vnf_src_name, vnf_dst_name, cmd, flow_options_str)
 
     def _set_flow_entry_ryu_rest(self, node, switch_inport_nr, switch_outport_nr, **kwargs):
+
         match = 'in_port=%s' % switch_inport_nr
 
         cookie = kwargs.get('cookie')
@@ -798,7 +803,7 @@ class DCNetwork(Containernet):
                         action['value'] = vlan | 0x1000
                         flow['actions'].append(action)
 
-                if index == len(path) - 1:  # last node
+                elif index == len(path) - 1:  # last node
                     # set vlan tag in ovs instance (to isolate from E-LANs)
                     if not skip_vlan_tag:
                         out_port_name = kwargs.get('switch_outport_name')
@@ -832,6 +837,7 @@ class DCNetwork(Containernet):
             action['type'] = 'OUTPUT'
             action['port'] = switch_outport_nr
             flow['actions'].append(action)
+
 
         flow['match'] = self._parse_match(match)
         self.ryu_REST(prefix, data=flow)
