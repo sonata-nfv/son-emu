@@ -29,6 +29,7 @@ import logging
 from flask_restful import Resource
 from flask import request
 import json
+import threading
 from copy import deepcopy
 
 logging.basicConfig()
@@ -70,8 +71,30 @@ class Compute(Resource):
 
         try:
             logging.debug("API CALL: compute start")
+            if compute_name is None or compute_name == "None":
+                logging.error("No compute name defined in request.")
+                return "No compute name defined in request.", 500, CORS_HEADER
+            if dc_label is None or dcs.get(dc_label) is None:
+                logging.error("No datacenter defined in request.")
+                return "No datacenter defined in request.", 500, CORS_HEADER
             c = dcs.get(dc_label).startCompute(
                 compute_name, image=image, command=command, network=nw_list)
+            # (if available) trigger emu. entry point given in Dockerfile
+            try:
+                config = c.dcinfo.get("Config", dict())
+                env = config.get("Env", list())
+                for env_var in env:
+                    var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
+                    logging.debug("%r = %r" % (var , cmd))
+                    if var=="SON_EMU_CMD" or var=="VIM_EMU_CMD":
+                        logging.info("Executing entry point script in %r: %r" % (c.name, cmd))
+                        # execute command in new thread to ensure that API is not blocked by VNF
+                        t = threading.Thread(target=c.cmdPrint, args=(cmd,))
+                        t.daemon = True
+                        t.start()
+            except Exception as ex:
+                logging.warning("Couldn't run Docker entry point VIM_EMU_CMD")
+                logging.exception("Exception:")
             # return docker inspect dict
             return c.getStatus(), 200, CORS_HEADER
         except Exception as ex:
