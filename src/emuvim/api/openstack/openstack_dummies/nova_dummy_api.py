@@ -223,7 +223,7 @@ class NovaListServersApi(Resource):
         try:
             server_dict = json.loads(request.data)['server']
             networks = server_dict.get('networks', None)
-            name = str(self.api.compute.dc.label) + "_man_" + server_dict["name"][0:12]
+            name = str(self.api.compute.dc.label) + "_" + server_dict["name"]
 
             if self.api.compute.find_server_by_name_or_id(name) is not None:
                 return Response("Server with name %s already exists." % name, status=409)
@@ -231,7 +231,7 @@ class NovaListServersApi(Resource):
             resp = dict()
 
             server = self.api.compute.create_server(name)
-            server.full_name = str(self.api.compute.dc.label) + "_man_" + server_dict["name"]
+            server.full_name = str(self.api.compute.dc.label) + "_" + server_dict["name"]
             server.template_name = server_dict["name"]
             if "metadata" in server_dict:
                 server.properties = server_dict["metadata"]
