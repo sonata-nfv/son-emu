@@ -535,7 +535,7 @@ class NovaListFlavorById(Resource):
         Does not really remove anything from the machine, just fakes an OK.
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
-        return Response("{}", status=204, mimetype="application/json")
+        return Response("", status=204, mimetype="application/json")
 
 
 class NovaListImages(Resource):
@@ -657,7 +657,7 @@ class NovaListImageById(Resource):
         Does not really remove anything from the machine, just fakes an OK.
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
-        return Response("{}", status=204, mimetype="application/json")
+        return Response("", status=204, mimetype="application/json")
 
 
 class NovaShowServerDetails(Resource):
@@ -729,10 +729,10 @@ class NovaShowServerDetails(Resource):
         :type id: ``str``
         :param serverid: The UUID of the server
         :type serverid: ``str``
-        :return: Returns 200 if everything is fine.
+        :return: Returns 204 if everything is fine.
         :rtype: :class:`flask.response`
         """
-        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
@@ -740,7 +740,7 @@ class NovaShowServerDetails(Resource):
 
             self.api.compute.stop_compute(server)
 
-            response = Response('Server deleted.', status=204, mimetype="application/json")
+            response = Response('', status=204, mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 

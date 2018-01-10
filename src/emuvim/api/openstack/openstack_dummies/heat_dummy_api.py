@@ -388,12 +388,14 @@ class HeatDeleteStack(Resource):
         try:
             if stack_name_or_id in self.api.compute.stacks:
                 self.api.compute.delete_stack(stack_name_or_id)
-                return Response('Deleted Stack: ' + stack_name_or_id, 204)
+                return Response("", 204,
+                                mimetype='application/json')
 
             for stack in self.api.compute.stacks.values():
                 if stack.stack_name == stack_name_or_id:
                     self.api.compute.delete_stack(stack.id)
-                    return Response('Deleted Stack: ' + stack_name_or_id, 204)
+                    return Response("", 204,
+                                    mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Heat: Delete Stack exception")
