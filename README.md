@@ -44,41 +44,54 @@ If you use the emulation platform for your research and/or other publications, p
 
 ## Installation
 
-There are three ways to install and use the emulation platform. The bare-metal installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook. The second option is to use a nested Docker environment to run the emulator inside a Docker container. The third option is to use Vagrant to create a VirtualBox-based VM on your machine that contains the pre-installed and configured emulator.
+There are multiple ways to install and use the emulation platform. The easiest way is the automated installation using the OSM installer. The bare-metal installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook. Another option is to use a nested Docker environment to run the emulator inside a Docker container.
 
-### Option 1: Bare-metal installation
+### Automated installation (recommended)
 
-* Requires: Ubuntu 16.04 LTS
-* `sudo apt-get install ansible git aptitude`
+```sh
+./install_osm.sh --lxdimages --vimemu
+```
 
-#### 1. Containernet
+This command will install OSM (as LXC containers) as well as the emulator (as a Docker container) on a local machine. It is recommended to use a machine with Ubuntu 16.04.
 
-* `cd`
-* `git clone https://github.com/containernet/containernet.git`
-* `cd ~/containernet/ansible`
-* `sudo ansible-playbook -i "localhost," -c local install.yml`
+### Manual installation
 
-#### 2. vim-emu
+#### Option 1: Bare-metal installation
 
-* `cd`
-* `git clone https://osm.etsi.org/gerrit/osm/vim-emu.git`
-* `cd ~/vim-emu/ansible`
-* `sudo ansible-playbook -i "localhost," -c local install.yml`
+```sh
+sudo apt-get install ansible git aptitude
+```
 
-### Option 2: Nested Docker Deployment
+##### Step 1. Containernet installation
+
+```sh
+cd
+git clone https://github.com/containernet/containernet.git
+cd ~/containernet/ansible
+sudo ansible-playbook -i "localhost," -c local install.yml
+```
+
+##### Step 2. vim-emu installation
+
+```sh
+cd
+git clone https://osm.etsi.org/gerrit/osm/vim-emu.git
+cd ~/vim-emu/ansible
+sudo ansible-playbook -i "localhost," -c local install.yml
+```
+
+#### Option 2: Nested Docker Deployment
 This option requires a Docker installation on the host machine on which the emulator should be deployed.
 
-* `git clone https://osm.etsi.org/gerrit/osm/vim-emu.git`
-* `cd ~/vim-emu`
-* Build the container: `docker build -t vim-emu-img .`
-* Run the (interactive) container: `docker run --name vim-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock vim-emu-img /bin/bash`
+```sh
+git clone https://osm.etsi.org/gerrit/osm/vim-emu.git</code>
+cd ~/vim-emu</code>
+# build the container:
+docker build -t vim-emu-img .
+# run the (interactive) container:
+docker run --name vim-emu -it --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock vim-emu-img /bin/bash
+```
 
-### Option 3: Vagrant Installation
-* Request VirtualBox and Vagrant to be installed on the system.
-* `git clone https://osm.etsi.org/gerrit/osm/vim-emu.git`
-* `cd ~/vim-emu`
-* `vagrant up`
-* `vagrant ssh` to enter the new VM in which the emulator is installed.
 
 ## Usage
 
@@ -96,8 +109,11 @@ This simple example shows how to start the emulator with a simple topology (term
     * `containernet> vnf1 ifconfig`
     * `containernet> vnf1 ping -c 2 vnf2`
 
+A more advanced example that includes OSM can be found in the [official vim-emu documentation in the OSM wiki](https://osm.etsi.org/wikipub/index.php/VIM_emulator).
+
 ### Further documentation and useful links
 
+* [Official vim-emu documentation in the OSM wiki](https://osm.etsi.org/wikipub/index.php/VIM_emulator)
 * [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
 * [Requirements for Docker containers executed by the emulator](https://github.com/sonata-nfv/son-emu/wiki/Container-Requirements)
 * [REST API](https://github.com/sonata-nfv/son-emu/wiki/APIs)
