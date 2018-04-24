@@ -527,6 +527,7 @@ class NeutronCreateSubnet(Resource):
 
             net.subnet_name = subnet_dict["subnet"].get('name', str(net.name) + '-sub')
             if net.subnet_id is not None:
+                LOG.error("Only one subnet per network is supported: {}".format(net.subnet_id))
                 return Response('Only one subnet per network is supported\n', status=409, mimetype='application/json')
 
             if "id" in subnet_dict["subnet"]:
@@ -627,6 +628,9 @@ class NeutronDeleteSubnet(Resource):
                     for server in self.api.compute.computeUnits.values():
                         for port_name in server.port_names:
                             port = self.api.compute.find_port_by_name_or_id(port_name)
+                            if port is None:
+                                LOG.warning("Port search for {} returned None.".format(port_name))
+                                continue
                             if port.net_name == net.name:
                                 port.ip_address = None
                                 self.api.compute.dc.net.removeLink(

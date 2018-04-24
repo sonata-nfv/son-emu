@@ -226,6 +226,7 @@ class NovaListServersApi(Resource):
             name = str(self.api.compute.dc.label) + "_" + server_dict["name"]
 
             if self.api.compute.find_server_by_name_or_id(name) is not None:
+                LOG.error("Server with name %s already exists. 409" % name)
                 return Response("Server with name %s already exists." % name, status=409)
             # TODO: not finished!
             resp = dict()

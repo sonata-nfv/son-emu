@@ -585,12 +585,10 @@ class OpenstackCompute(object):
         if server is None:
             return False
         name_parts = server.name.split('_')
-        if len(name_parts) < 3:
-            return False
-
-        for stack in self.stacks.values():
-            if stack.stack_name == name_parts[1]:
-                stack.servers.pop(server.id, None)
+        if len(name_parts) > 1:
+            for stack in self.stacks.values():
+                if stack.stack_name == name_parts[1]:
+                    stack.servers.pop(server.id, None)
         if self.computeUnits.pop(server.id, None) is None:
             return False
         return True
