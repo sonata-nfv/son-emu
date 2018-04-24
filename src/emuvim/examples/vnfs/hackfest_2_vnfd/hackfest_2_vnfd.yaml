@@ -1,0 +1,103 @@
+---
+# Copyright (c) 2018 by Paderborn University
+# (manuel@peuster.de)
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the OSM, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+
+vnfd:vnfd-catalog:
+    vnfd:
+    -   id: hackfest2-vnf
+        name: hackfest2-vnf
+        short-name: hackfest2-vnf
+        version: '1.0'
+        description: A VNF consisting of 2 VDUs connected to an internal VL
+        logo: osm.png
+        connection-point:
+        -   id: vnf-mgmt
+            name: vnf-mgmt
+            short-name: vnf-mgmt
+            type: VPORT
+        -   id: vnf-data
+            name: vnf-data
+            short-name: vnf-data
+            type: VPORT
+        mgmt-interface:
+            cp: vnf-mgmt
+        internal-vld:
+        -   id: internal
+            name: internal
+            short-name: internal
+            type: ELAN
+            internal-connection-point:
+            -   id-ref: mgmtVM-internal
+            -   id-ref: dataVM-internal
+        vdu:
+        -   id: mgmtVM
+            name: mgmtVM
+            image: "ubuntu:trusty"
+            count: '1'
+            vm-flavor:
+                vcpu-count: '1'
+                memory-mb: '1024'
+                storage-gb: '10'
+            interface:
+            -   name: mgmtVM-eth0
+                position: '1'
+                type: EXTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                external-connection-point-ref: vnf-mgmt
+            -   name: mgmtVM-eth1
+                position: '2'
+                type: INTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                internal-connection-point-ref: mgmtVM-internal
+            internal-connection-point:
+            -   id: mgmtVM-internal
+                name: mgmtVM-internal
+                short-name: mgmtVM-internal
+                type: VPORT
+        -   id: dataVM
+            name: dataVM
+            image: "ubuntu:trusty"
+            count: '1'
+            vm-flavor:
+                vcpu-count: '1'
+                memory-mb: '1024'
+                storage-gb: '10'
+            interface:
+            -   name: dataVM-eth0
+                position: '1'
+                type: INTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                internal-connection-point-ref: dataVM-internal
+            -   name: dataVM-xe0
+                position: '2'
+                type: EXTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                external-connection-point-ref: vnf-data
+            internal-connection-point:
+            -   id: dataVM-internal
+                name: dataVM-internal
+                short-name: dataVM-internal
+                type: VPORT
+
