@@ -44,6 +44,10 @@ class NeutronDummyApi(BaseOpenstackDummy):
         super(NeutronDummyApi, self).__init__(ip, port)
         self.compute = compute
 
+        # create default networks (OSM usually assumes to have these pre-configured)
+        self.compute.create_network("mgmt")
+        self.compute.create_network("mgmtnet")
+
         self.api.add_resource(NeutronListAPIVersions, "/")
         self.api.add_resource(NeutronShowAPIv2Details, "/v2.0")
         self.api.add_resource(NeutronListNetworks, "/v2.0/networks.json", "/v2.0/networks",
@@ -224,14 +228,19 @@ class NeutronListNetworks(Resource):
         :rtype: :class:`flask.response`
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        # LOG.debug("ARGS: {}".format(request.args))
         try:
             if request.args.get('name'):
                 tmp_network = NeutronShowNetwork(self.api)
-                return tmp_network.get_network(request.args.get('name'), True)
+                response = tmp_network.get_network(request.args.get('name'), True)
+                LOG.debug("{} RESPONSE (1): {}".format(self.__class__.__name__, response))
+                return response
             id_list = request.args.getlist('id')
             if len(id_list) == 1:
                 tmp_network = NeutronShowNetwork(self.api)
-                return tmp_network.get_network(request.args.get('id'), True)
+                response = tmp_network.get_network(request.args.get('id'), True)
+                LOG.debug("{} RESPONSE (2): {}".format(self.__class__.__name__, response))
+                return response
 
             network_list = list()
             network_dict = dict()
@@ -249,7 +258,7 @@ class NeutronListNetworks(Resource):
                             network_list.append(tmp_network_dict)
 
             network_dict["networks"] = network_list
-
+            LOG.debug("{} RESPONSE (3): {}".format(self.__class__.__name__, network_dict))
             return Response(json.dumps(network_dict), status=200, mimetype='application/json')
 
         except Exception as ex:

@@ -607,7 +607,10 @@ class OpenstackCompute(object):
         for net in self.nets.values():
             if net.name == name_or_id:
                 return net
-
+        LOG.warning("Could not find net '{}' in {} or {}"
+                    .format(name_or_id,
+                            self.nets.keys(),
+                            [n.name for n in self.nets.values()]))
         return None
 
     def create_network(self, name, stack_operation=False):

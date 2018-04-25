@@ -107,17 +107,18 @@ class OpenstackManage(object):
     def net(self, value):
         if self._net is None:
             self._net = value
+            # create default networks
             self.init_floating_network()
         self._net = value
 
-    def init_floating_network(self):
+    def init_floating_network(self, name="default"):
         """
         Initialize the floating network component for the emulator.
         Will not do anything if already initialized.
         """
         if self.net is not None and self.floating_switch is None:
             # create a floating network
-            fn = self.floating_network = Net("default")
+            fn = self.floating_network = Net(name)
             fn.id = str(uuid.uuid4())
             fn.set_cidr(self.floating_netmask)
 
