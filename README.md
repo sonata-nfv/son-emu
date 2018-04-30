@@ -1,36 +1,15 @@
-<!--
-# Copyright (c) 2017 SONATA-NFV and Paderborn University
-# ALL RIGHTS RESERVED.
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Neither the name of the SONATA-NFV, Paderborn University
-# nor the names of its contributors may be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
-#
-# This work has been performed in the framework of the SONATA project,
-# funded by the European Commission under Grant number 671517 through
-# the Horizon 2020 and 5G-PPP programmes. The authors would like to
-# acknowledge the contributions of their colleagues of the SONATA
-# partner consortium (www.sonata-nfv.eu).
--->
+[![Join the chat at https://gitter.im/containernet/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/containernet/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build Status](http://jenkins.sonata-nfv.eu/buildStatus/icon?job=son-emu-pipeline)](http://jenkins.sonata-nfv.eu/job/son-emu-pipeline)
+
 
 # vim-emu: A NFV multi-PoP emulation platform
 
 This emulation platform was created to support network service developers to locally prototype and test their network services in realistic end-to-end multi-PoP scenarios. It allows the execution of real network functions, packaged as Docker containers, in emulated network topologies running locally on the developer's machine. The emulation platform also offers OpenStack-like APIs for each emulated PoP so that it can integrate with MANO solutions, like OSM. The core of the emulation platform is based on [Containernet](https://containernet.github.io).
 
 The emulation platform `vim-emu` is developed as part of OSM's DevOps MDG.
+
+### Note
+
+This repository is a fork of the [original vim-emu](https://osm.etsi.org/gitweb/?p=osm/vim-emu.git;a=summary) repository that is hosted by ETSI OSM. You can find the (deprecated) SONATA master branch in [sonata/master](https://github.com/sonata-nfv/son-emu/tree/sonata/master).
 
 ### Acknowledgments
 
@@ -75,8 +54,8 @@ sudo ansible-playbook -i "localhost," -c local install.yml
 
 ```sh
 cd
-git clone https://osm.etsi.org/gerrit/osm/vim-emu.git
-cd ~/vim-emu/ansible
+git clone https://github.com/sonata-nfv/son-emu
+cd ~/son-emu/ansible
 sudo ansible-playbook -i "localhost," -c local install.yml
 ```
 
@@ -84,8 +63,8 @@ sudo ansible-playbook -i "localhost," -c local install.yml
 This option requires a Docker installation on the host machine on which the emulator should be deployed.
 
 ```sh
-git clone https://osm.etsi.org/gerrit/osm/vim-emu.git</code>
-cd ~/vim-emu</code>
+git clone https://github.com/sonata-nfv/son-emu
+cd ~/son-emu
 # build the container:
 docker build -t vim-emu-img .
 # run the (interactive) container:
