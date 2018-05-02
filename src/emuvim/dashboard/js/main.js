@@ -1,3 +1,30 @@
+/*
+ Copyright (c) 2017 SONATA-NFV and Paderborn University
+ ALL RIGHTS RESERVED.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ Neither the name of the SONATA-NFV, Paderborn University
+ nor the names of its contributors may be used to endorse or promote
+ products derived from this software without specific prior written
+ permission.
+
+ This work has been performed in the framework of the SONATA project,
+ funded by the European Commission under Grant number 671517 through
+ the Horizon 2020 and 5G-PPP programmes. The authors would like to
+ acknowledge the contributions of their colleagues of the SONATA
+ partner consortium (www.sonata-nfv.eu).
+*/
 var API_HOST = "http://127.0.0.1:5001";
 var ERROR_ALERT = false;
 var TIMESTAMP = 0;
@@ -83,7 +110,7 @@ function update_table_container(data)
 	    build_network_table(item[1].network, item[0]);
     });
     $("#lbl_container_count").text(data.length);
-    $("#table_network").append('<table class="interface_table"><tr class="interface_row"><td class="interface_port">datacenter port</td><td class="interface_name">interface</td><td class="interface_ip">ip</td><td class="interface_mac">mac</td><td class="vlan_tag">vlan</td></tr></table>')
+    $("#table_network").append('<table class="interface_table"><tr class="interface_row"><td class="interface_port">datacenter port</td><td class="interface_name">interface</td><td class="interface_ip">ip</td><td class="interface_mac">mac</td></tr></table>')
     // update lateness counter
     LAST_UPDATE_TIMESTAMP_CONTAINER = Date.now();
 }
@@ -99,7 +126,6 @@ function build_network_table(network_list, id)
         row_str += '<td class="interface_name">' + interface.intf_name + '</td>';
         row_str += '<td class="interface_ip">' + interface.ip + '</td>';
         row_str += '<td class="interface_mac">' + interface.mac + '</td>';
-        row_str += '<td class="vlan_tag">' + interface.vlan + '</td>';
         row_str += '</tr>';
     });
     $("#network_list_" + id).append(row_str)

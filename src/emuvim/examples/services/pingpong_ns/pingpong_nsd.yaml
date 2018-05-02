@@ -1,0 +1,98 @@
+---
+# Copyright (c) 2018 by Paderborn University and Manuel Peuster
+# (manuel@peuster.de)
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+
+nsd-catalog:
+    nsd:
+    -   id: pingpong
+        name: pingpong
+        short-name: pingpong
+        description: Ping-pong example nentwork scenario with two VNFs.
+        vendor: "Paderborn University"
+        version: '1.1'
+
+        # Place the logo as png in icons directory and provide the name here
+        # logo: <update, optional>
+
+        # Specify the VNFDs that are part of this NSD
+        constituent-vnfd:
+            # The member-vnf-index needs to be unique, starting from 1
+            # vnfd-id-ref is the id of the VNFD
+            # Multiple constituent VNFDs can be specified
+        -   member-vnf-index: '1'
+            vnfd-id-ref: ping
+        -   member-vnf-index: '2'
+            vnfd-id-ref: pong
+
+        vld:
+        -   id: mgmt_vl
+            description: Management VL
+            name: mgmt_vl
+            short-name: mgmt_vl
+            vim-network-name: default  # important for emulator!
+            type: ELAN
+            vendor: "Paderborn University"
+            version: '1.0'
+            mgmt-network: 'true'
+            vnfd-connection-point-ref:
+            -   member-vnf-index-ref: '1'
+                vnfd-connection-point-ref: ping/cp0
+                vnfd-id-ref: ping
+            -   member-vnf-index-ref: '2'
+                vnfd-connection-point-ref: pong/cp0
+                vnfd-id-ref: pong
+        #vld:
+        # Networks for the VNFs
+        #    -   id: demo_nsd_vld0
+        #        name: management
+        #        short-name: management
+        #        type: ELAN
+        #        mgmt-network: 'true'
+        #        # vim-network-name: <update>
+        #        # provider-network:
+        #        #     overlay-type: VLAN
+        #        #     segmentation_id: <update>
+        #        vnfd-connection-point-ref:
+        #        # Specify the constituent VNFs
+        #        # member-vnf-index-ref - entry from constituent vnf
+        #        # vnfd-id-ref - VNFD id
+        #        # vnfd-connection-point-ref - connection point name in the VNFD
+        #        -   nsd:member-vnf-index-ref: 1
+        #            nsd:vnfd-id-ref: http_vnfd
+        #            # NOTE: Validate the entry below
+        #            nsd:vnfd-connection-point-ref: eth0
+        #    -   id: http_nsd_vld1
+        #        name: http_nsd_vld1
+        #        short-name: http_nsd_vld1
+        #        type: ELAN
+        #        # vim-network-name: <update>
+        #        # provider-network:
+        #        #     overlay-type: VLAN
+        #        #     segmentation_id: <update>
+        #        vnfd-connection-point-ref:
+        #        # Specify the constituent VNFs
+        #        # member-vnf-index-ref - entry from constituent vnf
+        #        # vnfd-id-ref - VNFD id
+        #        # vnfd-connection-point-ref - connection point name in the VNFD
+        #        -   nsd:member-vnf-index-ref: 1
+        #            nsd:vnfd-id-ref: http_vnfd
+        #            # NOTE: Validate the entry below
+        #            nsd:vnfd-connection-point-ref: eth1

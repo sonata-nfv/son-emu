@@ -208,7 +208,7 @@ class testSonataDummyGatekeeper(SimpleTestTopology):
         initialize_GK()
 
 
-    #@unittest.skip("disabled")
+    @unittest.skip("disabled")
     def test_GK_stress_service(self):
         # create network
         self.createNet(ndatacenter=2, nhosts=2)

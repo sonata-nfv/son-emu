@@ -70,7 +70,6 @@ class Compute(Resource):
         command = data.get("docker_command")
 
         try:
-            logging.debug("API CALL: compute start")
             if compute_name is None or compute_name == "None":
                 logging.error("No compute name defined in request.")
                 return "No compute name defined in request.", 500, CORS_HEADER

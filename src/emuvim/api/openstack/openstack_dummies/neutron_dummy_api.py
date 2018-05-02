@@ -44,8 +44,11 @@ class NeutronDummyApi(BaseOpenstackDummy):
         super(NeutronDummyApi, self).__init__(ip, port)
         self.compute = compute
 
+        # create default networks (OSM usually assumes to have these pre-configured)
+        self.compute.create_network("mgmt")
+        self.compute.create_network("mgmtnet")
+
         self.api.add_resource(NeutronListAPIVersions, "/")
-        self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(NeutronShowAPIv2Details, "/v2.0")
         self.api.add_resource(NeutronListNetworks, "/v2.0/networks.json", "/v2.0/networks",
                               resource_class_kwargs={'api': self})
@@ -137,21 +140,6 @@ class NeutronDummyApi(BaseOpenstackDummy):
                               "/v2.0/sfc/port_chains/<chain_id>",
                               resource_class_kwargs={'api': self})
 
-    def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
-
-
-class Shutdown(Resource):
-    def get(self):
-        LOG.debug(("%s is beeing shut down") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
-
 
 class NeutronListAPIVersions(Resource):
     def get(self):
@@ -240,14 +228,19 @@ class NeutronListNetworks(Resource):
         :rtype: :class:`flask.response`
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
+        # LOG.debug("ARGS: {}".format(request.args))
         try:
             if request.args.get('name'):
                 tmp_network = NeutronShowNetwork(self.api)
-                return tmp_network.get_network(request.args.get('name'), True)
+                response = tmp_network.get_network(request.args.get('name'), True)
+                LOG.debug("{} RESPONSE (1): {}".format(self.__class__.__name__, response))
+                return response
             id_list = request.args.getlist('id')
             if len(id_list) == 1:
                 tmp_network = NeutronShowNetwork(self.api)
-                return tmp_network.get_network(request.args.get('id'), True)
+                response = tmp_network.get_network(request.args.get('id'), True)
+                LOG.debug("{} RESPONSE (2): {}".format(self.__class__.__name__, response))
+                return response
 
             network_list = list()
             network_dict = dict()
@@ -265,7 +258,7 @@ class NeutronListNetworks(Resource):
                             network_list.append(tmp_network_dict)
 
             network_dict["networks"] = network_list
-
+            LOG.debug("{} RESPONSE (3): {}".format(self.__class__.__name__, network_dict))
             return Response(json.dumps(network_dict), status=200, mimetype='application/json')
 
         except Exception as ex:
@@ -422,7 +415,7 @@ class NeutronDeleteNetwork(Resource):
 
             self.api.compute.delete_network(network_id)
 
-            return Response('Network ' + str(network_id) + ' deleted.\n', status=204, mimetype='application/json')
+            return Response('', status=204, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Delete network exception.")
             return Response(ex.message, status=500, mimetype='application/json')
@@ -543,6 +536,7 @@ class NeutronCreateSubnet(Resource):
 
             net.subnet_name = subnet_dict["subnet"].get('name', str(net.name) + '-sub')
             if net.subnet_id is not None:
+                LOG.error("Only one subnet per network is supported: {}".format(net.subnet_id))
                 return Response('Only one subnet per network is supported\n', status=409, mimetype='application/json')
 
             if "id" in subnet_dict["subnet"]:
@@ -643,6 +637,9 @@ class NeutronDeleteSubnet(Resource):
                     for server in self.api.compute.computeUnits.values():
                         for port_name in server.port_names:
                             port = self.api.compute.find_port_by_name_or_id(port_name)
+                            if port is None:
+                                LOG.warning("Port search for {} returned None.".format(port_name))
+                                continue
                             if port.net_name == net.name:
                                 port.ip_address = None
                                 self.api.compute.dc.net.removeLink(
@@ -653,8 +650,7 @@ class NeutronDeleteSubnet(Resource):
 
                     net.delete_subnet()
 
-                    return Response('Subnet ' + str(subnet_id) + ' deleted.\n',
-                                    status=204, mimetype='application/json')
+                    return Response('', status=204, mimetype='application/json')
 
             return Response('Could not find subnet.', status=404, mimetype='application/json')
         except Exception as ex:
@@ -911,7 +907,7 @@ class NeutronDeletePort(Resource):
             # delete the port
             self.api.compute.delete_port(port.id)
 
-            return Response('Port ' + port_id + ' deleted.\n', status=204, mimetype='application/json')
+            return Response('', status=204, mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: Delete port exception.")

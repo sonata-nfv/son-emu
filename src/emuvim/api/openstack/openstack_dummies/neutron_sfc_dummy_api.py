@@ -99,7 +99,8 @@ class PortPairsDelete(SFC):
         try:
             self.api.compute.delete_port_pair(pair_id)
 
-            return Response("Port pair %s deleted.\n" % pair_id, status=204, mimetype='application/json')
+            return Response("", status=204,
+                            mimetype='application/json')
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." % str(self.__class__.__name__))
             return Response(ex.message, status=500, mimetype='application/json')
@@ -191,7 +192,8 @@ class PortPairGroupDelete(SFC):
         try:
             self.api.compute.delete_port_pair_group(group_id)
 
-            return Response("Port pair group %s deleted.\n" % group_id, status=204, mimetype='application/json')
+            return Response("", status=204,
+                            mimetype='application/json')
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." % str(self.__class__.__name__))
             return Response(ex.message, status=500, mimetype='application/json')
@@ -300,7 +302,7 @@ class FlowClassifierDelete(SFC):
         try:
             self.api.compute.delete_flow_classifier(flow_classifier_id)
 
-            return Response("Port pair group %s deleted.\n" % flow_classifier_id, status=204,
+            return Response("", status=204,
                             mimetype='application/json')
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." % str(self.__class__.__name__))
@@ -404,7 +406,8 @@ class PortChainDelete(SFC):
 
         self.api.compute.delete_port_chain(chain_id)
         try:
-            return Response("Port chain %s deleted.\n" % chain_id, status=204, mimetype='application/json')
+            return Response("", status=204,
+                            mimetype='application/json')
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." % str(self.__class__.__name__))
             return Response(ex.message, status=500, mimetype='application/json')

@@ -1,0 +1,51 @@
+---
+# Copyright (c) 2018 by Paderborn University
+# (manuel@peuster.de)
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the OSM, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+
+vnfd:vnfd-catalog:
+    vnfd:
+    -   id: hackfest1-vnf
+        name: hackfest1-vnf
+        short-name: hackfest1-vnf
+        version: '1.0'
+        description: A simple VNF descriptor w/ one VDU
+        logo: osm.png
+        connection-point:
+        -   name: vnf-cp0
+            type: VPORT
+        vdu:
+        -   id: hackfest1VM
+            name: hackfest1VM
+            image: "ubuntu:trusty"
+            count: '1'
+            vm-flavor:
+                vcpu-count: '1'
+                memory-mb: '1024'
+                storage-gb: '10'
+            interface:
+            -   name: vdu-eth0
+                type: EXTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                external-connection-point-ref: vnf-cp0
+        mgmt-interface:
+            cp: vnf-cp0
+

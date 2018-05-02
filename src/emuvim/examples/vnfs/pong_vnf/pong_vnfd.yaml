@@ -1,0 +1,77 @@
+---
+# Copyright (c) 2018 by Paderborn University and Manuel Peuster
+# (manuel@peuster.de)
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+
+vnfd-catalog:
+    vnfd:
+    -   id: pong
+        name: pong
+        short-name: pong
+        description: Empty Container VNF
+        vendor: "Paderborn University"
+        version: '1.1'
+
+        # Place the logo as png in icons directory and provide the name here
+        # logo: sonata.png
+        connection-point:
+            -   name: pong/cp0
+                type: VPORT
+            -   name: pong/cp1
+                type: VPORT
+        # Management interface
+        mgmt-interface:
+            cp: pong/cp0
+
+        # Atleast one VDU need to be specified
+        vdu:
+        # Additional VDUs can be created by copying the
+        # VDU descriptor below
+        -   id: ubuntu
+            name: ubuntu
+            description: "Ubuntu Trusty default Docker container"
+            count: "1"
+
+            # Flavour of the VM to be instantiated for the VDU
+            vm-flavor:
+                vcpu-count: 1
+                memory-mb: 512
+                storage-gb: 10
+
+            # Image including the full path
+            image: "ubuntu:trusty"
+            #image: cirros034
+            interface:
+            -   name: pong0  # attention, no two VNFs should have same if names in emulator
+                position: 0
+                type: EXTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                external-connection-point-ref: pong/cp0
+            -   name: pong1
+                position: 1
+                type: EXTERNAL
+                virtual-interface:
+                    type: VIRTIO
+                external-connection-point-ref: pong/cp1
+
+        
+
+

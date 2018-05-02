@@ -27,6 +27,7 @@ partner consortium (www.sonata-nfv.eu).
 """
 from flask import Flask, request
 from flask_restful import Api, Resource
+from gevent.pywsgi import WSGIServer
 import logging
 
 LOG = logging.getLogger("api.openstack.base")
@@ -42,6 +43,8 @@ class BaseOpenstackDummy(Resource):
         self.port = port
         self.compute = None
         self.manage = None
+        self.http_server = None
+        self.server_thread = None
         self.playbook_file = '/tmp/son-emu-requests.log'
         with open(self.playbook_file, 'w'):
             pass
@@ -50,11 +53,19 @@ class BaseOpenstackDummy(Resource):
         self.app = Flask(__name__)
         self.api = Api(self.app)
 
+    def stop(self):
+        if self.http_server:
+            self.http_server.stop(timeout=1.0)
+
     def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
+        LOG.info("Starting %s endpoint @ http://%s:%d" % (
+            self.__class__.__name__, self.ip, self.port))
+        self.http_server = WSGIServer(
+            (self.ip, self.port),
+            self.app,
+            log=open("/dev/null", "w")  # don't show http logs
+        )
+        self.http_server.serve_forever(stop_timeout=1.0)
 
     def dump_playbook(self):
         with self.manage.lock:

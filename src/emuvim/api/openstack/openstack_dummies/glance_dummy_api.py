@@ -40,8 +40,6 @@ class GlanceDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port, compute):
         super(GlanceDummyApi, self).__init__(in_ip, in_port)
         self.compute = compute
-        self.api.add_resource(Shutdown,
-                              "/shutdown")
         self.api.add_resource(GlanceListApiVersions,
                               "/versions")
         self.api.add_resource(GlanceSchema,
@@ -62,21 +60,6 @@ class GlanceDummyApi(BaseOpenstackDummy):
                               "/v1/images/<owner>/<container>",
                               "/v2/images/<owner>/<container>",
                               resource_class_kwargs={'api': self})
-
-    def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % ("GlanceDummyApi", self.ip, self.port))
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
-
-
-class Shutdown(Resource):
-    def get(self):
-        LOG.debug(("%s is beeing shut down") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
 
 class GlanceListApiVersions(Resource):

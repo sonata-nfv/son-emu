@@ -40,30 +40,10 @@ class KeystoneDummyApi(BaseOpenstackDummy):
         super(KeystoneDummyApi, self).__init__(in_ip, in_port)
 
         self.api.add_resource(KeystoneListVersions, "/", resource_class_kwargs={'api': self})
-        self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(KeystoneShowAPIv2, "/v2.0", resource_class_kwargs={'api': self})
         self.api.add_resource(KeystoneGetToken, "/v2.0/tokens", resource_class_kwargs={'api': self})
         self.api.add_resource(KeystoneShowAPIv3, "/v3.0", resource_class_kwargs={'api': self})
         self.api.add_resource(KeystoneGetTokenv3, "/v3.0/auth/tokens", resource_class_kwargs={'api': self})
-
-    def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % (__name__, self.ip, self.port))
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
-
-
-class Shutdown(Resource):
-    """
-    A get request to /shutdown will shut down this endpoint.
-    """
-
-    def get(self):
-        LOG.debug(("%s is beeing shut down") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
 
 class KeystoneListVersions(Resource):

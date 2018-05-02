@@ -42,10 +42,13 @@ class NovaDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port, compute):
         super(NovaDummyApi, self).__init__(in_ip, in_port)
         self.compute = compute
+        self.compute.add_flavor('m1.tiny', 1, 512, "MB", 1, "GB")
+        self.compute.add_flavor('m1.nano', 1, 64, "MB", 0, "GB")
+        self.compute.add_flavor('m1.micro', 1, 128, "MB", 0, "GB")
+        self.compute.add_flavor('m1.small', 1, 1024, "MB", 2, "GB")
 
         self.api.add_resource(NovaVersionsList, "/",
                               resource_class_kwargs={'api': self})
-        self.api.add_resource(Shutdown, "/shutdown")
         self.api.add_resource(NovaVersionShow, "/v2.1/<id>",
                               resource_class_kwargs={'api': self})
         self.api.add_resource(NovaListServersApi, "/v2.1/<id>/servers",
@@ -74,30 +77,6 @@ class NovaDummyApi(BaseOpenstackDummy):
                               resource_class_kwargs={'api': self})
         self.api.add_resource(NovaLimits, "/v2.1/<id>/limits",
                               resource_class_kwargs={'api': self})
-
-    def _start_flask(self):
-        LOG.info("Starting %s endpoint @ http://%s:%d" % ("NovaDummyApi", self.ip, self.port))
-        # add some flavors for good measure
-        self.compute.add_flavor('m1.tiny', 1, 512, "MB", 1, "GB")
-        self.compute.add_flavor('m1.nano', 1, 64, "MB", 0, "GB")
-        self.compute.add_flavor('m1.micro', 1, 128, "MB", 0, "GB")
-        self.compute.add_flavor('m1.small', 1, 1024, "MB", 2, "GB")
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
-
-
-class Shutdown(Resource):
-    """
-    A get request to /shutdown will shut down this endpoint.
-    """
-
-    def get(self):
-        LOG.debug(("%s is beeing shut doen") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
 
 class NovaVersionsList(Resource):
@@ -244,15 +223,16 @@ class NovaListServersApi(Resource):
         try:
             server_dict = json.loads(request.data)['server']
             networks = server_dict.get('networks', None)
-            name = str(self.api.compute.dc.label) + "_man_" + server_dict["name"][0:12]
+            name = str(self.api.compute.dc.label) + "_" + server_dict["name"]
 
             if self.api.compute.find_server_by_name_or_id(name) is not None:
+                LOG.error("Server with name %s already exists. 409" % name)
                 return Response("Server with name %s already exists." % name, status=409)
             # TODO: not finished!
             resp = dict()
 
             server = self.api.compute.create_server(name)
-            server.full_name = str(self.api.compute.dc.label) + "_man_" + server_dict["name"]
+            server.full_name = str(self.api.compute.dc.label) + "_" + server_dict["name"]
             server.template_name = server_dict["name"]
             if "metadata" in server_dict:
                 server.properties = server_dict["metadata"]
@@ -556,7 +536,7 @@ class NovaListFlavorById(Resource):
         Does not really remove anything from the machine, just fakes an OK.
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
-        return Response("{}", status=204, mimetype="application/json")
+        return Response("", status=204, mimetype="application/json")
 
 
 class NovaListImages(Resource):
@@ -678,7 +658,7 @@ class NovaListImageById(Resource):
         Does not really remove anything from the machine, just fakes an OK.
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
-        return Response("{}", status=204, mimetype="application/json")
+        return Response("", status=204, mimetype="application/json")
 
 
 class NovaShowServerDetails(Resource):
@@ -750,10 +730,10 @@ class NovaShowServerDetails(Resource):
         :type id: ``str``
         :param serverid: The UUID of the server
         :type serverid: ``str``
-        :return: Returns 200 if everything is fine.
+        :return: Returns 204 if everything is fine.
         :rtype: :class:`flask.response`
         """
-        LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
+        LOG.debug("API CALL: %s DELETE" % str(self.__class__.__name__))
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
@@ -761,7 +741,7 @@ class NovaShowServerDetails(Resource):
 
             self.api.compute.stop_compute(server)
 
-            response = Response('Server deleted.', status=204, mimetype="application/json")
+            response = Response('', status=204, mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
