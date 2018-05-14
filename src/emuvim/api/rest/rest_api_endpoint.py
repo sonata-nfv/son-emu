@@ -30,7 +30,7 @@ import logging
 import threading
 from flask import Flask
 from flask_restful import Api
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 
 # need to import total module to set its global variable dcs
 import compute
