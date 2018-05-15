@@ -1,34 +1,31 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from flask_restful import Resource
 from flask import request, Response
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
-from emuvim.api.openstack.helper import get_host
 from datetime import datetime
 import neutron_sfc_dummy_api as SFC
 import logging
@@ -44,7 +41,8 @@ class NeutronDummyApi(BaseOpenstackDummy):
         super(NeutronDummyApi, self).__init__(ip, port)
         self.compute = compute
 
-        # create default networks (OSM usually assumes to have these pre-configured)
+        # create default networks (OSM usually assumes to have these
+        # pre-configured)
         self.compute.create_network("mgmt")
         self.compute.create_network("mgmtnet")
 
@@ -165,7 +163,8 @@ class NeutronListAPIVersions(Resource):
         }]
         resp['versions'] = versions
 
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class NeutronShowAPIv2Details(Resource):
@@ -199,7 +198,7 @@ class NeutronShowAPIv2Details(Resource):
                 ],
                 "name": "network",
                 "collection": "networks"
-            },
+        },
             {
                 "links": [
                     {
@@ -209,10 +208,11 @@ class NeutronShowAPIv2Details(Resource):
                 ],
                 "name": "ports",
                 "collection": "ports"
-            }
+        }
         ]
 
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class NeutronListNetworks(Resource):
@@ -232,14 +232,18 @@ class NeutronListNetworks(Resource):
         try:
             if request.args.get('name'):
                 tmp_network = NeutronShowNetwork(self.api)
-                response = tmp_network.get_network(request.args.get('name'), True)
-                LOG.debug("{} RESPONSE (1): {}".format(self.__class__.__name__, response))
+                response = tmp_network.get_network(
+                    request.args.get('name'), True)
+                LOG.debug("{} RESPONSE (1): {}".format(
+                    self.__class__.__name__, response))
                 return response
             id_list = request.args.getlist('id')
             if len(id_list) == 1:
                 tmp_network = NeutronShowNetwork(self.api)
-                response = tmp_network.get_network(request.args.get('id'), True)
-                LOG.debug("{} RESPONSE (2): {}".format(self.__class__.__name__, response))
+                response = tmp_network.get_network(
+                    request.args.get('id'), True)
+                LOG.debug("{} RESPONSE (2): {}".format(
+                    self.__class__.__name__, response))
                 return response
 
             network_list = list()
@@ -258,12 +262,15 @@ class NeutronListNetworks(Resource):
                             network_list.append(tmp_network_dict)
 
             network_dict["networks"] = network_list
-            LOG.debug("{} RESPONSE (3): {}".format(self.__class__.__name__, network_dict))
-            return Response(json.dumps(network_dict), status=200, mimetype='application/json')
+            LOG.debug("{} RESPONSE (3): {}".format(
+                self.__class__.__name__, network_dict))
+            return Response(json.dumps(network_dict),
+                            status=200, mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: List networks exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronShowNetwork(Resource):
@@ -294,9 +301,11 @@ class NeutronShowNetwork(Resource):
         :rtype: :class:`flask.response`
         """
         try:
-            net = self.api.compute.find_network_by_name_or_id(network_name_or_id)
+            net = self.api.compute.find_network_by_name_or_id(
+                network_name_or_id)
             if net is None:
-                return Response(u'Network not found.\n', status=404, mimetype='application/json')
+                return Response(u'Network not found.\n',
+                                status=404, mimetype='application/json')
 
             tmp_network_dict = net.create_network_dict()
             tmp_dict = dict()
@@ -305,12 +314,13 @@ class NeutronShowNetwork(Resource):
             else:
                 tmp_dict["network"] = tmp_network_dict
 
-            return Response(json.dumps(tmp_dict), status=200, mimetype='application/json')
-
+            return Response(json.dumps(tmp_dict), status=200,
+                            mimetype='application/json')
 
         except Exception as ex:
             logging.exception("Neutron: Show network exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronCreateNetwork(Resource):
@@ -332,13 +342,16 @@ class NeutronCreateNetwork(Resource):
             name = network_dict['network']['name']
             net = self.api.compute.find_network_by_name_or_id(name)
             if net is not None:
-                return Response('Network already exists.\n', status=400, mimetype='application/json')
+                return Response('Network already exists.\n',
+                                status=400, mimetype='application/json')
 
             net = self.api.compute.create_network(name)
-            return Response(json.dumps({"network": net.create_network_dict()}), status=201, mimetype='application/json')
+            return Response(json.dumps(
+                {"network": net.create_network_dict()}), status=201, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Create network excepiton.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronUpdateNetwork(Resource):
@@ -361,7 +374,6 @@ class NeutronUpdateNetwork(Resource):
             if network_id in self.api.compute.nets:
                 net = self.api.compute.nets[network_id]
                 network_dict = json.loads(request.data)
-                old_net = copy.copy(net)
 
                 if "status" in network_dict["network"]:
                     net.status = network_dict["network"]["status"]
@@ -372,17 +384,21 @@ class NeutronUpdateNetwork(Resource):
                 if "admin_state_up" in network_dict["network"]:
                     pass  # tmp_network_dict["admin_state_up"] = True
                 if "tenant_id" in network_dict["network"]:
-                    pass  # tmp_network_dict["tenant_id"] = "c1210485b2424d48804aad5d39c61b8f"
+                    # tmp_network_dict["tenant_id"] = "c1210485b2424d48804aad5d39c61b8f"
+                    pass
                 if "shared" in network_dict["network"]:
                     pass  # tmp_network_dict["shared"] = False
 
-                return Response(json.dumps(network_dict), status=200, mimetype='application/json')
+                return Response(json.dumps(network_dict),
+                                status=200, mimetype='application/json')
 
-            return Response('Network not found.\n', status=404, mimetype='application/json')
+            return Response('Network not found.\n', status=404,
+                            mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: Show networks exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronDeleteNetwork(Resource):
@@ -410,7 +426,7 @@ class NeutronDeleteNetwork(Resource):
             delete_subnet = NeutronDeleteSubnet(self.api)
             resp = delete_subnet.delete(net.subnet_id)
 
-            if not '204' in resp.status and not '404' in resp.status:
+            if '204' not in resp.status and '404' not in resp.status:
                 return resp
 
             self.api.compute.delete_network(network_id)
@@ -418,7 +434,8 @@ class NeutronDeleteNetwork(Resource):
             return Response('', status=204, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Delete network exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronListSubnets(Resource):
@@ -459,11 +476,13 @@ class NeutronListSubnets(Resource):
 
             subnet_dict["subnets"] = subnet_list
 
-            return Response(json.dumps(subnet_dict), status=200, mimetype='application/json')
+            return Response(json.dumps(subnet_dict), status=200,
+                            mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: List subnets exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronShowSubnet(Resource):
@@ -502,13 +521,16 @@ class NeutronShowSubnet(Resource):
                         tmp_dict["subnets"] = [tmp_subnet_dict]
                     else:
                         tmp_dict["subnet"] = tmp_subnet_dict
-                    return Response(json.dumps(tmp_dict), status=200, mimetype='application/json')
+                    return Response(json.dumps(tmp_dict),
+                                    status=200, mimetype='application/json')
 
-            return Response('Subnet not found. (' + subnet_name_or_id + ')\n', status=404, mimetype='application/json')
+            return Response('Subnet not found. (' + subnet_name_or_id +
+                            ')\n', status=404, mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: Show subnet exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronCreateSubnet(Resource):
@@ -529,15 +551,20 @@ class NeutronCreateSubnet(Resource):
         LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             subnet_dict = json.loads(request.data)
-            net = self.api.compute.find_network_by_name_or_id(subnet_dict['subnet']['network_id'])
+            net = self.api.compute.find_network_by_name_or_id(
+                subnet_dict['subnet']['network_id'])
 
             if net is None:
-                return Response('Could not find network.\n', status=404, mimetype='application/json')
+                return Response('Could not find network.\n',
+                                status=404, mimetype='application/json')
 
-            net.subnet_name = subnet_dict["subnet"].get('name', str(net.name) + '-sub')
+            net.subnet_name = subnet_dict["subnet"].get(
+                'name', str(net.name) + '-sub')
             if net.subnet_id is not None:
-                LOG.error("Only one subnet per network is supported: {}".format(net.subnet_id))
-                return Response('Only one subnet per network is supported\n', status=409, mimetype='application/json')
+                LOG.error(
+                    "Only one subnet per network is supported: {}".format(net.subnet_id))
+                return Response('Only one subnet per network is supported\n',
+                                status=409, mimetype='application/json')
 
             if "id" in subnet_dict["subnet"]:
                 net.subnet_id = subnet_dict["subnet"]["id"]
@@ -557,11 +584,13 @@ class NeutronCreateSubnet(Resource):
             if "enable_dhcp" in subnet_dict["subnet"]:
                 pass
 
-            return Response(json.dumps({'subnet': net.create_subnet_dict()}), status=201, mimetype='application/json')
+            return Response(json.dumps(
+                {'subnet': net.create_subnet_dict()}), status=201, mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: Create network excepiton.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronUpdateSubnet(Resource):
@@ -606,13 +635,16 @@ class NeutronUpdateSubnet(Resource):
 
                     net.subnet_update_time = str(datetime.now())
                     tmp_dict = {'subnet': net.create_subnet_dict()}
-                    return Response(json.dumps(tmp_dict), status=200, mimetype='application/json')
+                    return Response(json.dumps(tmp_dict),
+                                    status=200, mimetype='application/json')
 
-            return Response('Network not found.\n', status=404, mimetype='application/json')
+            return Response('Network not found.\n', status=404,
+                            mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: Show networks exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronDeleteSubnet(Resource):
@@ -636,9 +668,11 @@ class NeutronDeleteSubnet(Resource):
                 if net.subnet_id == subnet_id:
                     for server in self.api.compute.computeUnits.values():
                         for port_name in server.port_names:
-                            port = self.api.compute.find_port_by_name_or_id(port_name)
+                            port = self.api.compute.find_port_by_name_or_id(
+                                port_name)
                             if port is None:
-                                LOG.warning("Port search for {} returned None.".format(port_name))
+                                LOG.warning(
+                                    "Port search for {} returned None.".format(port_name))
                                 continue
                             if port.net_name == net.name:
                                 port.ip_address = None
@@ -650,12 +684,15 @@ class NeutronDeleteSubnet(Resource):
 
                     net.delete_subnet()
 
-                    return Response('', status=204, mimetype='application/json')
+                    return Response(
+                        '', status=204, mimetype='application/json')
 
-            return Response('Could not find subnet.', status=404, mimetype='application/json')
+            return Response('Could not find subnet.',
+                            status=404, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Delete subnet exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronListPorts(Resource):
@@ -695,11 +732,13 @@ class NeutronListPorts(Resource):
 
             port_dict["ports"] = port_list
 
-            return Response(json.dumps(port_dict), status=200, mimetype='application/json')
+            return Response(json.dumps(port_dict), status=200,
+                            mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: List ports exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronShowPort(Resource):
@@ -732,17 +771,20 @@ class NeutronShowPort(Resource):
         try:
             port = self.api.compute.find_port_by_name_or_id(port_name_or_id)
             if port is None:
-                return Response('Port not found. (' + port_name_or_id + ')\n', status=404, mimetype='application/json')
+                return Response('Port not found. (' + port_name_or_id + ')\n',
+                                status=404, mimetype='application/json')
             tmp_port_dict = port.create_port_dict(self.api.compute)
             tmp_dict = dict()
             if as_list:
                 tmp_dict["ports"] = [tmp_port_dict]
             else:
                 tmp_dict["port"] = tmp_port_dict
-            return Response(json.dumps(tmp_dict), status=200, mimetype='application/json')
+            return Response(json.dumps(tmp_dict), status=200,
+                            mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Show port exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronCreatePort(Resource):
@@ -764,7 +806,8 @@ class NeutronCreatePort(Resource):
             net_id = port_dict['port']['network_id']
 
             if net_id not in self.api.compute.nets:
-                return Response('Could not find network.\n', status=404, mimetype='application/json')
+                return Response('Could not find network.\n',
+                                status=404, mimetype='application/json')
 
             net = self.api.compute.nets[net_id]
             if 'name' in port_dict['port']:
@@ -774,7 +817,8 @@ class NeutronCreatePort(Resource):
                 name = "port:cp%s:man:%s" % (num_ports, str(uuid.uuid4()))
 
             if self.api.compute.find_port_by_name_or_id(name):
-                return Response("Port with name %s already exists.\n" % name, status=500, mimetype='application/json')
+                return Response("Port with name %s already exists.\n" %
+                                name, status=500, mimetype='application/json')
 
             port = self.api.compute.create_port(name)
 
@@ -796,7 +840,8 @@ class NeutronCreatePort(Resource):
             if "tenant_id" in port_dict["port"]:
                 pass
 
-            # add the port to a stack if the specified network is a stack network
+            # add the port to a stack if the specified network is a stack
+            # network
             for stack in self.api.compute.stacks.values():
                 for net in stack.nets.values():
                     if net.id == net_id:
@@ -806,7 +851,8 @@ class NeutronCreatePort(Resource):
                             mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Show port exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronUpdatePort(Resource):
@@ -829,7 +875,8 @@ class NeutronUpdatePort(Resource):
             port_dict = json.loads(request.data)
             port = self.api.compute.find_port_by_name_or_id(port_id)
             if port is None:
-                return Response("Port with id %s does not exists.\n" % port_id, status=404, mimetype='application/json')
+                return Response("Port with id %s does not exists.\n" %
+                                port_id, status=404, mimetype='application/json')
             old_port = copy.copy(port)
 
             stack = None
@@ -853,7 +900,8 @@ class NeutronUpdatePort(Resource):
                 port.set_name(port_dict["port"]["name"])
                 if stack is not None:
                     if port.net_name in stack.nets:
-                        stack.nets[port.net_name].update_port_name_for_ip_address(port.ip_address, port.name)
+                        stack.nets[port.net_name].update_port_name_for_ip_address(
+                            port.ip_address, port.name)
                     stack.ports[port.name] = stack.ports[old_port.name]
                     del stack.ports[old_port.name]
             if "network_id" in port_dict["port"]:
@@ -867,7 +915,8 @@ class NeutronUpdatePort(Resource):
                             mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Update port exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronDeletePort(Resource):
@@ -889,7 +938,8 @@ class NeutronDeletePort(Resource):
         try:
             port = self.api.compute.find_port_by_name_or_id(port_id)
             if port is None:
-                return Response("Port with id %s does not exists.\n" % port_id, status=404)
+                return Response("Port with id %s does not exists.\n" %
+                                port_id, status=404)
             stack = None
             for s in self.api.compute.stacks.values():
                 for p in s.ports.values():
@@ -897,7 +947,8 @@ class NeutronDeletePort(Resource):
                         stack = s
             if stack is not None:
                 if port.net_name in stack.nets:
-                    stack.nets[port.net_name].withdraw_ip_address(port.ip_address)
+                    stack.nets[port.net_name].withdraw_ip_address(
+                        port.ip_address)
                 for server in stack.servers.values():
                     try:
                         server.port_names.remove(port.name)
@@ -911,7 +962,8 @@ class NeutronDeletePort(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: Delete port exception.")
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
 
 class NeutronAddFloatingIp(Resource):
@@ -944,7 +996,8 @@ class NeutronAddFloatingIp(Resource):
             ip["floating_ip_address"] = "172.0.0.%d" % i
             ip["fixed_ip_address"] = "10.0.0.%d" % i
             resp["floatingips"].append(ip)
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
     def post(self):
         """
@@ -972,7 +1025,8 @@ class NeutronAddFloatingIp(Resource):
                                     status=400, mimetype='application/json')
 
                 if port.floating_ip is not None:
-                    return Response("We allow only one floating ip per port\n", status=400, mimetype='application/json')
+                    return Response("We allow only one floating ip per port\n",
+                                    status=400, mimetype='application/json')
             else:
                 num_ports = len(self.api.compute.ports)
                 name = "port:cp%s:fl:%s" % (num_ports, str(uuid.uuid4()))
@@ -992,7 +1046,9 @@ class NeutronAddFloatingIp(Resource):
             resp["floating_ip_address"] = port.floating_ip
             resp["fixed_ip_address"] = port.floating_ip
 
-            return Response(json.dumps(response), status=200, mimetype='application/json')
+            return Response(json.dumps(response), status=200,
+                            mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Create FloatingIP exception %s.", ex)
-            return Response(ex.message, status=500, mimetype='application/json')
+            return Response(ex.message, status=500,
+                            mimetype='application/json')

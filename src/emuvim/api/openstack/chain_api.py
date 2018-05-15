@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import json
 import logging
 import copy
@@ -34,8 +32,6 @@ from mininet.node import OVSSwitch
 from flask import Flask
 from flask import Response, request
 from flask_restful import Api, Resource
-from mininet.link import Link
-import uuid
 
 
 class ChainApi(Resource):
@@ -77,7 +73,8 @@ class ChainApi(Resource):
             return response
 
     def _start_flask(self):
-        logging.info("Starting %s endpoint @ http://%s:%d" % ("ChainDummyApi", self.ip, self.port))
+        logging.info("Starting %s endpoint @ http://%s:%d" %
+                     ("ChainDummyApi", self.ip, self.port))
         if self.app is not None:
             self.app.before_request(self.dump_playbook)
             self.app.run(self.ip, self.port, debug=True, use_reloader=False)
@@ -88,8 +85,8 @@ class ChainApi(Resource):
                 if len(request.data) > 0:
                     data = "# CHAIN API\n"
                     data += "curl -X {type} -H \"Content-type: application/json\" -d '{data}' {url}".format(type=request.method,
-                                                                                            data=request.data,
-                                                                                            url=request.url)
+                                                                                                            data=request.data,
+                                                                                                            url=request.url)
                     logfile.write(data + "\n")
 
 
@@ -139,7 +136,8 @@ class ChainVersionsList(Resource):
             return Response(resp, status=200, mimetype="application/json")
 
         except Exception as ex:
-            logging.exception(u"%s: Could not show list of versions." % __name__)
+            logging.exception(
+                u"%s: Could not show list of versions." % __name__)
             return ex.message, 500
 
 
@@ -162,10 +160,12 @@ class ChainList(Resource):
             for chain in self.api.manage.full_chain_data.values():
                 resp["chains"].append(chain)
 
-            return Response(json.dumps(resp), status=200, mimetype="application/json")
+            return Response(json.dumps(resp), status=200,
+                            mimetype="application/json")
 
         except Exception as ex:
-            logging.exception(u"%s: Could not list all network chains." % __name__)
+            logging.exception(
+                u"%s: Could not list all network chains." % __name__)
             return ex.message, 500
 
 
@@ -188,10 +188,12 @@ class BalanceHostList(Resource):
             for lb in self.api.manage.full_lb_data.values():
                 resp["loadbalancers"].append(lb)
 
-            return Response(json.dumps(resp), status=200, mimetype="application/json")
+            return Response(json.dumps(resp), status=200,
+                            mimetype="application/json")
 
         except Exception as ex:
-            logging.exception(u"%s: Could not list all live loadbalancers." % __name__)
+            logging.exception(
+                u"%s: Could not list all live loadbalancers." % __name__)
             return ex.message, 500
 
 
@@ -271,11 +273,14 @@ class ChainVnfInterfaces(Resource):
                                                           vnf_dst_interface=dst_intfs, bidirectional=True,
                                                           path=path, layer2=layer2)
             resp = {'cookie': cookie}
-            return Response(json.dumps(resp), status=200, mimetype="application/json")
+            return Response(json.dumps(resp), status=200,
+                            mimetype="application/json")
 
         except Exception as e:
-            logging.exception(u"%s: Error setting up the chain.\n %s" % (__name__, e))
-            return Response(u"Error setting up the chain", status=500, mimetype="application/json")
+            logging.exception(
+                u"%s: Error setting up the chain.\n %s" % (__name__, e))
+            return Response(u"Error setting up the chain",
+                            status=500, mimetype="application/json")
 
     def delete(self, src_vnf, src_intfs, dst_vnf, dst_intfs):
         """
@@ -307,10 +312,13 @@ class ChainVnfInterfaces(Resource):
         try:
             cookie = self.api.manage.network_action_stop(src_vnf, dst_vnf, vnf_src_interface=src_intfs,
                                                          vnf_dst_interface=dst_intfs, bidirectional=True)
-            return Response(json.dumps(cookie), status=200, mimetype="application/json")
+            return Response(json.dumps(cookie), status=200,
+                            mimetype="application/json")
         except Exception as e:
-            logging.exception(u"%s: Error deleting the chain.\n %s" % (__name__, e))
-            return Response(u"Error deleting the chain", status=500, mimetype="application/json")
+            logging.exception(
+                u"%s: Error deleting the chain.\n %s" % (__name__, e))
+            return Response(u"Error deleting the chain",
+                            status=500, mimetype="application/json")
 
 
 class ChainVnfDcStackInterfaces(Resource):
@@ -322,7 +330,8 @@ class ChainVnfDcStackInterfaces(Resource):
     def __init__(self, api):
         self.api = api
 
-    def put(self, src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs):
+    def put(self, src_dc, src_stack, src_vnf, src_intfs,
+            dst_dc, dst_stack, dst_vnf, dst_intfs):
         """
         A PUT request to "/v1/chain/<src_dc>/<src_stack>/<src_vnf>/<src_intfs>/<dst_dc>/<dst_stack>/<dst_vnf>/<dst_intfs>"
         will set up chain.
@@ -352,18 +361,21 @@ class ChainVnfDcStackInterfaces(Resource):
 
         """
         # search for real names
-        real_names = self._findNames(src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs)
-        if type(real_names) is not tuple:
+        real_names = self._findNames(
+            src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs)
+        if not isinstance(real_names, tuple):
             # something went wrong
             return real_names
 
         container_src, container_dst, interface_src, interface_dst = real_names
 
         # check if both VNFs exist
-        if not self.api.manage.check_vnf_intf_pair(container_src, interface_src):
+        if not self.api.manage.check_vnf_intf_pair(
+                container_src, interface_src):
             return Response(u"VNF %s or intfs %s does not exist" % (container_src, interface_src), status=501,
                             mimetype="application/json")
-        if not self.api.manage.check_vnf_intf_pair(container_dst, interface_dst):
+        if not self.api.manage.check_vnf_intf_pair(
+                container_dst, interface_dst):
             return Response(u"VNF %s or intfs %s does not exist" % (container_dst, interface_dst), status=501,
                             mimetype="application/json")
 
@@ -372,13 +384,17 @@ class ChainVnfDcStackInterfaces(Resource):
                                                           vnf_dst_interface=interface_dst, bidirectional=True,
                                                           layer2=True)
             resp = {'cookie': cookie}
-            return Response(json.dumps(resp), status=200, mimetype="application/json")
+            return Response(json.dumps(resp), status=200,
+                            mimetype="application/json")
 
         except Exception as e:
-            logging.exception(u"%s: Error setting up the chain.\n %s" % (__name__, e))
-            return Response(u"Error setting up the chain", status=500, mimetype="application/json")
+            logging.exception(
+                u"%s: Error setting up the chain.\n %s" % (__name__, e))
+            return Response(u"Error setting up the chain",
+                            status=500, mimetype="application/json")
 
-    def post(self, src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs):
+    def post(self, src_dc, src_stack, src_vnf, src_intfs,
+             dst_dc, dst_stack, dst_vnf, dst_intfs):
         """
          A post request to "/v1/chain/<src_dc>/<src_stack>/<src_vnf>/<src_intfs>/<dst_dc>/<dst_stack>/<dst_vnf>/<dst_intfs>"
          will create a chain between two interfaces at the specified vnfs.
@@ -410,8 +426,9 @@ class ChainVnfDcStackInterfaces(Resource):
             layer2 = True
 
         # search for real names
-        real_names = self._findNames(src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs)
-        if type(real_names) is not tuple:
+        real_names = self._findNames(
+            src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs)
+        if not isinstance(real_names, tuple):
             # something went wrong
             return real_names
 
@@ -422,13 +439,17 @@ class ChainVnfDcStackInterfaces(Resource):
                                                           vnf_dst_interface=interface_dst, bidirectional=True,
                                                           path=path, layer2=layer2)
             resp = {'cookie': cookie}
-            return Response(json.dumps(resp), status=200, mimetype="application/json")
+            return Response(json.dumps(resp), status=200,
+                            mimetype="application/json")
 
         except Exception as e:
-            logging.exception(u"%s: Error setting up the chain.\n %s" % (__name__, e))
-            return Response(u"Error setting up the chain", status=500, mimetype="application/json")
+            logging.exception(
+                u"%s: Error setting up the chain.\n %s" % (__name__, e))
+            return Response(u"Error setting up the chain",
+                            status=500, mimetype="application/json")
 
-    def delete(self, src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs):
+    def delete(self, src_dc, src_stack, src_vnf, src_intfs,
+               dst_dc, dst_stack, dst_vnf, dst_intfs):
         """
         A DELETE request to "/v1/chain/<src_dc>/<src_stack>/<src_vnf>/<src_intfs>/<dst_dc>/<dst_stack>/<dst_vnf>/<dst_intfs>"
         will delete a previously created chain.
@@ -456,8 +477,9 @@ class ChainVnfDcStackInterfaces(Resource):
 
         """
         # search for real names
-        real_names = self._findNames(src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs)
-        if type(real_names) is not tuple:
+        real_names = self._findNames(
+            src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs)
+        if not isinstance(real_names, tuple):
             # something went wrong, real_names is a Response object
             return real_names
 
@@ -466,17 +488,22 @@ class ChainVnfDcStackInterfaces(Resource):
         try:
             cookie = self.api.manage.network_action_stop(container_src, container_dst, vnf_src_interface=interface_src,
                                                          vnf_dst_interface=interface_dst, bidirectional=True)
-            return Response(json.dumps(cookie), status=200, mimetype="application/json")
+            return Response(json.dumps(cookie), status=200,
+                            mimetype="application/json")
         except Exception as e:
-            logging.exception(u"%s: Error deleting the chain.\n %s" % (__name__, e))
-            return Response(u"Error deleting the chain", status=500, mimetype="application/json")
+            logging.exception(
+                u"%s: Error deleting the chain.\n %s" % (__name__, e))
+            return Response(u"Error deleting the chain",
+                            status=500, mimetype="application/json")
 
     # Tries to find real container and interface names according to heat template names
     # Returns a tuple of 4 or a Response object
-    def _findNames(self, src_dc, src_stack, src_vnf, src_intfs, dst_dc, dst_stack, dst_vnf, dst_intfs):
+    def _findNames(self, src_dc, src_stack, src_vnf, src_intfs,
+                   dst_dc, dst_stack, dst_vnf, dst_intfs):
         # search for datacenters
         if src_dc not in self.api.manage.net.dcs or dst_dc not in self.api.manage.net.dcs:
-            return Response(u"At least one DC does not exist", status=500, mimetype="application/json")
+            return Response(u"At least one DC does not exist",
+                            status=500, mimetype="application/json")
         dc_src = self.api.manage.net.dcs[src_dc]
         dc_dst = self.api.manage.net.dcs[dst_dc]
         # search for related OpenStackAPIs
@@ -489,7 +516,8 @@ class ChainVnfDcStackInterfaces(Resource):
             if api.compute.dc == dc_dst:
                 api_dst = api
         if api_src is None or api_dst is None:
-            return Response(u"At least one OpenStackAPI does not exist", status=500, mimetype="application/json")
+            return Response(u"At least one OpenStackAPI does not exist",
+                            status=500, mimetype="application/json")
         # search for stacks
         stack_src = None
         stack_dst = None
@@ -500,7 +528,8 @@ class ChainVnfDcStackInterfaces(Resource):
             if stack.stack_name == dst_stack:
                 stack_dst = stack
         if stack_src is None or stack_dst is None:
-            return Response(u"At least one Stack does not exist", status=500, mimetype="application/json")
+            return Response(u"At least one Stack does not exist",
+                            status=500, mimetype="application/json")
         # search for servers
         server_src = None
         server_dst = None
@@ -513,7 +542,8 @@ class ChainVnfDcStackInterfaces(Resource):
                 server_dst = server
                 break
         if server_src is None or server_dst is None:
-            return Response(u"At least one VNF does not exist", status=500, mimetype="application/json")
+            return Response(u"At least one VNF does not exist",
+                            status=500, mimetype="application/json")
 
         container_src = server_src.name
         container_dst = server_dst.name
@@ -526,7 +556,8 @@ class ChainVnfDcStackInterfaces(Resource):
         if dst_intfs in server_dst.port_names:
             port_dst = stack_dst.ports[dst_intfs]
         if port_src is None or port_dst is None:
-            return Response(u"At least one Port does not exist", status=500, mimetype="application/json")
+            return Response(u"At least one Port does not exist",
+                            status=500, mimetype="application/json")
 
         interface_src = port_src.intf_name
         interface_dst = port_dst.intf_name
@@ -576,8 +607,9 @@ class BalanceHostDcStack(Resource):
 
             # check src vnf/port
             if src_stack != "floating":
-                real_src = self._findName(src_dc, src_stack, vnf_src_name, vnf_src_interface)
-                if type(real_src) is not tuple:
+                real_src = self._findName(
+                    src_dc, src_stack, vnf_src_name, vnf_src_interface)
+                if not isinstance(real_src, tuple):
                     # something went wrong, real_src is a Response object
                     return real_src
 
@@ -590,20 +622,24 @@ class BalanceHostDcStack(Resource):
                 dst_server = dst_vnf.get('server', None)
                 dst_port = dst_vnf.get('port', None)
                 if dst_dc is not None and dst_stack is not None and dst_server is not None and dst_port is not None:
-                    real_dst = self._findName(dst_dc, dst_stack, dst_server, dst_port)
-                    if type(real_dst) is not tuple:
+                    real_dst = self._findName(
+                        dst_dc, dst_stack, dst_server, dst_port)
+                    if not isinstance(real_dst, tuple):
                         # something went wrong, real_dst is a Response object
                         return real_dst
                     real_dst_dict[real_dst[0]] = real_dst[1]
 
-            input_object = {"dst_vnf_interfaces": real_dst_dict, "path": req.get("path", None)}
+            input_object = {"dst_vnf_interfaces": real_dst_dict,
+                            "path": req.get("path", None)}
 
             if src_stack != "floating":
-                self.api.manage.add_loadbalancer(container_src, interface_src, lb_data=input_object)
+                self.api.manage.add_loadbalancer(
+                    container_src, interface_src, lb_data=input_object)
                 return Response(u"Loadbalancer set up at %s:%s" % (container_src, interface_src),
                                 status=200, mimetype="application/json")
             else:
-                cookie, floating_ip = self.api.manage.add_floating_lb(src_dc, lb_data=input_object)
+                cookie, floating_ip = self.api.manage.add_floating_lb(
+                    src_dc, lb_data=input_object)
 
                 return Response(json.dumps({"cookie": "%d" % cookie, "floating_ip": "%s" % floating_ip}),
                                 status=200, mimetype="application/json")
@@ -612,7 +648,8 @@ class BalanceHostDcStack(Resource):
             logging.exception(u"%s: Error setting up the loadbalancer at %s %s %s:%s.\n %s" %
                               (__name__, src_dc, src_stack, vnf_src_name, vnf_src_interface, e))
             return Response(u"%s: Error setting up the loadbalancer at %s %s %s:%s.\n %s" %
-                            (__name__, src_dc, src_stack, vnf_src_name, vnf_src_interface, e), status=500,
+                            (__name__, src_dc, src_stack, vnf_src_name,
+                             vnf_src_interface, e), status=500,
                             mimetype="application/json")
 
     def delete(self, src_dc, src_stack, vnf_src_name, vnf_src_interface):
@@ -634,14 +671,16 @@ class BalanceHostDcStack(Resource):
         try:
             # check src vnf/port
             if src_stack != "floating":
-                real_src = self._findName(src_dc, src_stack, vnf_src_name, vnf_src_interface)
-                if type(real_src) is not tuple:
+                real_src = self._findName(
+                    src_dc, src_stack, vnf_src_name, vnf_src_interface)
+                if not isinstance(real_src, tuple):
                     # something went wrong, real_src is a Response object
                     return real_src
 
                 container_src, interface_src = real_src
 
-                self.api.manage.delete_loadbalancer(container_src, interface_src)
+                self.api.manage.delete_loadbalancer(
+                    container_src, interface_src)
                 return Response(u"Loadbalancer deleted at %s:%s" % (vnf_src_name, vnf_src_interface),
                                 status=200, mimetype="application/json")
             else:
@@ -654,7 +693,8 @@ class BalanceHostDcStack(Resource):
             logging.exception(u"%s: Error deleting the loadbalancer at %s %s %s%s.\n %s" %
                               (__name__, src_dc, src_stack, vnf_src_name, vnf_src_interface, e))
             return Response(u"%s: Error deleting the loadbalancer at %s %s %s%s." %
-                            (__name__, src_dc, src_stack, vnf_src_name, vnf_src_interface), status=500,
+                            (__name__, src_dc, src_stack, vnf_src_name,
+                             vnf_src_interface), status=500,
                             mimetype="application/json")
 
     # Tries to find real container and port name according to heat template names
@@ -662,7 +702,8 @@ class BalanceHostDcStack(Resource):
     def _findName(self, dc, stack, vnf, port):
         # search for datacenters
         if dc not in self.api.manage.net.dcs:
-            return Response(u"DC does not exist", status=500, mimetype="application/json")
+            return Response(u"DC does not exist", status=500,
+                            mimetype="application/json")
         dc_real = self.api.manage.net.dcs[dc]
         # search for related OpenStackAPIs
         api_real = None
@@ -671,14 +712,16 @@ class BalanceHostDcStack(Resource):
             if api.compute.dc == dc_real:
                 api_real = api
         if api_real is None:
-            return Response(u"OpenStackAPI does not exist", status=500, mimetype="application/json")
+            return Response(u"OpenStackAPI does not exist",
+                            status=500, mimetype="application/json")
         # search for stacks
         stack_real = None
         for stackObj in api_real.compute.stacks.values():
             if stackObj.stack_name == stack:
                 stack_real = stackObj
         if stack_real is None:
-            return Response(u"Stack does not exist", status=500, mimetype="application/json")
+            return Response(u"Stack does not exist", status=500,
+                            mimetype="application/json")
         # search for servers
         server_real = None
         for server in stack_real.servers.values():
@@ -686,7 +729,8 @@ class BalanceHostDcStack(Resource):
                 server_real = server
                 break
         if server_real is None:
-            return Response(u"VNF does not exist", status=500, mimetype="application/json")
+            return Response(u"VNF does not exist", status=500,
+                            mimetype="application/json")
 
         container_real = server_real.name
 
@@ -695,7 +739,8 @@ class BalanceHostDcStack(Resource):
         if port in server_real.port_names:
             port_real = stack_real.ports[port]
         if port_real is None:
-            return Response(u"At least one Port does not exist", status=500, mimetype="application/json")
+            return Response(u"At least one Port does not exist",
+                            status=500, mimetype="application/json")
 
         interface_real = port_real.intf_name
 
@@ -733,16 +778,19 @@ class BalanceHost(Resource):
 
             if vnf_src_name != "floating":
                 # check if VNF exist
-                if not self.api.manage.check_vnf_intf_pair(vnf_src_name, vnf_src_interface):
+                if not self.api.manage.check_vnf_intf_pair(
+                        vnf_src_name, vnf_src_interface):
                     return Response(u"VNF %s or intfs %s does not exist" % (vnf_src_name, vnf_src_interface),
                                     status=501,
                                     mimetype="application/json")
-                self.api.manage.add_loadbalancer(vnf_src_name, vnf_src_interface, lb_data=req)
+                self.api.manage.add_loadbalancer(
+                    vnf_src_name, vnf_src_interface, lb_data=req)
 
                 return Response(u"Loadbalancer set up at %s:%s" % (vnf_src_name, vnf_src_interface),
                                 status=200, mimetype="application/json")
             else:
-                cookie, floating_ip = self.api.manage.add_floating_lb(vnf_src_interface, lb_data=req)
+                cookie, floating_ip = self.api.manage.add_floating_lb(
+                    vnf_src_interface, lb_data=req)
 
                 return Response(json.dumps({"cookie": "%d" % cookie, "floating_ip": "%s" % floating_ip}),
                                 status=200, mimetype="application/json")
@@ -766,11 +814,13 @@ class BalanceHost(Resource):
 
         """
         # check if VNF exist
-        if not self.api.manage.check_vnf_intf_pair(vnf_src_name, vnf_src_interface):
+        if not self.api.manage.check_vnf_intf_pair(
+                vnf_src_name, vnf_src_interface):
             return Response(u"VNF %s or intfs %s does not exist" % (vnf_src_name, vnf_src_interface), status=501,
                             mimetype="application/json")
         try:
-            logging.debug("Deleting loadbalancer at %s: interface: %s" % (vnf_src_name, vnf_src_interface))
+            logging.debug("Deleting loadbalancer at %s: interface: %s" %
+                          (vnf_src_name, vnf_src_interface))
             net = self.api.manage.net
 
             if vnf_src_name != "floating":
@@ -779,7 +829,8 @@ class BalanceHost(Resource):
                     return Response(u"Source VNF or interface can not be found." % vnf_src_name,
                                     status=404, mimetype="application/json")
 
-                self.api.manage.delete_loadbalancer(vnf_src_name, vnf_src_interface)
+                self.api.manage.delete_loadbalancer(
+                    vnf_src_name, vnf_src_interface)
 
                 return Response(u"Loadbalancer deleted at %s:%s" % (vnf_src_name, vnf_src_interface),
                                 status=200, mimetype="application/json")
@@ -848,7 +899,8 @@ class QueryTopology(Resource):
                             # with their unique keys
                             link = copy.copy(data)
                             for edge in link:
-                                # do not add any links to the floating switch to the topology!
+                                # do not add any links to the floating switch
+                                # to the topology!
                                 if graph_node == "fs1":
                                     continue
                                 # the translator wants everything as a string!

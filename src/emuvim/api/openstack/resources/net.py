@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import re
 
 
@@ -63,9 +61,11 @@ class Net:
         if self.start_end_dict is None:
             return None
 
-        int_start_ip = Net.ip_2_int(self.start_end_dict['start']) + 2  # First address as network address not usable
+        # First address as network address not usable
+        int_start_ip = Net.ip_2_int(self.start_end_dict['start']) + 2
         # Second one is for gateways only
-        int_end_ip = Net.ip_2_int(self.start_end_dict['end']) - 1  # Last address for broadcasts
+        # Last address for broadcasts
+        int_end_ip = Net.ip_2_int(self.start_end_dict['end']) - 1
         while int_start_ip in self._issued_ip_addresses and int_start_ip <= int_end_ip:
             int_start_ip += 1
 
@@ -90,8 +90,10 @@ class Net:
         if int_ip in self._issued_ip_addresses:
             return False
 
-        int_start_ip = Net.ip_2_int(self.start_end_dict['start']) + 1  # First address as network address not usable
-        int_end_ip = Net.ip_2_int(self.start_end_dict['end']) - 1  # Last address for broadcasts
+        # First address as network address not usable
+        int_start_ip = Net.ip_2_int(self.start_end_dict['start']) + 1
+        # Last address for broadcasts
+        int_end_ip = Net.ip_2_int(self.start_end_dict['end']) - 1
         if int_ip < int_start_ip or int_ip > int_end_ip:
             return False
 
@@ -110,7 +112,7 @@ class Net:
         """
         int_ip = Net.cidr_2_int(cidr)
 
-        if not int_ip in self._issued_ip_addresses:
+        if int_ip not in self._issued_ip_addresses:
             return False
 
         if self._issued_ip_addresses[int_ip] == port_name:
@@ -285,14 +287,16 @@ class Net:
         :rtype: ``dict``
         """
         network_dict = dict()
-        network_dict["status"] = "ACTIVE"  # TODO do we support inactive networks?
-        if self.subnet_id == None:
+        # TODO do we support inactive networks?
+        network_dict["status"] = "ACTIVE"
+        if self.subnet_id is None:
             network_dict["subnets"] = []
         else:
             network_dict["subnets"] = [self.subnet_id]
         network_dict["name"] = self.name
         network_dict["admin_state_up"] = True  # TODO is it always true?
-        network_dict["tenant_id"] = "abcdefghijklmnopqrstuvwxyz123456"  # TODO what should go in here
+        # TODO what should go in here
+        network_dict["tenant_id"] = "abcdefghijklmnopqrstuvwxyz123456"
         network_dict["id"] = self.id
         network_dict["shared"] = False  # TODO is it always false?
         return network_dict
@@ -307,7 +311,8 @@ class Net:
         subnet_dict = dict()
         subnet_dict["name"] = self.subnet_name
         subnet_dict["network_id"] = self.id
-        subnet_dict["tenant_id"] = "abcdefghijklmnopqrstuvwxyz123456"  # TODO what should go in here?
+        # TODO what should go in here?
+        subnet_dict["tenant_id"] = "abcdefghijklmnopqrstuvwxyz123456"
         subnet_dict["created_at"] = self.subnet_creation_time
         subnet_dict["dns_nameservers"] = []
         subnet_dict["allocation_pools"] = [self.start_end_dict]
@@ -322,10 +327,10 @@ class Net:
 
     def __eq__(self, other):
         if self.name == other.name and self.subnet_name == other.subnet_name and \
-                        self.gateway_ip == other.gateway_ip and \
-                        self.segmentation_id == other.segmentation_id and \
-                        self._cidr == other._cidr and \
-                        self.start_end_dict == other.start_end_dict:
+                self.gateway_ip == other.gateway_ip and \
+                self.segmentation_id == other.segmentation_id and \
+                self._cidr == other._cidr and \
+                self.start_end_dict == other.start_end_dict:
             return True
         return False
 

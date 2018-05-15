@@ -1,33 +1,31 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from flask import request, Response
 from flask_restful import Resource
-from emuvim.api.openstack.resources import Stack
+from emuvim.api.openstack.resources.stack import Stack
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
 from emuvim.api.openstack.helper import get_host
 from datetime import datetime
@@ -88,7 +86,8 @@ class HeatListAPIVersions(Resource):
             ]
         }]
 
-        return Response(json.dumps(resp), status=200, mimetype="application/json")
+        return Response(json.dumps(resp), status=200,
+                        mimetype="application/json")
 
 
 class HeatCreateStack(Resource):
@@ -116,9 +115,11 @@ class HeatCreateStack(Resource):
             stack.stack_name = stack_dict['stack_name']
 
             reader = HeatParser(self.api.compute)
-            if isinstance(stack_dict['template'], str) or isinstance(stack_dict['template'], unicode):
+            if isinstance(stack_dict['template'], str) or isinstance(
+                    stack_dict['template'], unicode):
                 stack_dict['template'] = json.loads(stack_dict['template'])
-            if not reader.parse_input(stack_dict['template'], stack, self.api.compute.dc.label):
+            if not reader.parse_input(
+                    stack_dict['template'], stack, self.api.compute.dc.label):
                 self.api.compute.clean_broken_stack(stack)
                 return 'Could not create stack.', 400
 
@@ -136,7 +137,8 @@ class HeatCreateStack(Resource):
 
             self.api.compute.add_stack(stack)
             self.api.compute.deploy_stack(stack.id)
-            return Response(json.dumps(return_dict), status=201, mimetype="application/json")
+            return Response(json.dumps(return_dict), status=201,
+                            mimetype="application/json")
 
         except Exception as ex:
             LOG.exception("Heat: Create Stack exception.")
@@ -168,7 +170,8 @@ class HeatCreateStack(Resource):
                      "tags": ""
                      })
 
-            return Response(json.dumps(return_stacks), status=200, mimetype="application/json")
+            return Response(json.dumps(return_stacks),
+                            status=200, mimetype="application/json")
         except Exception as ex:
             LOG.exception("Heat: List Stack exception.")
             return ex.message, 500
@@ -225,7 +228,8 @@ class HeatShowStack(Resource):
                     "stack_name": stack.stack_name,
                     "stack_owner": "The owner of the stack.",  # add stack owner
                     "stack_status": stack.status,
-                    "stack_status_reason": "The reason for the current status of the stack.",  # add status reason
+                    # add status reason
+                    "stack_status_reason": "The reason for the current status of the stack.",
                     "template_description": "The description of the stack template.",
                     "stack_user_project_id": "The project UUID of the stack user.",
                     "timeout_mins": "",
@@ -235,13 +239,14 @@ class HeatShowStack(Resource):
                 }
             }
 
-            return Response(json.dumps(return_stack), status=200, mimetype="application/json")
+            return Response(json.dumps(return_stack),
+                            status=200, mimetype="application/json")
 
         except Exception as ex:
             LOG.exception("Heat: Show stack exception.")
             return ex.message, 500
 
-        
+
 class HeatShowStackTemplate(Resource):
     def __init__(self, api):
         self.api = api
@@ -253,7 +258,7 @@ class HeatShowStackTemplate(Resource):
         :param tenant_id:
         :param stack_name_or_id:
         :param stack_id:
-        :return: Returns a json response which contains the stack's template. 
+        :return: Returns a json response which contains the stack's template.
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
@@ -266,9 +271,10 @@ class HeatShowStackTemplate(Resource):
                         stack = tmp_stack
             if stack is None:
                 return 'Could not resolve Stack - ID', 404
-            #LOG.debug("STACK: {}".format(stack))
-            #LOG.debug("TEMPLATE: {}".format(stack.template))
-            return Response(json.dumps(stack.template), status=200, mimetype="application/json")
+            # LOG.debug("STACK: {}".format(stack))
+            # LOG.debug("TEMPLATE: {}".format(stack.template))
+            return Response(json.dumps(stack.template),
+                            status=200, mimetype="application/json")
 
         except Exception as ex:
             LOG.exception("Heat: Show stack template exception.")
@@ -286,7 +292,7 @@ class HeatShowStackResources(Resource):
         :param tenant_id:
         :param stack_name_or_id:
         :param stack_id:
-        :return: Returns a json response which contains the stack's template. 
+        :return: Returns a json response which contains the stack's template.
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
@@ -302,7 +308,8 @@ class HeatShowStackResources(Resource):
 
             response = {"resources": []}
 
-            return Response(json.dumps(response), status=200, mimetype="application/json")
+            return Response(json.dumps(response), status=200,
+                            mimetype="application/json")
 
         except Exception as ex:
             LOG.exception("Heat: Show stack template exception.")
@@ -320,7 +327,7 @@ class HeatUpdateStack(Resource):
     def patch(self, tenant_id, stack_name_or_id, stack_id=None):
         LOG.debug("API CALL: %s PATCH" % str(self.__class__.__name__))
         return self.update_stack(tenant_id, stack_name_or_id, stack_id)
-    
+
     def update_stack(self, tenant_id, stack_name_or_id, stack_id=None):
         """
         Updates an existing stack with a new heat template.
@@ -354,9 +361,11 @@ class HeatUpdateStack(Resource):
             stack.status = "UPDATE_COMPLETE"
 
             reader = HeatParser(self.api.compute)
-            if isinstance(stack_dict['template'], str) or isinstance(stack_dict['template'], unicode):
+            if isinstance(stack_dict['template'], str) or isinstance(
+                    stack_dict['template'], unicode):
                 stack_dict['template'] = json.loads(stack_dict['template'])
-            if not reader.parse_input(stack_dict['template'], stack, self.api.compute.dc.label, stack_update=True):
+            if not reader.parse_input(
+                    stack_dict['template'], stack, self.api.compute.dc.label, stack_update=True):
                 return 'Could not create stack.', 400
             stack.template = stack_dict['template']
 

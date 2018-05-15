@@ -1,31 +1,29 @@
-"""
-Copyright (c) 2015 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-from mininet.node import Docker, OVSBridge
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
+from mininet.node import Docker
 from mininet.link import Link
 from emuvim.dcemulator.resourcemodel import NotEnoughResourcesAvailable
 import logging
@@ -37,6 +35,7 @@ LOG.setLevel(logging.DEBUG)
 
 DCDPID_BASE = 1000  # start of switch dpid's used for data center switches
 EXTSAPDPID_BASE = 2000  # start of switch dpid's used for external SAP switches
+
 
 class EmulatorCompute(Docker):
     """
@@ -51,7 +50,8 @@ class EmulatorCompute(Docker):
             self, name, dimage, **kwargs):
         self.datacenter = kwargs.get("datacenter")  # pointer to current DC
         self.flavor_name = kwargs.get("flavor_name")
-        LOG.debug("Starting compute instance %r in data center %r" % (name, str(self.datacenter)))
+        LOG.debug("Starting compute instance %r in data center %r" %
+                  (name, str(self.datacenter)))
         # call original Docker.__init__
         Docker.__init__(self, name, dimage, **kwargs)
 
@@ -65,9 +65,11 @@ class EmulatorCompute(Docker):
         for i in self.intfList():
             vnf_name = self.name
             vnf_interface = str(i)
-            dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
+            dc_port_name = self.datacenter.net.find_connected_dc_interface(
+                vnf_name, vnf_interface)
             # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
-            intf_dict = {'intf_name': str(i), 'ip': "{0}/{1}".format(i.IP(), i.prefixLen), 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            intf_dict = {'intf_name': str(i), 'ip': "{0}/{1}".format(i.IP(), i.prefixLen), 'netmask': i.prefixLen,
+                         'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
             networkStatusList.append(intf_dict)
 
         return networkStatusList
@@ -91,7 +93,8 @@ class EmulatorCompute(Docker):
         status["state"] = self.dcli.inspect_container(self.dc)["State"]
         status["id"] = self.dcli.inspect_container(self.dc)["Id"]
         status["short_id"] = self.dcli.inspect_container(self.dc)["Id"][:12]
-        status["hostname"] = self.dcli.inspect_container(self.dc)["Config"]['Hostname']
+        status["hostname"] = self.dcli.inspect_container(self.dc)[
+            "Config"]['Hostname']
         status["datacenter"] = (None if self.datacenter is None
                                 else self.datacenter.label)
 
@@ -113,14 +116,16 @@ class EmulatorExtSAP(object):
         self.net = self.datacenter.net
         self.name = sap_name
 
-        LOG.debug("Starting ext SAP instance %r in data center %r" % (sap_name, str(self.datacenter)))
+        LOG.debug("Starting ext SAP instance %r in data center %r" %
+                  (sap_name, str(self.datacenter)))
 
         # create SAP as separate OVS switch with an assigned ip address
         self.ip = str(sap_net[1]) + '/' + str(sap_net.prefixlen)
         self.subnet = sap_net
         # allow connection to the external internet through the host
         params = dict(NAT=True)
-        self.switch = self.net.addExtSAP(sap_name, self.ip, dpid=hex(self._get_next_extSAP_dpid())[2:], **params)
+        self.switch = self.net.addExtSAP(sap_name, self.ip, dpid=hex(
+            self._get_next_extSAP_dpid())[2:], **params)
         self.switch.start()
 
     def _get_next_extSAP_dpid(self):
@@ -140,9 +145,11 @@ class EmulatorExtSAP(object):
             vnf_interface = str(i)
             if vnf_interface == 'lo':
                 continue
-            dc_port_name = self.datacenter.net.find_connected_dc_interface(vnf_name, vnf_interface)
+            dc_port_name = self.datacenter.net.find_connected_dc_interface(
+                vnf_name, vnf_interface)
             # format list of tuples (name, Ip, MAC, isUp, status, dc_portname)
-            intf_dict = {'intf_name': str(i), 'ip': self.ip, 'netmask': i.prefixLen, 'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
+            intf_dict = {'intf_name': str(i), 'ip': self.ip, 'netmask': i.prefixLen, 'mac': i.MAC(
+            ), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
             networkStatusList.append(intf_dict)
 
         return networkStatusList
@@ -153,6 +160,7 @@ class EmulatorExtSAP(object):
             "datacenter": self.datacenter.name,
             "network": self.getNetworkStatus()
         }
+
 
 class Datacenter(object):
     """
@@ -174,7 +182,8 @@ class Datacenter(object):
         self.label = label
         # dict to store arbitrary metadata (e.g. latitude and longitude)
         self.metadata = metadata
-        # path to which resource information should be logged (e.g. for experiments). None = no logging
+        # path to which resource information should be logged (e.g. for
+        # experiments). None = no logging
         self.resource_log_path = resource_log_path
         # first prototype assumes one "bigswitch" per DC
         self.switch = None
@@ -208,7 +217,8 @@ class Datacenter(object):
     def start(self):
         pass
 
-    def startCompute(self, name, image=None, command=None, network=None, flavor_name="tiny", properties=dict(), **params):
+    def startCompute(self, name, image=None, command=None, network=None,
+                     flavor_name="tiny", properties=dict(), **params):
         """
         Create a new container as compute resource and connect it to this
         data center.
@@ -230,7 +240,8 @@ class Datacenter(object):
         if network is None:
             network = {}  # {"ip": "10.0.0.254/8"}
         if isinstance(network, dict):
-            network = [network]  # if we have only one network, put it in a list
+            # if we have only one network, put it in a list
+            network = [network]
         if isinstance(network, list):
             if len(network) < 1:
                 network.append({})
@@ -250,19 +261,19 @@ class Datacenter(object):
             dcmd=command,
             datacenter=self,
             flavor_name=flavor_name,
-            environment = env,
+            environment=env,
             **params
         )
-
-
 
         # apply resource limits to container if a resource model is defined
         if self._resource_model is not None:
             try:
                 self._resource_model.allocate(d)
-                self._resource_model.write_allocation_log(d, self.resource_log_path)
+                self._resource_model.write_allocation_log(
+                    d, self.resource_log_path)
             except NotEnoughResourcesAvailable as ex:
-                LOG.warning("Allocation of container %r was blocked by resource model." % name)
+                LOG.warning(
+                    "Allocation of container %r was blocked by resource model." % name)
                 LOG.info(ex.message)
                 # ensure that we remove the container
                 self.net.removeDocker(name)
@@ -272,11 +283,14 @@ class Datacenter(object):
         # if no --net option is given, network = [{}], so 1 empty dict in the list
         # this results in 1 default interface with a default ip address
         for nw in network:
-            # clean up network configuration (e.g. RTNETLINK does not allow ':' in intf names
+            # clean up network configuration (e.g. RTNETLINK does not allow ':'
+            # in intf names
             if nw.get("id") is not None:
                 nw["id"] = self._clean_ifname(nw["id"])
-            # TODO we cannot use TCLink here (see: https://github.com/mpeuster/containernet/issues/3)
-            self.net.addLink(d, self.switch, params1=nw, cls=Link, intfName1=nw.get('id'))
+            # TODO we cannot use TCLink here (see:
+            # https://github.com/mpeuster/containernet/issues/3)
+            self.net.addLink(d, self.switch, params1=nw,
+                             cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
         self.containers[name] = d
 
@@ -289,7 +303,8 @@ class Datacenter(object):
         assert name is not None
         if name not in self.containers:
             raise Exception("Container with name %s not found." % name)
-        LOG.debug("Stopping compute instance %r in data center %r" % (name, str(self)))
+        LOG.debug("Stopping compute instance %r in data center %r" %
+                  (name, str(self)))
 
         #  stop the monitored metrics
         if self.net.monitor_agent is not None:
@@ -298,7 +313,8 @@ class Datacenter(object):
         # call resource model and free resources
         if self._resource_model is not None:
             self._resource_model.free(self.containers[name])
-            self._resource_model.write_free_log(self.containers[name], self.resource_log_path)
+            self._resource_model.write_free_log(
+                self.containers[name], self.resource_log_path)
 
         # remove links
         self.net.removeLink(
@@ -318,7 +334,7 @@ class Datacenter(object):
 
     def removeExternalSAP(self, sap_name):
         sap_switch = self.extSAPs[sap_name].switch
-        #sap_switch = self.net.getNodeByName(sap_name)
+        # sap_switch = self.net.getNodeByName(sap_name)
         # remove link of SAP to the DC switch
         self.net.removeLink(link=None, node1=sap_switch, node2=self.switch)
         self.net.removeExtSAP(sap_name)
@@ -350,8 +366,8 @@ class Datacenter(object):
             "switch": self.switch.name,
             "n_running_containers": len(self.containers),
             "metadata": self.metadata,
-            "vnf_list" : container_list,
-            "ext SAP list" : ext_saplist
+            "vnf_list": container_list,
+            "ext SAP list": ext_saplist
         }
 
     def assignResourceModel(self, rm):
@@ -361,7 +377,8 @@ class Datacenter(object):
         :return:
         """
         if self._resource_model is not None:
-            raise Exception("There is already an resource model assigned to this DC.")
+            raise Exception(
+                "There is already an resource model assigned to this DC.")
         self._resource_model = rm
         self.net.rm_registrar.register(self, rm)
         LOG.info("Assigned RM: %r to DC: %r" % (rm, self))
@@ -381,4 +398,3 @@ class Datacenter(object):
         name = name.replace(".", "-")
         name = name.replace("_", "-")
         return name
-

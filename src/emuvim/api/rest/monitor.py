@@ -1,48 +1,41 @@
-"""
-Copyright (c) 2015 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-
-"""
-Distributed Cloud Emulator (dcemulator)
-Networking and monitoring functions
-(c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
-"""
-
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
+#
+# Distributed Cloud Emulator (dcemulator)
+# Networking and monitoring functions
+# (c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 import logging
-from flask_restful import Resource, reqparse
+from flask_restful import Resource
 from flask import request
-import json
 
 logging.basicConfig()
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 
 net = None
-
 
 
 class MonitorInterfaceAction(Resource):
@@ -68,11 +61,13 @@ class MonitorInterfaceAction(Resource):
 
         try:
             if cookie:
-                c = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+                c = net.monitor_agent.setup_flow(
+                    vnf_name, vnf_interface, metric, cookie)
             else:
-                c = net.monitor_agent.setup_metric(vnf_name, vnf_interface, metric)
+                c = net.monitor_agent.setup_metric(
+                    vnf_name, vnf_interface, metric)
             # return monitor message response
-            return  str(c), 200, CORS_HEADER
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
@@ -90,9 +85,11 @@ class MonitorInterfaceAction(Resource):
 
         try:
             if cookie:
-                c = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
+                c = net.monitor_agent.stop_flow(
+                    vnf_name, vnf_interface, metric, cookie)
             else:
-                c = net.monitor_agent.stop_metric(vnf_name, vnf_interface, metric)
+                c = net.monitor_agent.stop_metric(
+                    vnf_name, vnf_interface, metric)
             # return monitor message response
             return str(c), 200, CORS_HEADER
         except Exception as ex:
@@ -123,7 +120,8 @@ class MonitorFlowAction(Resource):
         cookie = data.get("cookie", 0)
 
         try:
-            c = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+            c = net.monitor_agent.setup_flow(
+                vnf_name, vnf_interface, metric, cookie)
             # return monitor message response
             return str(c), 200, CORS_HEADER
         except Exception as ex:
@@ -142,12 +140,14 @@ class MonitorFlowAction(Resource):
         cookie = data.get("cookie", 0)
 
         try:
-            c = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
+            c = net.monitor_agent.stop_flow(
+                vnf_name, vnf_interface, metric, cookie)
             # return monitor message response
             return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
+
 
 class MonitorLinkAction(Resource):
     """
@@ -171,7 +171,8 @@ class MonitorLinkAction(Resource):
     :return: message string indicating if the chain action is succesful or not
     """
 
-    # the global net is set from the topology file, and connected via connectDCNetwork function in rest_api_endpoint.py
+    # the global net is set from the topology file, and connected via
+    # connectDCNetwork function in rest_api_endpoint.py
     global net
 
     def put(self):
@@ -222,7 +223,7 @@ class MonitorLinkAction(Resource):
             monitor = data.get("monitor")
             monitor_placement = data.get("monitor_placement")
 
-            #first install monitor flow
+            # first install monitor flow
             c1 = net.setChain(
                 vnf_src_name, vnf_dst_name,
                 vnf_src_interface=vnf_src_interface,
@@ -237,7 +238,7 @@ class MonitorLinkAction(Resource):
                 monitor=monitor,
                 monitor_placement=monitor_placement)
 
-            #then export monitor flow
+            # then export monitor flow
             metric = data.get("metric")
             if 'rx' in monitor_placement:
                 vnf_name = vnf_dst_name
@@ -248,15 +249,18 @@ class MonitorLinkAction(Resource):
 
             c2 = 'command unknown'
             if command == 'add-flow':
-                c2 = net.monitor_agent.setup_flow(vnf_name, vnf_interface, metric, cookie)
+                c2 = net.monitor_agent.setup_flow(
+                    vnf_name, vnf_interface, metric, cookie)
             elif command == 'del-flows':
-                c2 = net.monitor_agent.stop_flow(vnf_name, vnf_interface, metric, cookie)
+                c2 = net.monitor_agent.stop_flow(
+                    vnf_name, vnf_interface, metric, cookie)
 
             # return setChain response
             return (str(c1) + " " + str(c2)), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
+
 
 class MonitorSkewAction(Resource):
     """
@@ -277,10 +281,11 @@ class MonitorSkewAction(Resource):
         resource_name = data.get("resource_name", 'cpu')
         try:
             # configure skewmon
-            c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='start')
+            c = net.monitor_agent.update_skewmon(
+                vnf_name, resource_name, action='start')
 
             # return monitor message response
-            return  str(c), 200, CORS_HEADER
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
@@ -295,13 +300,15 @@ class MonitorSkewAction(Resource):
         resource_name = data.get("resource_name", 'cpu')
         try:
             # configure skewmon
-            c = net.monitor_agent.update_skewmon(vnf_name, resource_name, action='stop')
+            c = net.monitor_agent.update_skewmon(
+                vnf_name, resource_name, action='stop')
 
             # return monitor message response
             return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
+
 
 class MonitorTerminal(Resource):
     """
@@ -323,7 +330,7 @@ class MonitorTerminal(Resource):
             c = net.monitor_agent.term(vnf_list)
 
             # return monitor message response
-            return  str(c), 200, CORS_HEADER
+            return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER

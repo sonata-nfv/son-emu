@@ -1,48 +1,43 @@
-"""
-Copyright (c) 2015 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-
-"""
-Distributed Cloud Emulator (dcemulator)
-Networking and monitoring functions
-(c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
-"""
-
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
+#
+# Distributed Cloud Emulator (dcemulator)
+# Networking and monitoring functions
+# (c) 2015 by Steven Van Rossem <steven.vanrossem@intec.ugent.be>
 import logging
 from flask_restful import Resource
 from flask import request
-import json
 import networkx
 
 logging.basicConfig()
 
 CORS_HEADER = {'Access-Control-Allow-Origin': '*'}
 
-# the global net is set from the topology file, and connected via connectDCNetwork function in rest_api_endpoint.py
+# the global net is set from the topology file, and connected via
+# connectDCNetwork function in rest_api_endpoint.py
 net = None
 
 
@@ -135,9 +130,8 @@ class DrawD3jsgraph(Resource):
         node_attr = networkx.get_node_attributes(net.DCNetwork_graph, 'type')
         for node_name in net.DCNetwork_graph.nodes():
             nodes2.append(node_name)
-            node_index = nodes2.index(node_name)
             type = node_attr[node_name]
-            node_dict = {"name":node_name,"group":type}
+            node_dict = {"name": node_name, "group": type}
             nodes.append(node_dict)
 
         # add links between other DCs
@@ -145,8 +139,9 @@ class DrawD3jsgraph(Resource):
             node1_index = nodes2.index(node1_name)
             for node2_name in net.DCNetwork_graph.neighbors(node1_name):
                 node2_index = nodes2.index(node2_name)
-                edge_dict = {"source": node1_index, "target": node2_index, "value": 10}
+                edge_dict = {"source": node1_index,
+                             "target": node2_index, "value": 10}
                 links.append(edge_dict)
 
-        json = {"nodes":nodes, "links":links}
+        json = {"nodes": nodes, "links": links}
         return json, 200, CORS_HEADER
