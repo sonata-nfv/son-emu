@@ -1,38 +1,34 @@
-"""
-Copyright (c) 2015 SONATA-NFV
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import time
 import os
 import unittest
 from emuvim.test.base import SimpleTestTopology
 from emuvim.dcemulator.resourcemodel import BaseResourceModel, ResourceFlavor, NotEnoughResourcesAvailable, ResourceModelRegistrar
 from emuvim.dcemulator.resourcemodel.upb.simple import UpbSimpleCloudDcRM, UpbOverprovisioningCloudDcRM, UpbDummyRM
-
 
 
 class testResourceModel(SimpleTestTopology):
@@ -98,15 +94,15 @@ def createDummyContainerObject(name, flavor):
         def __init__(self):
             # take defaukt values from son-emu
             self.resources = dict(
-            cpu_period = -1,
-            cpu_quota = -1,
-            mem_limit = -1,
-            memswap_limit = -1
+                cpu_period=-1,
+                cpu_quota=-1,
+                mem_limit=-1,
+                memswap_limit=-1
             )
-            #self.cpu_period = self.resources['cpu_period']
-            #self.cpu_quota = self.resources['cpu_quota']
-            #self.mem_limit = self.resources['mem_limit']
-            #self.memswap_limit = self.resources['memswap_limit']
+            # self.cpu_period = self.resources['cpu_period']
+            # self.cpu_quota = self.resources['cpu_quota']
+            # self.mem_limit = self.resources['mem_limit']
+            # self.memswap_limit = self.resources['memswap_limit']
 
         def updateCpuLimit(self, cpu_period, cpu_quota):
             self.resources['cpu_period'] = cpu_period
@@ -119,8 +115,6 @@ def createDummyContainerObject(name, flavor):
     d.name = name
     d.flavor_name = flavor
     return d
-
-
 
 
 class testUpbSimpleCloudDcRM(SimpleTestTopology):
@@ -139,35 +133,55 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         E_MEM = 512
         MAX_MU = 2048
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        reg = ResourceModelRegistrar(
+            dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
         rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
         c1 = createDummyContainerObject("c1", flavor="tiny")
         rm.allocate(c1)  # calculate allocation
-        self.assertEqual(float(c1.resources['cpu_quota']) / c1.resources['cpu_period'], E_CPU / MAX_CU * 0.5)   # validate compute result
-        self.assertEqual(float(c1.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 32)   # validate memory result
+        # validate compute result
+        self.assertEqual(float(
+            c1.resources['cpu_quota']) / c1.resources['cpu_period'], E_CPU / MAX_CU * 0.5)
+        # validate memory result
+        self.assertEqual(
+            float(c1.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 32)
 
         c2 = createDummyContainerObject("c2", flavor="small")
         rm.allocate(c2)  # calculate allocation
-        self.assertEqual(float(c2.resources['cpu_quota']) / c2.resources['cpu_period'], E_CPU / MAX_CU * 1)   # validate compute result
-        self.assertEqual(float(c2.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)   # validate memory result
+        # validate compute result
+        self.assertEqual(float(
+            c2.resources['cpu_quota']) / c2.resources['cpu_period'], E_CPU / MAX_CU * 1)
+        # validate memory result
+        self.assertEqual(
+            float(c2.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 128)
 
         c3 = createDummyContainerObject("c3", flavor="medium")
         rm.allocate(c3)  # calculate allocation
-        self.assertEqual(float(c3.resources['cpu_quota']) / c3.resources['cpu_period'], E_CPU / MAX_CU * 4)   # validate compute result
-        self.assertEqual(float(c3.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 256)   # validate memory result
+        # validate compute result
+        self.assertEqual(float(
+            c3.resources['cpu_quota']) / c3.resources['cpu_period'], E_CPU / MAX_CU * 4)
+        # validate memory result
+        self.assertEqual(
+            float(c3.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 256)
 
         c4 = createDummyContainerObject("c4", flavor="large")
         rm.allocate(c4)  # calculate allocation
-        self.assertEqual(float(c4.resources['cpu_quota']) / c4.resources['cpu_period'], E_CPU / MAX_CU * 8)   # validate compute result
-        self.assertEqual(float(c4.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 512)   # validate memory result
+        # validate compute result
+        self.assertEqual(float(
+            c4.resources['cpu_quota']) / c4.resources['cpu_period'], E_CPU / MAX_CU * 8)
+        # validate memory result
+        self.assertEqual(
+            float(c4.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 512)
 
         c5 = createDummyContainerObject("c5", flavor="xlarge")
         rm.allocate(c5)  # calculate allocation
-        self.assertEqual(float(c5.resources['cpu_quota']) / c5.resources['cpu_period'], E_CPU / MAX_CU * 16)   # validate compute result
-        self.assertEqual(float(c5.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 1024)   # validate memory result
-
+        # validate compute result
+        self.assertEqual(float(
+            c5.resources['cpu_quota']) / c5.resources['cpu_period'], E_CPU / MAX_CU * 16)
+        # validate memory result
+        self.assertEqual(
+            float(c5.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 1024)
 
     def testAllocationCpuLimit(self):
         """
@@ -180,7 +194,8 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         E_MEM = 512
         MAX_MU = 4096
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        reg = ResourceModelRegistrar(
+            dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
         rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
@@ -211,7 +226,8 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         E_MEM = 512
         MAX_MU = 2048
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        reg = ResourceModelRegistrar(
+            dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
         rm = UpbSimpleCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
@@ -234,11 +250,9 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         Test the free procedure.
         :return:
         """
-        # config
-        E_CPU = 1.0
-        MAX_CU = 100
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=1.0, dc_emulation_max_mem=512)
+        reg = ResourceModelRegistrar(
+            dc_emulation_max_cpu=1.0, dc_emulation_max_mem=512)
         rm = UpbSimpleCloudDcRM(max_cu=100, max_mu=100)
         reg.register("test_dc", rm)
         c1 = createDummyContainerObject("c6", flavor="tiny")
@@ -279,8 +293,10 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
         self.assertTrue(len(r._allocated_compute_instances) == 1)
 
         # check if there is a real limitation set for containers cgroup
-        # deactivated for now, seems not to work in docker-in-docker setup used in CI
-        self.assertEqual(float(tc1.resources['cpu_quota'])/tc1.resources['cpu_period'], 0.005)
+        # deactivated for now, seems not to work in docker-in-docker setup used
+        # in CI
+        self.assertEqual(
+            float(tc1.resources['cpu_quota']) / tc1.resources['cpu_period'], 0.005)
 
         # check if free was called during stopCompute
         self.dc[0].stopCompute("tc1")
@@ -307,39 +323,50 @@ class testUpbOverprovisioningCloudDcRM(SimpleTestTopology):
         E_MEM = 512
         MAX_MU = 2048
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        reg = ResourceModelRegistrar(
+            dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
         rm = UpbOverprovisioningCloudDcRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
         c1 = createDummyContainerObject("c1", flavor="small")
         rm.allocate(c1)  # calculate allocation
-        self.assertAlmostEqual(float(c1.resources['cpu_quota']) / c1.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
-        self.assertAlmostEqual(float(c1.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(
+            c1.resources['cpu_quota']) / c1.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(
+            float(c1.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
 
         c2 = createDummyContainerObject("c2", flavor="small")
         rm.allocate(c2)  # calculate allocation
-        self.assertAlmostEqual(float(c2.resources['cpu_quota']) / c2.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
-        self.assertAlmostEqual(float(c2.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(
+            c2.resources['cpu_quota']) / c2.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(
+            float(c2.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
 
         c3 = createDummyContainerObject("c3", flavor="small")
         rm.allocate(c3)  # calculate allocation
-        self.assertAlmostEqual(float(c3.resources['cpu_quota']) / c3.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
-        self.assertAlmostEqual(float(c3.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(
+            c3.resources['cpu_quota']) / c3.resources['cpu_period'], E_CPU / MAX_CU * 1.0, places=5)
+        self.assertAlmostEqual(
+            float(c3.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 1.0)
 
         # from this container onwards, we should go to over provisioning mode:
         c4 = createDummyContainerObject("c4", flavor="small")
         rm.allocate(c4)  # calculate allocation
-        self.assertAlmostEqual(float(c4.resources['cpu_quota']) / c4.resources['cpu_period'], E_CPU / MAX_CU * (float(3) / 4), places=5)
-        self.assertAlmostEqual(float(c4.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128, places=5)
+        self.assertAlmostEqual(float(
+            c4.resources['cpu_quota']) / c4.resources['cpu_period'], E_CPU / MAX_CU * (float(3) / 4), places=5)
+        self.assertAlmostEqual(float(
+            c4.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 128, places=5)
         self.assertAlmostEqual(rm.cpu_op_factor, 0.75)
 
         c5 = createDummyContainerObject("c5", flavor="small")
         rm.allocate(c5)  # calculate allocation
-        self.assertAlmostEqual(float(c5.resources['cpu_quota']) / c5.resources['cpu_period'], E_CPU / MAX_CU * (float(3) / 5), places=5)
-        self.assertAlmostEqual(float(c5.resources['mem_limit']/1024/1024), float(E_MEM) / MAX_MU * 128)
+        self.assertAlmostEqual(float(
+            c5.resources['cpu_quota']) / c5.resources['cpu_period'], E_CPU / MAX_CU * (float(3) / 5), places=5)
+        self.assertAlmostEqual(
+            float(c5.resources['mem_limit'] / 1024 / 1024), float(E_MEM) / MAX_MU * 128)
         self.assertAlmostEqual(rm.cpu_op_factor, 0.6)
 
 
@@ -359,7 +386,8 @@ class testUpbDummyRM(SimpleTestTopology):
         E_MEM = 512
         MAX_MU = 2048
         # create dummy resource model environment
-        reg = ResourceModelRegistrar(dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
+        reg = ResourceModelRegistrar(
+            dc_emulation_max_cpu=E_CPU, dc_emulation_max_mem=E_MEM)
         rm = UpbDummyRM(max_cu=MAX_CU, max_mu=MAX_MU)
         reg.register("test_dc", rm)
 
@@ -370,4 +398,3 @@ class testUpbDummyRM(SimpleTestTopology):
         c2 = createDummyContainerObject("c2", flavor="small")
         rm.allocate(c2)  # calculate allocation
         self.assertEqual(len(rm._allocated_compute_instances), 2)
-

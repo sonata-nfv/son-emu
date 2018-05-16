@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from flask_restful import Resource
 from flask import Response, request
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
@@ -78,7 +76,8 @@ class GlanceListApiVersions(Resource):
             ]
         }]
         resp['versions'] = versions
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class GlanceSchema(Resource):
@@ -88,7 +87,8 @@ class GlanceSchema(Resource):
         resp['name'] = 'someImageName'
         resp['properties'] = dict()
         # just an ugly hack to allow the openstack client to work
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class GlanceListImagesApi(Resource):
@@ -97,7 +97,7 @@ class GlanceListImagesApi(Resource):
 
     def get(self):
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
-        try:           
+        try:
             resp = dict()
             resp['next'] = None
             resp['first'] = "/v2/images"
@@ -132,10 +132,12 @@ class GlanceListImagesApi(Resource):
                     break
             if "marker" in request.args:  # ugly hack to fix pageination of openstack client
                 resp['images'] = None
-            return Response(json.dumps(resp), status=200, mimetype="application/json")
+            return Response(json.dumps(resp), status=200,
+                            mimetype="application/json")
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
 
     def post(self):
@@ -147,20 +149,22 @@ class GlanceListImagesApi(Resource):
         LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
         try:
             body_data = json.loads(request.data)
-        except:
+        except BaseException:
             body_data = dict()
         # lets see what we should create
         img_name = request.headers.get("X-Image-Meta-Name")
         img_size = request.headers.get("X-Image-Meta-Size")
         img_disk_format = request.headers.get("X-Image-Meta-Disk-Format")
         img_is_public = request.headers.get("X-Image-Meta-Is-Public")
-        img_container_format = request.headers.get("X-Image-Meta-Container-Format")
+        img_container_format = request.headers.get(
+            "X-Image-Meta-Container-Format")
         # try to use body payload if header fields are empty
         if img_name is None:
             img_name = body_data.get("name")
             img_size = 1234
             img_disk_format = body_data.get("disk_format")
-            img_is_public = True if "public" in body_data.get("visibility") else False
+            img_is_public = True if "public" in body_data.get(
+                "visibility") else False
             img_container_format = body_data.get("container_format")
         # try to find ID of already existing image (matched by name)
         img_id = None
@@ -212,15 +216,19 @@ class GlanceImageByIdApi(Resource):
                     resp['id'] = image.id
                     resp['name'] = image.name
 
-                    return Response(json.dumps(resp), status=200, mimetype="application/json")
+                    return Response(json.dumps(resp), status=200,
+                                    mimetype="application/json")
 
-            response = Response("Image with id or name %s does not exists." % id, status=404)
+            response = Response(
+                "Image with id or name %s does not exists." % id, status=404)
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve image with id %s." % (__name__, id))
-            return Response(ex.message, status=500, mimetype='application/json')
+            LOG.exception(
+                u"%s: Could not retrieve image with id %s." % (__name__, id))
+            return Response(ex.message, status=500,
+                            mimetype='application/json')
 
     def put(self, id):
         LOG.debug("API CALL: %s " % str(self.__class__.__name__))
@@ -241,12 +249,16 @@ class GlanceImageByDockerNameApi(Resource):
                 resp = dict()
                 resp['id'] = image.id
                 resp['name'] = image.name
-                return Response(json.dumps(resp), status=200, mimetype="application/json")
+                return Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
 
-            response = Response("Image with id or name %s does not exists." % id, status=404)
+            response = Response(
+                "Image with id or name %s does not exists." % id, status=404)
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            logging.exception(u"%s: Could not retrieve image with id %s." % (__name__, id))
-            return Response(ex.message, status=500, mimetype='application/json')
+            logging.exception(
+                u"%s: Could not retrieve image with id %s." % (__name__, id))
+            return Response(ex.message, status=500,
+                            mimetype='application/json')

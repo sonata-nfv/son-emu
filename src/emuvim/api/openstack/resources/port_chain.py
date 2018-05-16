@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import random
 import uuid
 import logging
@@ -40,7 +38,8 @@ class PortChain(object):
         self.flow_classifiers = list()
         self.chain_parameters = dict()
 
-        # Cookie for internal identification of installed flows (e.g. to delete them)
+        # Cookie for internal identification of installed flows (e.g. to delete
+        # them)
         self.cookie = random.randint(1, 0xffffffff)
 
     def create_dict(self, compute):
@@ -56,13 +55,16 @@ class PortChain(object):
 
     def install(self, compute):
         for flow_classifier_id in self.flow_classifiers:
-            flow_classifier = compute.find_flow_classifier_by_name_or_id(flow_classifier_id)
+            flow_classifier = compute.find_flow_classifier_by_name_or_id(
+                flow_classifier_id)
             if flow_classifier:
                 pass
-                # TODO: for every flow classifier create match and pass it to setChain
+                # TODO: for every flow classifier create match and pass it to
+                # setChain
 
         for group_id in self.port_pair_groups:
-            port_pair_group = compute.find_port_pair_group_by_name_or_id(group_id)
+            port_pair_group = compute.find_port_pair_group_by_name_or_id(
+                group_id)
             for port_pair_id in port_pair_group.port_pairs:
                 port_pair = compute.find_port_pair_by_name_or_id(port_pair_id)
 
@@ -76,10 +78,12 @@ class PortChain(object):
 
                 # TODO: Not sure, if this should throw an error
                 if not server_ingress:
-                    logging.warn("Neutron SFC: ingress port %s not connected." % str(port_pair.ingress.name))
+                    logging.warn("Neutron SFC: ingress port %s not connected." % str(
+                        port_pair.ingress.name))
                     continue
                 if not server_egress:
-                    logging.warn("Neutron SFC: egress port %s not connected." % str(port_pair.egress.name))
+                    logging.warn("Neutron SFC: egress port %s not connected." % str(
+                        port_pair.egress.name))
                     continue
 
                 compute.dc.net.setChain(
