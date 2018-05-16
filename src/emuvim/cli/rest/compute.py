@@ -1,35 +1,32 @@
-"""
-Copyright (c) 2015 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from requests import get, put, delete
 from tabulate import tabulate
 import pprint
 import argparse
-import json
 from subprocess import Popen
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -70,7 +67,8 @@ class RestApiClient():
 
     def list(self, args):
 
-        list = get('%s/restapi/compute/%s' % (args.get("endpoint"), args.get('datacenter'))).json()
+        list = get('%s/restapi/compute/%s' %
+                   (args.get("endpoint"), args.get('datacenter'))).json()
 
         table = []
         for c in list:
@@ -78,15 +76,17 @@ class RestApiClient():
             if len(c) > 1:
                 name = c[0]
                 status = c[1]
-                #eth0ip = status.get("docker_network", "-")
-                netw_list = [netw_dict['intf_name'] for netw_dict in status.get("network")]
-                dc_if_list = [netw_dict['dc_portname'] for netw_dict in status.get("network")]
+                # eth0ip = status.get("docker_network", "-")
+                netw_list = [netw_dict['intf_name']
+                             for netw_dict in status.get("network")]
+                dc_if_list = [netw_dict['dc_portname']
+                              for netw_dict in status.get("network")]
                 table.append([status.get("datacenter"),
                               name,
                               status.get("image"),
                               ','.join(netw_list),
                               ','.join(dc_if_list)])
-                #status.get("state").get("Status")]
+                # status.get("state").get("Status")]
 
         headers = ["Datacenter",
                    "Container",
@@ -110,8 +110,9 @@ class RestApiClient():
             Popen(['xterm', '-xrm', 'XTerm.vt100.allowTitleOps: false', '-T', vnf_name,
                    '-e', "docker exec -it mn.{0} /bin/bash".format(vnf_name)])
 
+
 parser = argparse.ArgumentParser(description="""son-emu-cli compute
-    
+
     Examples:
     - son-emu-cli compute start -d dc2 -n client -i sonatanfv/sonata-iperf3-vnf
     - son-emu-cli list

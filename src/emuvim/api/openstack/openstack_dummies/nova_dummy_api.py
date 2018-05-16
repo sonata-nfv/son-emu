@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from flask_restful import Resource
 from flask import Response, request
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
@@ -202,12 +200,14 @@ class NovaListServersApi(Resource):
 
                 resp['servers'].append(s)
 
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
     def post(self, id):
@@ -227,12 +227,12 @@ class NovaListServersApi(Resource):
 
             if self.api.compute.find_server_by_name_or_id(name) is not None:
                 LOG.error("Server with name %s already exists. 409" % name)
-                return Response("Server with name %s already exists." % name, status=409)
+                return Response(
+                    "Server with name %s already exists." % name, status=409)
             # TODO: not finished!
-            resp = dict()
-
             server = self.api.compute.create_server(name)
-            server.full_name = str(self.api.compute.dc.label) + "_" + server_dict["name"]
+            server.full_name = str(
+                self.api.compute.dc.label) + "_" + server_dict["name"]
             server.template_name = server_dict["name"]
             if "metadata" in server_dict:
                 server.properties = server_dict["metadata"]
@@ -246,11 +246,13 @@ class NovaListServersApi(Resource):
 
             if networks is not None:
                 for net in networks:
-                    port = self.api.compute.find_port_by_name_or_id(net.get('port', ""))
+                    port = self.api.compute.find_port_by_name_or_id(
+                        net.get('port', ""))
                     if port is not None:
                         server.port_names.append(port.name)
                     else:
-                        return Response("Currently only networking by port is supported.", status=400)
+                        return Response(
+                            "Currently only networking by port is supported.", status=400)
 
             self.api.compute._start_compute(server)
 
@@ -301,12 +303,14 @@ class NovaListServersAndPortsApi(Resource):
 
                 resp['servers'].append(s)
 
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
 
@@ -363,12 +367,14 @@ class NovaListServersDetailed(Resource):
 
                 resp['servers'].append(s)
 
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
 
@@ -399,12 +405,14 @@ class NovaListFlavors(Resource):
                                                                             flavor.id)}]
                 resp['flavors'].append(f)
 
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
     def post(self, id):
@@ -424,7 +432,8 @@ class NovaListFlavors(Resource):
                                                                        id,
                                                                        f.id)}]
         resp = {"flavor": data}
-        return Response(json.dumps(resp), status=200, mimetype="application/json")
+        return Response(json.dumps(resp), status=200,
+                        mimetype="application/json")
 
 
 class NovaListFlavorsDetails(Resource):
@@ -463,12 +472,14 @@ class NovaListFlavorsDetails(Resource):
                 f['rxtx_factor'] = 1.0
                 resp['flavors'].append(f)
 
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of servers." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of servers." % __name__)
             return ex.message, 500
 
     def post(self, id):
@@ -488,7 +499,8 @@ class NovaListFlavorsDetails(Resource):
                                                                        id,
                                                                        f.id)}]
         resp = {"flavor": data}
-        return Response(json.dumps(resp), status=200, mimetype="application/json")
+        return Response(json.dumps(resp), status=200,
+                        mimetype="application/json")
 
 
 class NovaListFlavorById(Resource):
@@ -522,12 +534,14 @@ class NovaListFlavorById(Resource):
                                                                                      self.api.port,
                                                                                      id,
                                                                                      flavor.id)}]
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve flavor with id %s" % (__name__, flavorid))
+            LOG.exception(u"%s: Could not retrieve flavor with id %s" %
+                          (__name__, flavorid))
             return ex.message, 500
 
     def delete(self, id, flavorid):
@@ -565,12 +579,14 @@ class NovaListImages(Resource):
                                                                            id,
                                                                            image.id)}]
                 resp['images'].append(f)
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
 
 
@@ -609,12 +625,14 @@ class NovaListImagesDetails(Resource):
                 }
                 resp['images'].append(f)
 
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500
 
 
@@ -642,14 +660,17 @@ class NovaListImageById(Resource):
                     i['id'] = image.id
                     i['name'] = image.name
 
-                    return Response(json.dumps(resp), status=200, mimetype="application/json")
+                    return Response(json.dumps(resp), status=200,
+                                    mimetype="application/json")
 
-            response = Response("Image with id or name %s does not exists." % imageid, status=404)
+            response = Response(
+                "Image with id or name %s does not exists." % imageid, status=404)
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve image with id %s." % (__name__, imageid))
+            LOG.exception(u"%s: Could not retrieve image with id %s." %
+                          (__name__, imageid))
             return ex.message, 500
 
     def delete(self, id, imageid):
@@ -680,7 +701,8 @@ class NovaShowServerDetails(Resource):
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
-                return Response("Server with id or name %s does not exists." % serverid, status=404)
+                return Response(
+                    "Server with id or name %s does not exists." % serverid, status=404)
             s = server.create_server_dict()
             s['links'] = [{'href': "http://%s:%d/v2.1/%s/servers/%s" % (get_host(request),
                                                                         self.api.port,
@@ -714,12 +736,14 @@ class NovaShowServerDetails(Resource):
                 ]
             }
 
-            response = Response(json.dumps({'server': s}), status=200, mimetype="application/json")
+            response = Response(json.dumps(
+                {'server': s}), status=200, mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the server details." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the server details." % __name__)
             return ex.message, 500
 
     def delete(self, id, serverid):
@@ -737,7 +761,8 @@ class NovaShowServerDetails(Resource):
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
-                return Response('Could not find server.', status=404, mimetype="application/json")
+                return Response('Could not find server.',
+                                status=404, mimetype="application/json")
 
             self.api.compute.stop_compute(server)
 
@@ -769,11 +794,13 @@ class NovaInterfaceToServer(Resource):
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
-                return Response("Server with id or name %s does not exists." % serverid, status=404)
+                return Response(
+                    "Server with id or name %s does not exists." % serverid, status=404)
 
             if server.emulator_compute is None:
                 LOG.error("The targeted container does not exist.")
-                return Response("The targeted container of %s does not exist." % serverid, status=404)
+                return Response(
+                    "The targeted container of %s does not exist." % serverid, status=404)
             data = json.loads(request.data).get("interfaceAttachment")
             resp = dict()
             port = data.get("port_id", None)
@@ -791,7 +818,8 @@ class NovaInterfaceToServer(Resource):
             elif net is not None:
                 network = self.api.compute.find_network_by_name_or_id(net)
                 if network is None:
-                    return Response("Network with id or name %s does not exists." % net, status=404)
+                    return Response(
+                        "Network with id or name %s does not exists." % net, status=404)
                 port = self.api.compute.create_port("port:cp%s:fl:%s" %
                                                     (len(self.api.compute.ports), str(uuid.uuid4())))
 
@@ -804,10 +832,12 @@ class NovaInterfaceToServer(Resource):
                 port = self.api.compute.find_port_by_name_or_id(port)
                 network_dict['id'] = port.intf_name
                 network_dict['ip'] = port.ip_address
-                network = self.api.compute.find_network_by_name_or_id(port.net_name)
+                network = self.api.compute.find_network_by_name_or_id(
+                    port.net_name)
                 network_dict[network_dict['id']] = network.name
             else:
-                raise Exception("You can only attach interfaces by port or network at the moment")
+                raise Exception(
+                    "You can only attach interfaces by port or network at the moment")
 
             if network == self.api.manage.floating_network:
                 dc.net.addLink(server.emulator_compute, self.api.manage.floating_switch,
@@ -817,19 +847,22 @@ class NovaInterfaceToServer(Resource):
                                params1=network_dict, cls=Link, intfName1=port.intf_name)
             resp["port_state"] = "ACTIVE"
             resp["port_id"] = port.id
-            resp["net_id"] = self.api.compute.find_network_by_name_or_id(port.net_name).id
+            resp["net_id"] = self.api.compute.find_network_by_name_or_id(
+                port.net_name).id
             resp["mac_addr"] = port.mac_address
             resp["fixed_ips"] = list()
             fixed_ips = dict()
             fixed_ips["ip_address"] = port.ip_address
             fixed_ips["subnet_id"] = network.subnet_name
             resp["fixed_ips"].append(fixed_ips)
-            response = Response(json.dumps({"interfaceAttachment": resp}), status=202, mimetype="application/json")
+            response = Response(json.dumps(
+                {"interfaceAttachment": resp}), status=202, mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not add interface to the server." % __name__)
+            LOG.exception(
+                u"%s: Could not add interface to the server." % __name__)
             return ex.message, 500
 
 
@@ -855,14 +888,16 @@ class NovaShowAndDeleteInterfaceAtServer(Resource):
         try:
             server = self.api.compute.find_server_by_name_or_id(serverid)
             if server is None:
-                return Response("Server with id or name %s does not exists." % serverid, status=404)
+                return Response(
+                    "Server with id or name %s does not exists." % serverid, status=404)
             port = self.api.compute.find_port_by_name_or_id(port_id)
             if port is None:
-                return Response("Port with id or name %s does not exists." % port_id, status=404)
+                return Response(
+                    "Port with id or name %s does not exists." % port_id, status=404)
 
             for link in self.api.compute.dc.net.links:
                 if str(link.intf1) == port.intf_name and \
-                                str(link.intf1.ip) == port.ip_address.split('/')[0]:
+                        str(link.intf1.ip) == port.ip_address.split('/')[0]:
                     self.api.compute.dc.net.removeLink(link)
                     break
 
@@ -871,7 +906,8 @@ class NovaShowAndDeleteInterfaceAtServer(Resource):
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not detach interface from the server." % __name__)
+            LOG.exception(
+                u"%s: Could not detach interface from the server." % __name__)
             return ex.message, 500
 
 
@@ -919,10 +955,12 @@ class NovaLimits(Resource):
                     "rate": []
                 }
             }
-            response = Response(json.dumps(resp), status=200, mimetype="application/json")
+            response = Response(json.dumps(resp), status=200,
+                                mimetype="application/json")
             response.headers['Access-Control-Allow-Origin'] = '*'
             return response
 
         except Exception as ex:
-            LOG.exception(u"%s: Could not retrieve the list of images." % __name__)
+            LOG.exception(
+                u"%s: Could not retrieve the list of images." % __name__)
             return ex.message, 500

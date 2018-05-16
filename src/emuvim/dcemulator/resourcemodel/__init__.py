@@ -1,34 +1,28 @@
-"""
-Copyright (c) 2015 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-"""
-Base classes needed for resource models support.
-"""
-
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import logging
 LOG = logging.getLogger("resourcemodel")
 LOG.setLevel(logging.DEBUG)
@@ -55,7 +49,8 @@ class ResourceModelRegistrar(object):
         :return: None
         """
         if dc in self._resource_models:
-            raise Exception("There is already an resource model assigned to this DC.")
+            raise Exception(
+                "There is already an resource model assigned to this DC.")
         self._resource_models[dc] = rm
         rm.registrar = self
         rm.dcs.append(dc)
@@ -75,7 +70,8 @@ class ResourceModelRegistrar(object):
         Total number of data centers that are connected to a resource model
         :return:
         """
-        return sum([len(rm.dcs) for rm in list(self._resource_models.itervalues())])
+        return sum([len(rm.dcs)
+                    for rm in list(self._resource_models.itervalues())])
 
 
 class ResourceFlavor(object):
@@ -83,6 +79,7 @@ class ResourceFlavor(object):
     Simple class that represents resource flavors (c.f. OpenStack).
     Can contain arbitrary metrics.
     """
+
     def __init__(self, name, metrics):
         self.name = name
         self._metrics = metrics
@@ -114,15 +111,15 @@ class BaseResourceModel(object):
         initialize some default flavours (naming/sizes inspired by OpenStack)
         """
         self.addFlavour(ResourceFlavor(
-            "tiny",  {"compute": 0.5, "memory": 32, "disk": 1}))
+            "tiny", {"compute": 0.5, "memory": 32, "disk": 1}))
         self.addFlavour(ResourceFlavor(
-            "small",  {"compute": 1.0, "memory": 128, "disk": 20}))
+            "small", {"compute": 1.0, "memory": 128, "disk": 20}))
         self.addFlavour(ResourceFlavor(
-            "medium",  {"compute": 4.0, "memory": 256, "disk": 40}))
+            "medium", {"compute": 4.0, "memory": 256, "disk": 40}))
         self.addFlavour(ResourceFlavor(
-            "large",  {"compute": 8.0, "memory": 512, "disk": 80}))
+            "large", {"compute": 8.0, "memory": 512, "disk": 80}))
         self.addFlavour(ResourceFlavor(
-            "xlarge",  {"compute": 16.0, "memory": 1024, "disk": 160}))
+            "xlarge", {"compute": 16.0, "memory": 1024, "disk": 160}))
 
     def addFlavour(self, fl):
         """
@@ -139,7 +136,8 @@ class BaseResourceModel(object):
         This method has to be overwritten by a real resource model.
         :param d: Container object
         """
-        LOG.warning("Allocating in BaseResourceModel: %r with flavor: %r" % (d.name, d.flavor_name))
+        LOG.warning("Allocating in BaseResourceModel: %r with flavor: %r" % (
+            d.name, d.flavor_name))
         self._allocated_compute_instances[d.name] = d.flavor_name
 
     def free(self, d):

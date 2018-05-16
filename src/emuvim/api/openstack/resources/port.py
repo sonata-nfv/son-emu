@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import logging
 import threading
 import uuid
@@ -34,7 +32,8 @@ intf_names = dict()
 
 
 class Port:
-    def __init__(self, name, ip_address=None, mac_address=None, floating_ip=None):
+    def __init__(self, name, ip_address=None,
+                 mac_address=None, floating_ip=None):
         self.name = name
         self.intf_name = None
         self.id = str(uuid.uuid4())
@@ -80,13 +79,13 @@ class Port:
         if len(split_name) >= 3:
             if split_name[2] == 'input' or split_name[2] == 'in':
                 self.intf_name = split_name[0][:4] + '-' + \
-                                 'in'
+                    'in'
             elif split_name[2] == 'output' or split_name[2] == 'out':
                 self.intf_name = split_name[0][:4] + '-' + \
-                                 'out'
+                    'out'
             else:
                 self.intf_name = split_name[0][:4] + '-' + \
-                                 split_name[2][:4]
+                    split_name[2][:4]
         else:
             self.intf_name = self.name[:9]
 
@@ -96,12 +95,14 @@ class Port:
         global intf_names
         intf_len = len(self.intf_name)
         self.intf_name = self.intf_name + '-' + str(counter)[:4]
-        while self.intf_name in intf_names and counter < 999 and not intf_names[self.intf_name][0] == self.id:
+        while self.intf_name in intf_names and counter < 999 and not intf_names[
+                self.intf_name][0] == self.id:
             counter += 1
             self.intf_name = self.intf_name[:intf_len] + '-' + str(counter)[:4]
 
         if counter >= 1000:
-            logging.ERROR("Port %s could not create unique interface name (%s)", self.name, self.intf_name)
+            logging.ERROR(
+                "Port %s could not create unique interface name (%s)", self.name, self.intf_name)
             lock.release()
             return
 
@@ -132,7 +133,8 @@ class Port:
         """
         port_dict = dict()
         port_dict["admin_state_up"] = True  # TODO is it always true?
-        port_dict["device_id"] = "257614cc-e178-4c92-9c61-3b28d40eca44"  # TODO find real values
+        # TODO find real values
+        port_dict["device_id"] = "257614cc-e178-4c92-9c61-3b28d40eca44"
         port_dict["device_owner"] = ""  # TODO do we have such things?
         net = compute.find_network_by_name_or_id(self.net_name)
         port_dict["fixed_ips"] = [
@@ -146,7 +148,8 @@ class Port:
         port_dict["name"] = self.name
         port_dict["network_id"] = net.id if net is not None else ""
         port_dict["status"] = "ACTIVE"  # TODO do we support inactive port?
-        port_dict["tenant_id"] = "abcdefghijklmnopqrstuvwxyz123456"  # TODO find real tenant_id
+        # TODO find real tenant_id
+        port_dict["tenant_id"] = "abcdefghijklmnopqrstuvwxyz123456"
         return port_dict
 
     def compare_attributes(self, other):
@@ -163,7 +166,7 @@ class Port:
             return False
 
         if self.name == other.name and self.floating_ip == other.floating_ip and \
-                                       self.net_name == other.net_name:
+                self.net_name == other.net_name:
             return True
         return False
 
@@ -172,9 +175,9 @@ class Port:
             return False
 
         if self.name == other.name and self.ip_address == other.ip_address and \
-                        self.mac_address == other.mac_address and \
-                        self.floating_ip == other.floating_ip and \
-                        self.net_name == other.net_name:
+                self.mac_address == other.mac_address and \
+                self.floating_ip == other.floating_ip and \
+                self.net_name == other.net_name:
             return True
         return False
 

@@ -1,31 +1,29 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-from docker import DockerClient, APIClient
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
+from docker import APIClient
 import time
 import re
 
@@ -64,7 +62,8 @@ def docker_abs_cpu(container_id):
     cpu_usage = 0
     for number in numbers:
         cpu_usage += number
-    return {'CPU_used': cpu_usage, 'CPU_used_systime': sys_time, 'CPU_cores': len(numbers)}
+    return {'CPU_used': cpu_usage,
+            'CPU_used_systime': sys_time, 'CPU_cores': len(numbers)}
 
 
 def docker_mem_used(container_id):
@@ -123,7 +122,8 @@ def docker_mem(container_id):
     out_dict = dict()
     out_dict['MEM_used'] = docker_mem_used(container_id)
     out_dict['MEM_limit'] = docker_max_mem(container_id)
-    out_dict['MEM_%'] = float(out_dict['MEM_used']) / float(out_dict['MEM_limit'])
+    out_dict['MEM_%'] = float(out_dict['MEM_used']) / \
+        float(out_dict['MEM_limit'])
     return out_dict
 
 
@@ -218,9 +218,12 @@ def monitoring_over_time(container_id):
     second_disk_io = docker_block_rw(container_id)
 
     # Disk access
-    time_div = (int(second_disk_io['BLOCK_systime']) - int(first_disk_io['BLOCK_systime']))
-    read_div = int(second_disk_io['BLOCK_read']) - int(first_disk_io['BLOCK_read'])
-    write_div = int(second_disk_io['BLOCK_write']) - int(first_disk_io['BLOCK_write'])
+    time_div = (int(second_disk_io['BLOCK_systime']
+                    ) - int(first_disk_io['BLOCK_systime']))
+    read_div = int(second_disk_io['BLOCK_read']) - \
+        int(first_disk_io['BLOCK_read'])
+    write_div = int(second_disk_io['BLOCK_write']) - \
+        int(first_disk_io['BLOCK_write'])
     out_dict = {'BLOCK_read/s': int(read_div * 1000000000 / float(time_div) + 0.5),
                 'BLOCK_write/s': int(write_div * 1000000000 / float(time_div) + 0.5)}
 
@@ -232,7 +235,10 @@ def monitoring_over_time(container_id):
                      'NET_out/s': int(out_div * 1000000000 / float(time_div) + 0.5)})
 
     # CPU utilization
-    time_div = (int(second_cpu_usage['CPU_used_systime']) - int(first_cpu_usage['CPU_used_systime']))
-    usage_div = int(second_cpu_usage['CPU_used']) - int(first_cpu_usage['CPU_used'])
-    out_dict.update({'CPU_%': usage_div / float(time_div), 'CPU_cores': first_cpu_usage['CPU_cores']})
+    time_div = (int(second_cpu_usage['CPU_used_systime']
+                    ) - int(first_cpu_usage['CPU_used_systime']))
+    usage_div = int(second_cpu_usage['CPU_used']) - \
+        int(first_cpu_usage['CPU_used'])
+    out_dict.update({'CPU_%': usage_div / float(time_div),
+                     'CPU_cores': first_cpu_usage['CPU_cores']})
     return out_dict

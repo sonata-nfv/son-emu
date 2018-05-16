@@ -1,38 +1,34 @@
-"""
-Copyright (c) 2015 SONATA-NFV
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV [, ANY ADDITIONAL AFFILIATION]
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
-
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import logging
-import sys
-from mininet.node import  OVSSwitch
+from mininet.node import OVSSwitch
 import ast
 import time
-from prometheus_client import start_http_server, Summary, Histogram, Gauge, Counter, REGISTRY, CollectorRegistry, \
-    pushadd_to_gateway, push_to_gateway, delete_from_gateway
+from prometheus_client import Gauge, CollectorRegistry, \
+    pushadd_to_gateway, delete_from_gateway
 import threading
 from subprocess import Popen
 import os
@@ -51,6 +47,7 @@ PUSHGATEWAY_PORT = 9091
 CADVISOR_PORT = 8081
 
 COOKIE_MASK = 0xffffffff
+
 
 class DCNetworkMonitor():
     def __init__(self, net):
@@ -71,8 +68,8 @@ class DCNetworkMonitor():
         self.prom_rx_byte_count = Gauge('sonemu_rx_count_bytes', 'Total number of bytes received',
                                         ['vnf_name', 'vnf_interface', 'flow_id'], registry=self.registry)
 
-        self.prom_metrics={'tx_packets':self.prom_tx_packet_count, 'rx_packets':self.prom_rx_packet_count,
-                           'tx_bytes':self.prom_tx_byte_count,'rx_bytes':self.prom_rx_byte_count}
+        self.prom_metrics = {'tx_packets': self.prom_tx_packet_count, 'rx_packets': self.prom_rx_packet_count,
+                             'tx_bytes': self.prom_tx_byte_count, 'rx_bytes': self.prom_rx_byte_count}
 
         # list of installed metrics to monitor
         # each entry can contain this data
@@ -98,17 +95,20 @@ class DCNetworkMonitor():
         self.monitor_thread = threading.Thread(target=self.get_network_metrics)
         self.monitor_thread.start()
 
-        self.monitor_flow_thread = threading.Thread(target=self.get_flow_metrics)
+        self.monitor_flow_thread = threading.Thread(
+            target=self.get_flow_metrics)
         self.monitor_flow_thread.start()
 
         # helper tools
-        # cAdvisor, Prometheus pushgateway are started as external container, to gather monitoring metric in son-emu
+        # cAdvisor, Prometheus pushgateway are started as external container,
+        # to gather monitoring metric in son-emu
         self.pushgateway_process = self.start_PushGateway()
         self.cadvisor_process = self.start_cAdvisor()
 
-
     # first set some parameters, before measurement can start
-    def setup_flow(self, vnf_name, vnf_interface=None, metric='tx_packets', cookie=0):
+
+    def setup_flow(self, vnf_name, vnf_interface=None,
+                   metric='tx_packets', cookie=0):
 
         flow_metric = {}
 
@@ -133,8 +133,10 @@ class DCNetworkMonitor():
                     break
 
         if not vnf_switch:
-            logging.exception("vnf switch of {0}:{1} not found!".format(vnf_name, vnf_interface))
-            return "vnf switch of {0}:{1} not found!".format(vnf_name, vnf_interface)
+            logging.exception("vnf switch of {0}:{1} not found!".format(
+                vnf_name, vnf_interface))
+            return "vnf switch of {0}:{1} not found!".format(
+                vnf_name, vnf_interface)
 
         try:
             # default port direction to monitor
@@ -144,7 +146,8 @@ class DCNetworkMonitor():
             next_node = self.net.getNodeByName(vnf_switch)
 
             if not isinstance(next_node, OVSSwitch):
-                logging.info("vnf: {0} is not connected to switch".format(vnf_name))
+                logging.info(
+                    "vnf: {0} is not connected to switch".format(vnf_name))
                 return
 
             flow_metric['previous_measurement'] = 0
@@ -158,8 +161,10 @@ class DCNetworkMonitor():
             self.flow_metrics.append(flow_metric)
             self.monitor_flow_lock.release()
 
-            logging.info('Started monitoring flow:{3} {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie))
-            return 'Started monitoring flow:{3} {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie)
+            logging.info('Started monitoring flow:{3} {2} on {0}:{1}'.format(
+                vnf_name, vnf_interface, metric, cookie))
+            return 'Started monitoring flow:{3} {2} on {0}:{1}'.format(
+                vnf_name, vnf_interface, metric, cookie)
 
         except Exception as ex:
             logging.exception("setup_metric error.")
@@ -187,17 +192,21 @@ class DCNetworkMonitor():
                     labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=cookie). \
                     set(float('nan'))
 
-                delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
+                delete_from_gateway(
+                    self.pushgateway, job='sonemu-SDNcontroller')
 
                 self.monitor_flow_lock.release()
 
-                logging.info('Stopped monitoring flow {3}: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie))
-                return 'Stopped monitoring flow {3}: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric, cookie)
+                logging.info('Stopped monitoring flow {3}: {2} on {0}:{1}'.format(
+                    vnf_name, vnf_interface, metric, cookie))
+                return 'Stopped monitoring flow {3}: {2} on {0}:{1}'.format(
+                    vnf_name, vnf_interface, metric, cookie)
 
-        return 'Error stopping monitoring flow: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
-
+        return 'Error stopping monitoring flow: {0} on {1}:{2}'.format(
+            metric, vnf_name, vnf_interface)
 
     # first set some parameters, before measurement can start
+
     def setup_metric(self, vnf_name, vnf_interface=None, metric='tx_packets'):
 
         network_metric = {}
@@ -221,8 +230,10 @@ class DCNetworkMonitor():
                     break
 
         if 'mon_port' not in network_metric:
-            logging.exception("vnf interface {0}:{1} not found!".format(vnf_name,vnf_interface))
-            return "vnf interface {0}:{1} not found!".format(vnf_name,vnf_interface)
+            logging.exception("vnf interface {0}:{1} not found!".format(
+                vnf_name, vnf_interface))
+            return "vnf interface {0}:{1} not found!".format(
+                vnf_name, vnf_interface)
 
         try:
             # default port direction to monitor
@@ -242,12 +253,12 @@ class DCNetworkMonitor():
             next_node = self.net.getNodeByName(vnf_switch)
 
             if not isinstance(next_node, OVSSwitch):
-                logging.info("vnf: {0} is not connected to switch".format(vnf_name))
+                logging.info(
+                    "vnf: {0} is not connected to switch".format(vnf_name))
                 return
 
             network_metric['previous_measurement'] = 0
             network_metric['previous_monitor_time'] = 0
-
 
             network_metric['switch_dpid'] = int(str(next_node.dpid), 16)
             network_metric['metric_key'] = metric
@@ -256,9 +267,10 @@ class DCNetworkMonitor():
             self.network_metrics.append(network_metric)
             self.monitor_lock.release()
 
-
-            logging.info('Started monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric))
-            return 'Started monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric)
+            logging.info('Started monitoring: {2} on {0}:{1}'.format(
+                vnf_name, vnf_interface, metric))
+            return 'Started monitoring: {2} on {0}:{1}'.format(
+                vnf_name, vnf_interface, metric)
 
         except Exception as ex:
             logging.exception("setup_metric error.")
@@ -282,7 +294,7 @@ class DCNetworkMonitor():
                 self.network_metrics.remove(metric_dict)
 
                 # set values to NaN, prometheus api currently does not support removal of metrics
-                #self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(float('nan'))
+                # self.prom_metrics[metric_dict['metric_key']].labels(vnf_name, vnf_interface).set(float('nan'))
                 self.prom_metrics[metric_dict['metric_key']]. \
                     labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=None). \
                     set(float('nan'))
@@ -291,21 +303,28 @@ class DCNetworkMonitor():
                 # 1 single monitor job for all metrics of the SDN controller
                 # we can only  remove from the pushgateway grouping keys(labels) which we have defined for the add_to_pushgateway
                 # we can not specify labels from the metrics to be removed
-                # if we need to remove the metrics seperatelty, we need to give them a separate grouping key, and probably a diffferent registry also
-                delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
+                # if we need to remove the metrics seperatelty, we need to give
+                # them a separate grouping key, and probably a diffferent
+                # registry also
+                delete_from_gateway(
+                    self.pushgateway, job='sonemu-SDNcontroller')
 
                 self.monitor_lock.release()
 
-                logging.info('Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric))
-                return 'Stopped monitoring: {2} on {0}:{1}'.format(vnf_name, vnf_interface, metric)
+                logging.info('Stopped monitoring: {2} on {0}:{1}'.format(
+                    vnf_name, vnf_interface, metric))
+                return 'Stopped monitoring: {2} on {0}:{1}'.format(
+                    vnf_name, vnf_interface, metric)
 
             # delete everything from this vnf
             elif metric_dict['vnf_name'] == vnf_name and vnf_interface is None and metric is None:
                 self.monitor_lock.acquire()
                 self.network_metrics.remove(metric_dict)
-                logging.info('remove metric from monitor: vnf_name:{0} vnf_interface:{1} mon_port:{2}'.format(metric_dict['vnf_name'], metric_dict['vnf_interface'], metric_dict['mon_port']))
+                logging.info('remove metric from monitor: vnf_name:{0} vnf_interface:{1} mon_port:{2}'.format(
+                    metric_dict['vnf_name'], metric_dict['vnf_interface'], metric_dict['mon_port']))
 
-                delete_from_gateway(self.pushgateway, job='sonemu-SDNcontroller')
+                delete_from_gateway(
+                    self.pushgateway, job='sonemu-SDNcontroller')
                 self.monitor_lock.release()
                 continue
 
@@ -313,10 +332,12 @@ class DCNetworkMonitor():
             logging.info('Stopped monitoring vnf: {0}'.format(vnf_name))
             return 'Stopped monitoring: {0}'.format(vnf_name)
         else:
-            return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(metric, vnf_name, vnf_interface)
+            return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(
+                metric, vnf_name, vnf_interface)
 
 
 # get all metrics defined in the list and export it to Prometheus
+
     def get_flow_metrics(self):
         while self.start_monitoring:
 
@@ -329,13 +350,13 @@ class DCNetworkMonitor():
                 data['cookie_mask'] = COOKIE_MASK
 
                 if 'tx' in flow_dict['metric_key']:
-                    data['match'] = {'in_port':flow_dict['mon_port']}
+                    data['match'] = {'in_port': flow_dict['mon_port']}
                 elif 'rx' in flow_dict['metric_key']:
                     data['out_port'] = flow_dict['mon_port']
 
-
                 # query Ryu
-                ret = self.net.ryu_REST('stats/flow', dpid=flow_dict['switch_dpid'], data=data)
+                ret = self.net.ryu_REST(
+                    'stats/flow', dpid=flow_dict['switch_dpid'], data=data)
                 if isinstance(ret, dict):
                     flow_stat_dict = ret
                 elif isinstance(ret, basestring):
@@ -347,12 +368,13 @@ class DCNetworkMonitor():
 
                 self.set_flow_metric(flow_dict, flow_stat_dict)
 
-
             try:
                 if len(self.flow_metrics) > 0:
-                    pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
-            except Exception, e:
-                logging.warning("Pushgateway not reachable: {0} {1}".format(Exception, e))
+                    pushadd_to_gateway(
+                        self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
+            except Exception as e:
+                logging.warning(
+                    "Pushgateway not reachable: {0} {1}".format(Exception, e))
 
             self.monitor_flow_lock.release()
             time.sleep(1)
@@ -363,7 +385,8 @@ class DCNetworkMonitor():
             self.monitor_lock.acquire()
 
             # group metrics by dpid to optimize the rest api calls
-            dpid_list = [metric_dict['switch_dpid'] for metric_dict in self.network_metrics]
+            dpid_list = [metric_dict['switch_dpid']
+                         for metric_dict in self.network_metrics]
             dpid_set = set(dpid_list)
 
             for dpid in dpid_set:
@@ -378,28 +401,30 @@ class DCNetworkMonitor():
                     port_stat_dict = None
 
                 metric_list = [metric_dict for metric_dict in self.network_metrics
-                               if int(metric_dict['switch_dpid'])==int(dpid)]
+                               if int(metric_dict['switch_dpid']) == int(dpid)]
 
                 for metric_dict in metric_list:
                     self.set_network_metric(metric_dict, port_stat_dict)
 
             try:
                 if len(self.network_metrics) > 0:
-                    pushadd_to_gateway(self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
-            except Exception, e:
-                logging.warning("Pushgateway not reachable: {0} {1}".format(Exception, e))
+                    pushadd_to_gateway(
+                        self.pushgateway, job='sonemu-SDNcontroller', registry=self.registry)
+            except Exception as e:
+                logging.warning(
+                    "Pushgateway not reachable: {0} {1}".format(Exception, e))
 
             self.monitor_lock.release()
             time.sleep(1)
 
-    # add metric to the list to export to Prometheus, parse the Ryu port-stats reply
+    # add metric to the list to export to Prometheus, parse the Ryu port-stats
+    # reply
     def set_network_metric(self, metric_dict, port_stat_dict):
         # vnf tx is the datacenter switch rx and vice-versa
         metric_key = self.switch_tx_rx(metric_dict['metric_key'])
         switch_dpid = metric_dict['switch_dpid']
         vnf_name = metric_dict['vnf_name']
         vnf_interface = metric_dict['vnf_interface']
-        previous_measurement = metric_dict['previous_measurement']
         previous_monitor_time = metric_dict['previous_monitor_time']
         mon_port = metric_dict['mon_port']
         for port_stat in port_stat_dict[str(switch_dpid)]:
@@ -407,7 +432,8 @@ class DCNetworkMonitor():
             if port_stat['port_no'] == 'LOCAL':
                 continue
             if int(port_stat['port_no']) == int(mon_port):
-                port_uptime = port_stat['duration_sec'] + port_stat['duration_nsec'] * 10 ** (-9)
+                port_uptime = port_stat['duration_sec'] + \
+                    port_stat['duration_nsec'] * 10 ** (-9)
                 this_measurement = int(port_stat[metric_key])
 
                 # set prometheus metric
@@ -418,27 +444,26 @@ class DCNetworkMonitor():
                 # also the rate is calculated here, but not used for now
                 # (rate can be easily queried from prometheus also)
                 if previous_monitor_time <= 0 or previous_monitor_time >= port_uptime:
-                    metric_dict['previous_measurement'] = int(port_stat[metric_key])
+                    metric_dict['previous_measurement'] = int(
+                        port_stat[metric_key])
                     metric_dict['previous_monitor_time'] = port_uptime
                     # do first measurement
-                    #time.sleep(1)
-                    #self.monitor_lock.release()
+                    # time.sleep(1)
+                    # self.monitor_lock.release()
                     # rate cannot be calculated yet (need a first measurement)
-                    metric_rate = None
-
-                else:
-                    time_delta = (port_uptime - metric_dict['previous_monitor_time'])
-                    #metric_rate = (this_measurement - metric_dict['previous_measurement']) / float(time_delta)
-
                 metric_dict['previous_measurement'] = this_measurement
                 metric_dict['previous_monitor_time'] = port_uptime
                 return
 
-        logging.exception('metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface))
-        logging.exception('monport:{0}, dpid:{1}'.format(mon_port, switch_dpid))
-        logging.exception('monitored network_metrics:{0}'.format(self.network_metrics))
+        logging.exception('metric {0} not found on {1}:{2}'.format(
+            metric_key, vnf_name, vnf_interface))
+        logging.exception(
+            'monport:{0}, dpid:{1}'.format(mon_port, switch_dpid))
+        logging.exception(
+            'monitored network_metrics:{0}'.format(self.network_metrics))
         logging.exception('port dict:{0}'.format(port_stat_dict))
-        return 'metric {0} not found on {1}:{2}'.format(metric_key, vnf_name, vnf_interface)
+        return 'metric {0} not found on {1}:{2}'.format(
+            metric_key, vnf_name, vnf_interface)
 
     def set_flow_metric(self, metric_dict, flow_stat_dict):
         # vnf tx is the datacenter switch rx and vice-versa
@@ -446,8 +471,6 @@ class DCNetworkMonitor():
         switch_dpid = metric_dict['switch_dpid']
         vnf_name = metric_dict['vnf_name']
         vnf_interface = metric_dict['vnf_interface']
-        previous_measurement = metric_dict['previous_measurement']
-        previous_monitor_time = metric_dict['previous_monitor_time']
         cookie = metric_dict['cookie']
 
         counter = 0
@@ -458,21 +481,24 @@ class DCNetworkMonitor():
                 counter += flow_stat['packet_count']
 
         # flow_uptime disabled for now (can give error)
-        #flow_stat = flow_stat_dict[str(switch_dpid)][0]
-        #flow_uptime = flow_stat['duration_sec'] + flow_stat['duration_nsec'] * 10 ** (-9)
+        # flow_stat = flow_stat_dict[str(switch_dpid)][0]
+        # flow_uptime = flow_stat['duration_sec'] + flow_stat['duration_nsec'] * 10 ** (-9)
 
         self.prom_metrics[metric_dict['metric_key']]. \
             labels(vnf_name=vnf_name, vnf_interface=vnf_interface, flow_id=cookie). \
             set(counter)
 
     def start_Prometheus(self, port=9090):
-        # prometheus.yml configuration file is located in the same directory as this file
+        # prometheus.yml configuration file is located in the same directory as
+        # this file
         cmd = ["docker",
                "run",
                "--rm",
                "-p", "{0}:9090".format(port),
-               "-v", "{0}/prometheus.yml:/etc/prometheus/prometheus.yml".format(os.path.dirname(os.path.abspath(__file__))),
-               "-v", "{0}/profile.rules:/etc/prometheus/profile.rules".format(os.path.dirname(os.path.abspath(__file__))),
+               "-v", "{0}/prometheus.yml:/etc/prometheus/prometheus.yml".format(
+                   os.path.dirname(os.path.abspath(__file__))),
+               "-v", "{0}/profile.rules:/etc/prometheus/profile.rules".format(
+                   os.path.dirname(os.path.abspath(__file__))),
                "--name", "prometheus",
                "prom/prometheus"
                ]
@@ -502,12 +528,12 @@ class DCNetworkMonitor():
                "--volume=/var/lib/docker/:/var/lib/docker:ro",
                "--publish={0}:8080".format(port),
                "--name=cadvisor",
-               "--label",'com.containernet=""',
+               "--label", 'com.containernet=""',
                "--detach=true",
                "google/cadvisor:latest",
-               #"--storage_duration=1m0s",
-               #"--allow_dynamic_housekeeping=true",
-               #"--housekeeping_interval=1s",
+               # "--storage_duration=1m0s",
+               # "--allow_dynamic_housekeeping=true",
+               # "--housekeeping_interval=1s",
                ]
         logging.info('Start cAdvisor container {0}'.format(cmd))
         return Popen(cmd)
@@ -518,7 +544,8 @@ class DCNetworkMonitor():
         self.monitor_thread.join()
         self.monitor_flow_thread.join()
 
-        # these containers are used for monitoring but are started now outside of son-emu
+        # these containers are used for monitoring but are started now outside
+        # of son-emu
 
         if self.pushgateway_process is not None:
             logging.info('stopping pushgateway container')
@@ -528,27 +555,27 @@ class DCNetworkMonitor():
             logging.info('stopping cadvisor container')
             self._stop_container('cadvisor')
 
-    def switch_tx_rx(self,metric=''):
+    def switch_tx_rx(self, metric=''):
         # when monitoring vnfs, the tx of the datacenter switch is actually the rx of the vnf
-        # so we need to change the metric name to be consistent with the vnf rx or tx
+        # so we need to change the metric name to be consistent with the vnf rx
+        # or tx
         if 'tx' in metric:
-            metric = metric.replace('tx','rx')
+            metric = metric.replace('tx', 'rx')
         elif 'rx' in metric:
-            metric = metric.replace('rx','tx')
+            metric = metric.replace('rx', 'tx')
 
         return metric
 
     def _stop_container(self, name):
 
-        #container = self.dockercli.containers.get(name)
-        #container.stop()
-        #container.remove(force=True)
+        # container = self.dockercli.containers.get(name)
+        # container.stop()
+        # container.remove(force=True)
 
         # the only robust way to stop these containers is via Popen, it seems
         time.sleep(1)
         cmd = ['docker', 'rm', '-f', name]
         Popen(cmd)
-
 
     def update_skewmon(self, vnf_name, resource_name, action):
 
@@ -558,11 +585,11 @@ class DCNetworkMonitor():
         configfile = open(config_file_path, 'a+')
         try:
             config = json.load(configfile)
-        except:
-            #not a valid json file or empty
+        except BaseException:
+            # not a valid json file or empty
             config = {}
 
-        #initialize config file
+        # initialize config file
         if len(self.skewmon_metrics) == 0:
             config = {}
         json.dump(config, configfile)
@@ -576,14 +603,16 @@ class DCNetworkMonitor():
         if action == 'start':
             # add a new vnf to monitor
             config[key] = dict(VNF_NAME=vnf_name,
-                                VNF_ID=vnf_id,
-                                VNF_METRIC=resource_name)
-            ret = 'adding to skewness monitor: {0} {1} '.format(vnf_name, resource_name)
+                               VNF_ID=vnf_id,
+                               VNF_METRIC=resource_name)
+            ret = 'adding to skewness monitor: {0} {1} '.format(
+                vnf_name, resource_name)
             logging.info(ret)
         elif action == 'stop':
             # remove vnf to monitor
             config.pop(key)
-            ret = 'removing from skewness monitor: {0} {1} '.format(vnf_name, resource_name)
+            ret = 'removing from skewness monitor: {0} {1} '.format(
+                vnf_name, resource_name)
             logging.info(ret)
 
         self.skewmon_metrics = config
@@ -604,8 +633,8 @@ class DCNetworkMonitor():
             # start container if not running
             ret += 'starting skewness monitor'
             logging.info('starting skewness monitor')
-            volumes = {'/sys/fs/cgroup':{'bind':'/sys/fs/cgroup', 'mode':'ro'},
-                       '/tmp/skewmon.cfg':{'bind':'/config.txt', 'mode':'ro'}}
+            volumes = {'/sys/fs/cgroup': {'bind': '/sys/fs/cgroup', 'mode': 'ro'},
+                       '/tmp/skewmon.cfg': {'bind': '/config.txt', 'mode': 'ro'}}
             self.dockercli.containers.run('skewmon',
                                           detach=True,
                                           volumes=volumes,
@@ -616,7 +645,8 @@ class DCNetworkMonitor():
             started = False
             wait_time = 0
             while not started:
-                list1 = self.dockercli.containers.list(filters={'status': 'running', 'name': 'prometheus'})
+                list1 = self.dockercli.containers.list(
+                    filters={'status': 'running', 'name': 'prometheus'})
                 if len(list1) >= 1:
                     time.sleep(1)
                     started = True
@@ -634,7 +664,6 @@ class DCNetworkMonitor():
         :return:
         """
 
-
         if vnf_list is None:
             vnf_list = []
         if not isinstance(vnf_list, list):
@@ -644,8 +673,8 @@ class DCNetworkMonitor():
 
         return self.start_xterm(vnf_list)
 
-
     # start an xterm for the specfified vnfs
+
     def start_xterm(self, vnf_names):
         # start xterm for all vnfs
         for vnf_name in vnf_names:
@@ -660,13 +689,3 @@ class DCNetworkMonitor():
         if len(vnf_names) == 0:
             ret = 'vnf list is empty, no xterms started'
         return ret
-
-
-
-
-
-
-
-
-
-

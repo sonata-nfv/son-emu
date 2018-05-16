@@ -13,7 +13,7 @@ This repository is a fork of the [original vim-emu](https://osm.etsi.org/gitweb/
 
 ### Acknowledgments
 
-This software was originally developed by the [SONATA project](http://www.sonata-nfv.eu), funded by the European Commission under grant number 671517 through the Horizon 2020 and 5G-PPP programs.
+This software was originally developed by the [SONATA project](http://www.sonata-nfv.eu), funded by the European Commission under grant number 671517 through the Horizon 2020 and 5G-PPP programs. The development of this software is now also supported by the [5GTANGO project](https://5gtango.eu), funded by the European Commission under grant number H2020-ICT-2016-2 761493 through the Horizon 2020 and 5G-PPP programs.
 
 ### Cite this work
 
@@ -23,15 +23,7 @@ If you use the emulation platform for your research and/or other publications, p
 
 ## Installation
 
-There are multiple ways to install and use the emulation platform. The easiest way is the automated installation using the OSM installer. The bare-metal installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook. Another option is to use a nested Docker environment to run the emulator inside a Docker container.
-
-### Automated installation (recommended)
-
-```sh
-./install_osm.sh --lxdimages --vimemu
-```
-
-This command will install OSM (as LXC containers) as well as the emulator (as a Docker container) on a local machine. It is recommended to use a machine with Ubuntu 16.04.
+There are multiple ways to install and use the emulation platform. The bare-metal installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook. Another option is to use a nested Docker environment to run the emulator inside a Docker container.
 
 ### Manual installation
 

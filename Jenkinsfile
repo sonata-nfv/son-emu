@@ -15,6 +15,13 @@ pipeline {
                 sh "docker build --no-cache -t sonatanfv/son-emu:dev ."
             }
         }
+        stage('Style check') {
+            steps {
+                echo 'Style check...'
+                sh "docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock sonatanfv/son-emu:dev 'flake8 --exclude=.eggs,devops --ignore=E501 .'"
+                echo "done."
+            }
+        }
         stage('Test') {
             steps {
                 echo 'Testing...'

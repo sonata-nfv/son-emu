@@ -1,32 +1,30 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from __future__ import print_function  # TODO remove when print is no longer needed for debugging
-from resources import *
+from resources.router import Router
 from datetime import datetime
 import re
 import sys
@@ -68,7 +66,8 @@ class HeatParser:
                  * *False*: Else
         :rtype: ``bool``
         """
-        if not self.check_template_version(str(input_dict['heat_template_version'])):
+        if not self.check_template_version(
+                str(input_dict['heat_template_version'])):
             print('Unsupported template version: ' + input_dict['heat_template_version'], file=sys.stderr)
             return False
 
@@ -81,15 +80,19 @@ class HeatParser:
         self.bufferResource = list()
 
         for resource in self.resources.values():
-            self.handle_resource(resource, stack, dc_label, stack_update=stack_update)
+            self.handle_resource(resource, stack, dc_label,
+                                 stack_update=stack_update)
 
-        # This loop tries to create all classes which had unresolved dependencies.
+        # This loop tries to create all classes which had unresolved
+        # dependencies.
         unresolved_resources_last_round = len(self.bufferResource) + 1
-        while len(self.bufferResource) > 0 and unresolved_resources_last_round > len(self.bufferResource):
+        while len(self.bufferResource) > 0 and unresolved_resources_last_round > len(
+                self.bufferResource):
             unresolved_resources_last_round = len(self.bufferResource)
             number_of_items = len(self.bufferResource)
             while number_of_items > 0:
-                self.handle_resource(self.bufferResource.pop(0), stack, dc_label, stack_update=stack_update)
+                self.handle_resource(self.bufferResource.pop(
+                    0), stack, dc_label, stack_update=stack_update)
                 number_of_items -= 1
 
         if len(self.bufferResource) > 0:
@@ -123,7 +126,8 @@ class HeatParser:
             try:
                 net_name = resource['properties']['name']
                 if net_name not in stack.nets:
-                    stack.nets[net_name] = self.compute.create_network(net_name, True)
+                    stack.nets[net_name] = self.compute.create_network(
+                        net_name, True)
 
             except Exception as e:
                 LOG.warning('Could not create Net: ' + e.message)
@@ -141,7 +145,8 @@ class HeatParser:
                 net.subnet_name = resource['properties']['name']
                 if 'gateway_ip' in resource['properties']:
                     net.gateway_ip = resource['properties']['gateway_ip']
-                net.subnet_id = resource['properties'].get('id', str(uuid.uuid4()))
+                net.subnet_id = resource['properties'].get(
+                    'id', str(uuid.uuid4()))
                 net.subnet_creation_time = str(datetime.now())
                 if not stack_update:
                     net.set_cidr(IP.get_new_cidr(net.subnet_id))
@@ -158,8 +163,10 @@ class HeatParser:
                 else:
                     port = stack.ports[port_name]
 
-                if str(resource['properties']['network']['get_resource']) in stack.nets:
-                    net = stack.nets[resource['properties']['network']['get_resource']]
+                if str(resource['properties']['network']
+                       ['get_resource']) in stack.nets:
+                    net = stack.nets[resource['properties']
+                                     ['network']['get_resource']]
                     if net.subnet_id is not None:
                         port.net_name = net.name
                         port.ip_address = net.get_new_ip_address(port.name)
@@ -171,20 +178,24 @@ class HeatParser:
 
         if 'OS::Nova::Server' in resource['type']:
             try:
-                compute_name = str(dc_label) + '_' + str(stack.stack_name) + '_' + str(resource['properties']['name'])
+                compute_name = str(dc_label) + '_' + str(stack.stack_name) + \
+                    '_' + str(resource['properties']['name'])
                 shortened_name = str(dc_label) + '_' + str(stack.stack_name) + '_' + \
-                                 self.shorten_server_name(str(resource['properties']['name']), stack)
+                    self.shorten_server_name(
+                        str(resource['properties']['name']), stack)
                 nw_list = resource['properties']['networks']
 
                 if shortened_name not in stack.servers:
-                    server = self.compute.create_server(shortened_name, stack_update)
+                    server = self.compute.create_server(
+                        shortened_name, stack_update)
                     stack.servers[shortened_name] = server
                 else:
                     server = stack.servers[shortened_name]
 
                 server.full_name = compute_name
                 server.template_name = str(resource['properties']['name'])
-                server.command = resource['properties'].get('command', '/bin/sh')
+                server.command = resource['properties'].get(
+                    'command', '/bin/sh')
                 server.image = resource['properties']['image']
                 server.flavor = resource['properties']['flavor']
 
@@ -194,7 +205,8 @@ class HeatParser:
                     # we don't know which network it belongs to yet, but the resource will appear later in a valid
                     # template
                     if port_name not in stack.ports:
-                        stack.ports[port_name] = self.compute.create_port(port_name, stack_update)
+                        stack.ports[port_name] = self.compute.create_port(
+                            port_name, stack_update)
                     server.port_names.append(port_name)
                 return
             except Exception as e:
@@ -219,7 +231,8 @@ class HeatParser:
                         stack.routers[router_name].add_subnet(subnet_name)
                         return
             except Exception as e:
-                LOG.warning('Could not create RouterInterface: ' + e.__repr__())
+                LOG.warning(
+                    'Could not create RouterInterface: ' + e.__repr__())
             self.bufferResource.append(resource)
             return
 
@@ -228,7 +241,8 @@ class HeatParser:
                 port_name = resource['properties']['port_id']['get_resource']
                 floating_network_id = resource['properties']['floating_network_id']
                 if port_name not in stack.ports:
-                    stack.ports[port_name] = self.compute.create_port(port_name, stack_update)
+                    stack.ports[port_name] = self.compute.create_port(
+                        port_name, stack_update)
 
                 stack.ports[port_name].floating_ip = floating_network_id
             except Exception as e:
@@ -247,14 +261,17 @@ class HeatParser:
         if 'OS::Heat::ResourceGroup' in resource['type']:
             try:
                 embedded_resource = resource['properties']['resource_def']
-                LOG.debug("Found resource in resource group: {}".format(embedded_resource))
+                LOG.debug("Found resource in resource group: {}".format(
+                    embedded_resource))
                 # recursively parse embedded resource
-                self.handle_resource(embedded_resource, stack, dc_label, stack_update)
+                self.handle_resource(
+                    embedded_resource, stack, dc_label, stack_update)
             except Exception as e:
                 print('Could not create Router: ' + e.message)
             return
 
-        LOG.warning('Could not determine resource type: {}'.format(resource['type']))
+        LOG.warning(
+            'Could not determine resource type: {}'.format(resource['type']))
         return
 
     def shorten_server_name(self, server_name, stack):
@@ -310,8 +327,8 @@ class HeatParser:
         if year < 2015:
             return False
         if year == 2015:
-            if month < 04:
+            if month < 0o4:
                 return False
-            if month == 04 and day < 30:
+            if month == 0o4 and day < 30:
                 return False
         return True

@@ -1,30 +1,28 @@
-"""
-Copyright (c) 2017 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 from flask_restful import Resource
 from flask import request, Response
 from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
@@ -39,11 +37,16 @@ class KeystoneDummyApi(BaseOpenstackDummy):
     def __init__(self, in_ip, in_port):
         super(KeystoneDummyApi, self).__init__(in_ip, in_port)
 
-        self.api.add_resource(KeystoneListVersions, "/", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneShowAPIv2, "/v2.0", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneGetToken, "/v2.0/tokens", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneShowAPIv3, "/v3.0", resource_class_kwargs={'api': self})
-        self.api.add_resource(KeystoneGetTokenv3, "/v3.0/auth/tokens", resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneListVersions, "/",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneShowAPIv2, "/v2.0",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneGetToken, "/v2.0/tokens",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(KeystoneShowAPIv3, "/v3.0",
+                              resource_class_kwargs={'api': self})
+        self.api.add_resource(
+            KeystoneGetTokenv3, "/v3.0/auth/tokens", resource_class_kwargs={'api': self})
 
 
 class KeystoneListVersions(Resource):
@@ -85,7 +88,8 @@ class KeystoneListVersions(Resource):
         }]
         resp['versions']['values'] = version
 
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class KeystoneShowAPIv2(Resource):
@@ -106,8 +110,8 @@ class KeystoneShowAPIv2(Resource):
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
-        neutron_port = self.api.port + 4696
-        heat_port = self.api.port + 3004
+        # neutron_port = self.api.port + 4696
+        # heat_port = self.api.port + 3004
 
         resp = dict()
         resp['version'] = {
@@ -127,7 +131,8 @@ class KeystoneShowAPIv2(Resource):
             ]
         }
         LOG.debug(json.dumps(resp))
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class KeystoneShowAPIv3(Resource):
@@ -148,8 +153,8 @@ class KeystoneShowAPIv3(Resource):
         """
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
 
-        neutron_port = self.api.port + 4696
-        heat_port = self.api.port + 3004
+        # neutron_port = self.api.port + 4696
+        # heat_port = self.api.port + 3004
 
         resp = dict()
         resp['version'] = {
@@ -169,7 +174,8 @@ class KeystoneShowAPIv3(Resource):
             ]
         }
 
-        return Response(json.dumps(resp), status=200, mimetype='application/json')
+        return Response(json.dumps(resp), status=200,
+                        mimetype='application/json')
 
 
 class KeystoneGetToken(Resource):
@@ -208,11 +214,13 @@ class KeystoneGetToken(Resource):
 
             token['issued_at'] = "2014-01-30T15:30:58.819Z"
             token['expires'] = "2999-01-30T15:30:58.819Z"
-            token['id'] = req['auth'].get('token', {'id': 'fc394f2ab2df4114bde39905f800dc57'}).get('id')
+            token['id'] = req['auth'].get(
+                'token', {'id': 'fc394f2ab2df4114bde39905f800dc57'}).get('id')
             token['tenant'] = dict()
             token['tenant']['description'] = None
             token['tenant']['enabled'] = True
-            token['tenant']['id'] = req['auth'].get('tenantId', 'fc394f2ab2df4114bde39905f800dc57')
+            token['tenant']['id'] = req['auth'].get(
+                'tenantId', 'fc394f2ab2df4114bde39905f800dc57')
             token['tenant']['name'] = "tenantName"
 
             ret['access']['user'] = dict()
@@ -220,7 +228,8 @@ class KeystoneGetToken(Resource):
             user['username'] = req.get('username', "username")
             user['name'] = "tenantName"
             user['roles_links'] = list()
-            user['id'] = token['tenant'].get('id', "fc394f2ab2df4114bde39905f800dc57")
+            user['id'] = token['tenant'].get(
+                'id', "fc394f2ab2df4114bde39905f800dc57")
             user['roles'] = [{'name': 'Member'}]
 
             ret['access']['region_name'] = "RegionOne"
@@ -252,7 +261,7 @@ class KeystoneGetToken(Resource):
                     "endpoints_links": [],
                     "type": "identity",
                     "name": "keystone"
-                },
+            },
                 {
                     "endpoints": [
                         {
@@ -266,7 +275,7 @@ class KeystoneGetToken(Resource):
                     "endpoints_links": [],
                     "type": "network",
                     "name": "neutron"
-                },
+            },
                 {
                     "endpoints": [
                         {
@@ -280,7 +289,7 @@ class KeystoneGetToken(Resource):
                     "endpoints_links": [],
                     "type": "image",
                     "name": "glance"
-                },
+            },
                 {
                     "endpoints": [
                         {
@@ -294,26 +303,28 @@ class KeystoneGetToken(Resource):
                     "endpoints_links": [],
                     "type": "orchestration",
                     "name": "heat"
-                }
+            }
             ]
 
             ret['access']["metadata"] = {
-                                            "is_admin": 0,
-                                            "roles": [
-                                                "7598ac3c634d4c3da4b9126a5f67ca2b"
-                                            ]
-                                        },
+                "is_admin": 0,
+                "roles": [
+                    "7598ac3c634d4c3da4b9126a5f67ca2b"
+                ]
+            },
             ret['access']['trust'] = {
                 "id": "394998fa61f14736b1f0c1f322882949",
                 "trustee_user_id": "269348fdd9374b8885da1418e0730af1",
                 "trustor_user_id": "3ec3164f750146be97f21559ee4d9c51",
                 "impersonation": False
             }
-            return Response(json.dumps(ret), status=200, mimetype='application/json')
+            return Response(json.dumps(ret), status=200,
+                            mimetype='application/json')
 
         except Exception as ex:
             logging.exception("Keystone: Get token failed.")
             return ex.message, 500
+
 
 class KeystoneGetTokenv3(Resource):
     """
@@ -354,7 +365,8 @@ class KeystoneGetTokenv3(Resource):
             token['extras'] = dict()
             token['user'] = dict()
             user = token['user']
-            user['id'] = req['auth'].get('token', {'id': 'fc394f2ab2df4114bde39905f800dc57'}).get('id')
+            user['id'] = req['auth'].get(
+                'token', {'id': 'fc394f2ab2df4114bde39905f800dc57'}).get('id')
             user['name'] = "tenantName"
             user['password_expires_at'] = None
             user['domain'] = {"id": "default", "name": "Default"}
@@ -363,7 +375,7 @@ class KeystoneGetTokenv3(Resource):
             # project
             token['project'] = {
                 "domain": {
-                    "id" : "default",
+                    "id": "default",
                     "name": "Default"
                 },
                 "id": "8538a3f13f9541b28c2620eb19065e45",
@@ -396,7 +408,7 @@ class KeystoneGetTokenv3(Resource):
                     "id": "2dad48f09e2a447a9bf852bcd93543fc",
                     "type": "identity",
                     "name": "keystone"
-                },
+            },
                 {
                     "endpoints": [
                         {
@@ -409,7 +421,7 @@ class KeystoneGetTokenv3(Resource):
                     "id": "2dad48f09e2a447a9bf852bcd93548cf",
                     "type": "network",
                     "name": "neutron"
-                },
+            },
                 {
                     "endpoints": [
                         {
@@ -422,7 +434,7 @@ class KeystoneGetTokenv3(Resource):
                     "id": "2dad48f09e2a447a9bf852bcd93548cf",
                     "type": "image",
                     "name": "glance"
-                },
+            },
                 {
                     "endpoints": [
                         {
@@ -435,9 +447,10 @@ class KeystoneGetTokenv3(Resource):
                     "id": "2dad48f09e2a447a9bf852bcd93548bf",
                     "type": "orchestration",
                     "name": "heat"
-                }
+            }
             ]
-            return Response(json.dumps(ret), status=201, mimetype='application/json')
+            return Response(json.dumps(ret), status=201,
+                            mimetype='application/json')
 
         except Exception as ex:
             logging.exception("Keystone: Get token failed.")

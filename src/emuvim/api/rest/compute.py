@@ -1,36 +1,33 @@
-"""
-Copyright (c) 2015 SONATA-NFV and Paderborn University
-ALL RIGHTS RESERVED.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Neither the name of the SONATA-NFV, Paderborn University
-nor the names of its contributors may be used to endorse or promote
-products derived from this software without specific prior written
-permission.
-
-This work has been performed in the framework of the SONATA project,
-funded by the European Commission under Grant number 671517 through
-the Horizon 2020 and 5G-PPP programmes. The authors would like to
-acknowledge the contributions of their colleagues of the SONATA
-partner consortium (www.sonata-nfv.eu).
-"""
+# Copyright (c) 2015 SONATA-NFV and Paderborn University
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Neither the name of the SONATA-NFV, Paderborn University
+# nor the names of its contributors may be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# This work has been performed in the framework of the SONATA project,
+# funded by the European Commission under Grant number 671517 through
+# the Horizon 2020 and 5G-PPP programmes. The authors would like to
+# acknowledge the contributions of their colleagues of the SONATA
+# partner consortium (www.sonata-nfv.eu).
 import logging
 from flask_restful import Resource
 from flask import request
 import json
 import threading
-from copy import deepcopy
 
 logging.basicConfig()
 
@@ -61,7 +58,7 @@ class Compute(Resource):
         data = request.json
         if data is None:
             data = {}
-        elif type(data) is not dict:
+        elif not isinstance(data, dict):
             data = json.loads(request.json)
 
         network = data.get("network")
@@ -84,10 +81,12 @@ class Compute(Resource):
                 env = config.get("Env", list())
                 for env_var in env:
                     var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
-                    logging.debug("%r = %r" % (var , cmd))
-                    if var=="SON_EMU_CMD" or var=="VIM_EMU_CMD":
-                        logging.info("Executing entry point script in %r: %r" % (c.name, cmd))
-                        # execute command in new thread to ensure that API is not blocked by VNF
+                    logging.debug("%r = %r" % (var, cmd))
+                    if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
+                        logging.info(
+                            "Executing entry point script in %r: %r" % (c.name, cmd))
+                        # execute command in new thread to ensure that API is
+                        # not blocked by VNF
                         t = threading.Thread(target=c.cmdPrint, args=(cmd,))
                         t.daemon = True
                         t.start()
@@ -105,7 +104,8 @@ class Compute(Resource):
         logging.debug("API CALL: compute status")
 
         try:
-            return dcs.get(dc_label).containers.get(compute_name).getStatus(), 200, CORS_HEADER
+            return dcs.get(dc_label).containers.get(
+                compute_name).getStatus(), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
@@ -113,7 +113,8 @@ class Compute(Resource):
     def delete(self, dc_label, compute_name):
         logging.debug("API CALL: compute stop")
         try:
-            return dcs.get(dc_label).stopCompute(compute_name), 200, CORS_HEADER
+            return dcs.get(dc_label).stopCompute(
+                compute_name), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
@@ -152,19 +153,24 @@ class ComputeList(Resource):
                     all_containers += dc.listCompute()
                     all_extSAPs += dc.listExtSAPs()
 
-                extSAP_list = [(sap.name, sap.getStatus()) for sap in all_extSAPs]
-                container_list = [(c.name, c.getStatus()) for c in all_containers]
+                extSAP_list = [(sap.name, sap.getStatus())
+                               for sap in all_extSAPs]
+                container_list = [(c.name, c.getStatus())
+                                  for c in all_containers]
                 total_list = container_list + extSAP_list
                 return total_list, 200, CORS_HEADER
             else:
                 # return list of compute nodes for specified DC
-                container_list = [(c.name, c.getStatus()) for c in dcs.get(dc_label).listCompute()]
-                extSAP_list = [(sap.name, sap.getStatus()) for sap in dcs.get(dc_label).listExtSAPs()]
+                container_list = [(c.name, c.getStatus())
+                                  for c in dcs.get(dc_label).listCompute()]
+                extSAP_list = [(sap.name, sap.getStatus())
+                               for sap in dcs.get(dc_label).listExtSAPs()]
                 total_list = container_list + extSAP_list
                 return total_list, 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER
+
 
 class ComputeResources(Resource):
     """
@@ -206,8 +212,9 @@ class ComputeResources(Resource):
         # then no data
         if params is None:
             params = {}
-        logging.debug("REST CALL: update container resources {0}".format(params))
-        #check if container exists
+        logging.debug(
+            "REST CALL: update container resources {0}".format(params))
+        # check if container exists
         d = dcs.get(dc_label).net.getNodeByName(compute_name)
 
         # general request of cpu percentage
@@ -217,23 +224,25 @@ class ComputeResources(Resource):
             cpu_period = int(dcs.get(dc_label).net.cpu_period)
             value = params.get('cpu_bw')
             cpu_quota = int(cpu_period * float(value))
-            #put default values back
+            # put default values back
             if float(value) <= 0:
                 cpu_period = 100000
                 cpu_quota = -1
             params['cpu_period'] = cpu_period
             params['cpu_quota'] = cpu_quota
-            #d.updateCpuLimit(cpu_period=cpu_period, cpu_quota=cpu_quota)
+            # d.updateCpuLimit(cpu_period=cpu_period, cpu_quota=cpu_quota)
 
         # only pass allowed keys to docker
         allowed_keys = ['blkio_weight', 'cpu_period', 'cpu_quota', 'cpu_shares', 'cpuset_cpus',
                         'cpuset_mems', 'mem_limit', 'mem_reservation', 'memswap_limit',
                         'kernel_memory', 'restart_policy']
-        filtered_params = {key:params[key] for key in allowed_keys if key in params}
+        filtered_params = {key: params[key]
+                           for key in allowed_keys if key in params}
 
         d.update_resources(**filtered_params)
 
         return d
+
 
 class DatacenterList(Resource):
     global dcs
