@@ -132,8 +132,8 @@ Please check [this OSM wiki page](https://osm.etsi.org/wikipub/index.php/Workflo
 To run the unit tests do:
 
 * `cd ~/vim-emu`
-* `sudo py.test -v src/emuvim/test/unittests`
-(To force Python2: `python2 -m  pytest -v src/emuvim/test/unittests`)
+* `sudo pytest -v`
+* (To force Python2: `sudo python2 -m  pytest -v`)
 
 ## Seed code contributors:
 
