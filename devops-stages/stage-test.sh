@@ -38,10 +38,12 @@ docker pull 'ubuntu:trusty'
 # debugging
 echo "Tests executed inside: $(hostname)"
 echo "Tests executed by user: $(whoami)"
-# trigger the tests
 cd /son-emu/
-py.test -v src/emuvim/test/unittests
 # trigger pep8 style check
 echo "Doing flake8 style check ..."
 flake8 --exclude=.eggs,devops --ignore=E501 .
+echo "done."
+# trigger the tests
+echo "Running unit tests ..."
+pytest -v
 echo "done."
