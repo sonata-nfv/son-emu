@@ -732,8 +732,7 @@ class OpenstackCompute(object):
 
         my_links = self.dc.net.links
         for link in my_links:
-            if str(link.intf1) == port.intf_name and \
-                    str(link.intf1.ip) == port.ip_address.split('/')[0]:
+            if str(link.intf1) == port.intf_name:
                 self._remove_link(link.intf1.node.name, link)
                 break
 
