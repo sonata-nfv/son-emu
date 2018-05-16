@@ -21,6 +21,13 @@ pipeline {
                 sh "docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock sonatanfv/son-emu:dev 'py.test -v src/emuvim/test/unittests'"
             }
         }
+        stage('Style check') {
+            steps {
+                echo 'Style check...'
+                sh "docker run --name son-emu --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock sonatanfv/son-emu:dev 'flake8 --exclude=.eggs,devops --ignore=E501 .'"
+                echo "done."
+            }
+        }
         stage('Package') {
             steps {
                 echo 'Packaging (Docker-image)...'
