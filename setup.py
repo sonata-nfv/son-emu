@@ -26,7 +26,6 @@
 from setuptools import setup, find_packages
 
 setup(name='emuvim',
-      #a comment to break the style check to test jenkins
       version='1.0',
       license='Apache 2.0',
       description='vim-emu: A NFV multi-PoP emulation platform',
