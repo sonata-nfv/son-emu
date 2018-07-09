@@ -42,6 +42,7 @@ import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
+from emuvim.dcemulator.sfc import SFC
 
 LOG = logging.getLogger("dcemulator.net")
 LOG.setLevel(logging.DEBUG)
@@ -86,6 +87,7 @@ class DCNetwork(Containernet):
         self.deployed_elines = []
         self.deployed_elans = []
         self.installed_chains = []
+        self.sfc_data = SFC()
 
         # always cleanup environment before we start the emulator
         self.killRyu()
@@ -615,38 +617,18 @@ class DCNetwork(Containernet):
         # check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
-            connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
-            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
-            vnf_src_interface = link_dict[0]['src_port_id']
+            vnf_src_interface = self.set_vnf_interface(vnf_src_name, part="src")
 
-        for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
-            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
-            for link in link_dict:
-                if (link_dict[link]['src_port_id'] == vnf_src_interface or
-                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
-                    # found the right link and connected switch
-                    src_sw = connected_sw
-                    src_sw_inport_nr = link_dict[link]['dst_port_nr']
-                    src_sw_inport_name = link_dict[link]['dst_port_name']
-                    break
+        src_sw, src_sw_inport_name, src_sw_inport_nr = self.get_switch_data(vnf_src_interface, vnf_src_name, part="src")
 
         if vnf_dst_interface is None:
             # take first interface by default
-            connected_sw = self.DCNetwork_graph.neighbors(vnf_dst_name)[0]
-            link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
-            vnf_dst_interface = link_dict[0]['dst_port_id']
+            vnf_dst_interface = self.set_vnf_interface(vnf_dst_name, part="dst")
 
         vnf_dst_name = vnf_dst_name.split(':')[0]
-        for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
-            link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
-            for link in link_dict:
-                if link_dict[link]['dst_port_id'] == vnf_dst_interface or \
-                        link_dict[link]['dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
-                    # found the right link and connected switch
-                    dst_sw = connected_sw
-                    dst_sw_outport_nr = link_dict[link]['src_port_nr']
-                    dst_sw_outport_name = link_dict[link]['src_port_name']
-                    break
+
+        dst_sw, dst_sw_outport_name, dst_sw_outport_nr = self.get_switch_data(vnf_dst_interface, vnf_dst_name,
+                                                                              part="dst")
 
         path = kwargs.get('path')
         if path is None:
@@ -748,6 +730,48 @@ class DCNetwork(Containernet):
         flow_options_str = json.dumps(flow_options, indent=1)
         return "success: {2} between {0} and {1} with options: {3}".format(
             vnf_src_name, vnf_dst_name, cmd, flow_options_str)
+
+    def get_switch_data(self, vnf_src_interface, vnf_name, part):
+        sw, sw_port_name, sw_port_nr = None, None, None
+        for connected_sw in self.DCNetwork_graph.neighbors(vnf_name):
+            if part == "src":
+                link_dict = self.DCNetwork_graph[vnf_name][connected_sw]
+                for link in link_dict:
+                    if (link_dict[link]['src_port_id'] == vnf_src_interface or
+                            link_dict[link][
+                                'src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        # found the right link and connected switch
+                        sw = connected_sw
+                        sw_port_nr = link_dict[link]['dst_port_nr']
+                        sw_port_name = link_dict[link]['dst_port_name']
+                        break
+            elif part == "dst":
+                link_dict = self.DCNetwork_graph[connected_sw][vnf_name]
+                for link in link_dict:
+                    if link_dict[link]['dst_port_id'] == vnf_src_interface or \
+                            link_dict[link][
+                                'dst_port_name'] == vnf_src_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        # found the right link and connected switch
+                        sw = connected_sw
+                        sw_port_nr = link_dict[link]['src_port_nr']
+                        sw_port_name = link_dict[link]['src_port_name']
+                        break
+
+        return sw, sw_port_name, sw_port_nr
+
+    # part: src or dst
+    def set_vnf_interface(self, vnf_name, part):
+        vnf_interface = None
+        connected_sw = self.DCNetwork_graph.neighbors(vnf_name)[0]
+
+        if part == "src":
+            link_dict = self.DCNetwork_graph[vnf_name][connected_sw]
+            vnf_interface = link_dict[0]['src_port_id']
+        elif part == "dst":
+            link_dict = self.DCNetwork_graph[connected_sw][vnf_name]
+            vnf_interface = link_dict[0]['dst_port_id']
+
+        return vnf_interface
 
     def _set_flow_entry_ryu_rest(
             self, node, switch_inport_nr, switch_outport_nr, **kwargs):
@@ -999,3 +1023,26 @@ class DCNetwork(Containernet):
                     # found the right link and connected switch
                     src_sw_inport_name = link_dict[link]['dst_port_name']
                     return src_sw_inport_name
+
+    def make_something_with_sfc(self, vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface):
+        LOG.info("I want to make something with sfc2")
+
+        # check if port is specified (vnf:port)
+        if vnf_src_interface is None:
+            # take first interface by default
+            vnf_src_interface = self.set_vnf_interface(vnf_src_name, part="src")
+
+        src_sw, src_sw_inport_name, src_sw_inport_nr = self.get_switch_data(vnf_src_interface, vnf_src_name, part="src")
+
+        if vnf_dst_interface is None:
+            # take first interface by default
+            vnf_dst_interface = self.set_vnf_interface(vnf_dst_name, part="dst")
+
+        vnf_dst_name = vnf_dst_name.split(':')[0]
+
+        dst_sw, dst_sw_outport_name, dst_sw_outport_nr = self.get_switch_data(vnf_dst_interface, vnf_dst_name,
+                                                                              part="dst")
+
+
+        print("wait")
+
