@@ -42,7 +42,7 @@ setLogLevel('info')  # set Mininet loglevel
 #logging.getLogger('werkzeug').setLevel(logging.DEBUG)
 #logging.getLogger('api.openstack.base').setLevel(logging.DEBUG)
 #logging.getLogger('api.openstack.compute').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.keystone').setLevel(logging.DEBUG)
+#logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.keystone').setLevel(logging.DEBUGexit
 #logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.nova').setLevel(logging.DEBUG)
 #logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.neutron').setLevel(logging.DEBUG)
 #logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.heat').setLevel(logging.DEBUG)

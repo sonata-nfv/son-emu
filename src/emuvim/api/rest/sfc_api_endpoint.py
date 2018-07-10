@@ -14,9 +14,9 @@ LOG.setLevel(logging.INFO)
 app = Flask(__name__)
 api = Api(app)
 
-pp = api.namespace('portPair', description='PortPair operations')
-ppg = api.namespace('portPairGroup', description='PortPairGroup operations')
-pc = api.namespace('portChain', description='PortChain operations')
+pp = api.namespace('sfc/port_pairs', description='PortPair operations')
+ppg = api.namespace('sfc/port_pair_groups', description='PortPairGroup operations')
+pc = api.namespace('sfc/port_chains', description='PortChain operations')
 
 portPair = api.model('Port Pair', {
     'id': fields.Integer(readonly=True, description='unique identifier'),
@@ -86,10 +86,10 @@ class PortPairDAO(object):
 
     def create(self, data):
         global net
-        return net.make_something_with_sfc(vnf_src_name=data['vnf_src_name'],
-                                           vnf_src_interface=data['vnf_src_interface'],
-                                           vnf_dst_name=data['vnf_dst_name'],
-                                           vnf_dst_interface=data['vnf_dst_interface'])
+        return net.sfc_add_port_pair(vnf_src_name=data['vnf_src_name'],
+                                     vnf_src_interface=data['vnf_src_interface'],
+                                     vnf_dst_name=data['vnf_dst_name'],
+                                     vnf_dst_interface=data['vnf_dst_interface'])
 
     def update(self, id, data):
         api.abort(404, "not implemented")
@@ -106,18 +106,17 @@ ppDAO = PortPairDAO()
 
 
 @pp.route('/')
-class PortPairList(Resource):
+class PortPair(Resource):
     """ Show all Port Pairs and add some """
 
     @pp.doc('list_port_pairs')
     @pp.marshal_list_with(portPair)
     def get(self):
-        return ppDAO.portPairs
+        return ppDAO.delete(55)
 
     @pp.doc('create_port_pair')
     @pp.expect(portPair)
     @pp.marshal_list_with(portPair, code=201)
     def post(self):
         """ Create a new PortPair """
-        # print(api.payload)
         return ppDAO.create(api.payload), 201

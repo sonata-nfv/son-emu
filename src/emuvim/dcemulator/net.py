@@ -42,7 +42,7 @@ import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
-from emuvim.dcemulator.sfc import SFC
+from emuvim.dcemulator.sfc import SFC, PortChain, PortPair, PortPairGroup
 
 LOG = logging.getLogger("dcemulator.net")
 LOG.setLevel(logging.DEBUG)
@@ -373,7 +373,8 @@ class DCNetwork(Containernet):
                 link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
                 for link in link_dict:
                     if (link_dict[link]['src_port_id'] == vnf_src_interface or
-                            link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                            link_dict[link][
+                                'src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                         # found the right link and connected switch
                         src_sw = connected_sw
                         src_sw_inport_name = link_dict[link]['dst_port_name']
@@ -420,7 +421,8 @@ class DCNetwork(Containernet):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
                 if (link_dict[link]['src_port_id'] == vnf_src_interface or
-                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        link_dict[link][
+                            'src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     src_sw = connected_sw
                     src_sw_inport_nr = link_dict[link]['dst_port_nr']
@@ -438,7 +440,8 @@ class DCNetwork(Containernet):
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             for link in link_dict:
                 if link_dict[link]['dst_port_id'] == vnf_dst_interface or \
-                        link_dict[link]['dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        link_dict[link][
+                            'dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     dst_sw = connected_sw
                     dst_sw_outport_nr = link_dict[link]['src_port_nr']
@@ -593,8 +596,8 @@ class DCNetwork(Containernet):
                 if kwargs.get('path') is not None:
                     kwargs['path'] = list(reversed(kwargs.get('path')))
                 ret = ret + '\n' + \
-                    self._chainAddFlow(
-                        vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
+                      self._chainAddFlow(
+                          vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
 
         else:
             ret = "Command unknown"
@@ -900,7 +903,7 @@ class DCNetwork(Containernet):
             if vlan is not None:
                 if index == 0:  # first node
                     action = ('action=mod_vlan_vid:%s' % vlan) + \
-                        (',output=%s' % switch_outport_nr)
+                             (',output=%s' % switch_outport_nr)
                     match = '-O OpenFlow13 ' + match
                 elif index == len(path) - 1:  # last node
                     match += ',dl_vlan=%s' % vlan
@@ -1024,9 +1027,8 @@ class DCNetwork(Containernet):
                     src_sw_inport_name = link_dict[link]['dst_port_name']
                     return src_sw_inport_name
 
-    def make_something_with_sfc(self, vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface):
-        LOG.info("I want to make something with sfc2")
-
+    def sfc_add_port_pair(self, vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface):
+        LOG.info("SFC: Check reachability")
         # check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
@@ -1043,6 +1045,5 @@ class DCNetwork(Containernet):
         dst_sw, dst_sw_outport_name, dst_sw_outport_nr = self.get_switch_data(vnf_dst_interface, vnf_dst_name,
                                                                               part="dst")
 
-
-        print("wait")
-
+        print("Ports found, add to SFC store")
+        self.sfc_data.add_port_pair(PortPair(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface))
