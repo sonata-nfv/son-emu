@@ -121,7 +121,7 @@ class PortChains(Resource):
     @pc.marshal_list_with(portChain, code=201)
     def post(self):
         """ Add port chain """
-        new_port_exitchain = net.sfc_add_port_chain(description=api.payload['description'],
+        new_port_chain = net.sfc_add_port_chain(description=api.payload['description'],
                                                 port_pair_groups=api.payload['port_pair_groups'])
         if new_port_chain is None:
             abort(409)
