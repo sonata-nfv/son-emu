@@ -33,6 +33,7 @@ import requests
 import os
 import json
 
+from flask_restplus import abort
 from mininet.net import Containernet
 from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
@@ -1030,13 +1031,13 @@ class DCNetwork(Containernet):
     def sfc_add_port_pair(self, vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface):
         LOG.info("SFC: Check reachability")
         # check if port is specified (vnf:port)
-        if vnf_src_interface is None:
+        if vnf_src_interface is None or vnf_dst_interface == '':
             # take first interface by default
             vnf_src_interface = self.set_vnf_interface(vnf_src_name, part="src")
 
         src_sw, src_sw_inport_name, src_sw_inport_nr = self.get_switch_data(vnf_src_interface, vnf_src_name, part="src")
 
-        if vnf_dst_interface is None:
+        if vnf_dst_interface is None or vnf_dst_interface == '':
             # take first interface by default
             vnf_dst_interface = self.set_vnf_interface(vnf_dst_name, part="dst")
 
@@ -1045,5 +1046,32 @@ class DCNetwork(Containernet):
         dst_sw, dst_sw_outport_name, dst_sw_outport_nr = self.get_switch_data(vnf_dst_interface, vnf_dst_name,
                                                                               part="dst")
 
-        print("Ports found, add to SFC store")
-        self.sfc_data.add_port_pair(PortPair(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface))
+        LOG.debug("Ports found, add to SFC store")
+        new_port_pair = PortPair(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface)
+        self.sfc_data.add_port_pair(new_port_pair)
+        return vars(new_port_pair)
+
+    def sfc_get_port_pair(self, id):
+        if id is None:
+            return self.sfc_data.get_port_pairs()
+        return self.sfc_data.get_port_pair(id)
+
+    def sfc_delete_port_pair(self, id):
+        self.sfc_data.delete_port_pair(id)
+        return
+
+    def sfc_add_port_pair_group(self, description, port_pairs):
+        for port_pair in port_pairs:
+            if self.sfc_data.get_port_pair(port_pair) is None:
+                return
+        new_port_pair_group = PortPairGroup(description, port_pairs)
+        self.sfc_data.add_port_pair_group(new_port_pair_group)
+        return new_port_pair_group
+
+    def sfc_add_port_chain(self, description, port_pair_groups):
+        for port_pair_group in port_pair_groups:
+            if self.sfc_data.get_port_pair_group(port_pair_group) is None:
+                return
+        new_port_chain = PortChain(description, port_pair_groups)
+        self.sfc_data.add_port_chain(new_port_chain)
+        return new_port_chain

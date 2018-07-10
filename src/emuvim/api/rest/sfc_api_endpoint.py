@@ -1,7 +1,7 @@
 import threading
 
 from flask import Flask
-from flask_restplus import Resource, Api, fields
+from flask_restplus import Resource, Api, fields, abort
 import logging
 
 from gevent.pywsgi import WSGIServer
@@ -28,15 +28,16 @@ portPair = api.model('Port Pair', {
 
 portPairGroup = api.model('Port Pair Group', {
     'id': fields.Integer(readonly=True, description='unique identifier'),
+    'description': fields.String(description='useful information about the Port Pair Group'),
     'port_pairs': fields.List(fields.Integer, required=True, description='Port Pairs of equal VNFs')
 })
 
 portChain = api.model('Port Chain', {
     'id': fields.Integer(readonly=True, description='unique identifier'),
+    'description': fields.String(description='useful information about the Port Chain'),
     'port_pair_groups': fields.List(fields.Integer, required=True,
                                     description='PortPairGroups, the order will be preserved'),
-    'status': fields.String(readonly=True, description='status of SFC: (FAILURE: <message>), (DEPLOYED)')
-
+    'chain_id': fields.String(readonly=True, description='Reference to the Rendered Service Path')
 })
 net = None  # type: DCNetwork
 
@@ -79,10 +80,8 @@ class PortPairDAO(object):
         self.portPairs = []
 
     def get(self, id):
-        for portPair in self.portPairs:
-            if portPair['id'] == id:
-                return portPair
-        api.abort(404, "PortPair {} does not exist".format(id))
+        if id is None:
+            return net.sfc_get_port_pair(None)
 
     def create(self, data):
         global net
@@ -103,20 +102,145 @@ ppDAO = PortPairDAO()
 
 # ppDAO.create({'vnf_src_name': 'vnfsrc',               'vnf_dst_name': 'vnfdst',               'vnf_src_interface':
 # 'vnfsrciface',               'vnf_dst_interface': 'vnfdstiface'               })
+@pc.route('/')
+class PortChains(Resource):
+    """ Show Port Chains and add some"""
+
+    @pc.doc('list_port_chains')
+    @pc.marshal_list_with(portChain)
+    def get(self):
+        response = net.sfc_data.get_port_chains()
+        if response is None:
+            abort(404)
+        else:
+            return response
+
+    @pc.response(409, 'Port chain not found, create port pair group before assign in port chain')
+    @pc.doc('create_port_chain')
+    @pc.expect(portChain)
+    @pc.marshal_list_with(portChain, code=201)
+    def post(self):
+        """ Add port chain """
+        new_port_exitchain = net.sfc_add_port_chain(description=api.payload['description'],
+                                                port_pair_groups=api.payload['port_pair_groups'])
+        if new_port_chain is None:
+            abort(409)
+        else:
+            return new_port_chain
+
+
+@pc.route('/<int:id>')
+@pc.response(404, 'Port chain not found')
+@pc.param('id', 'Port chain identifier')
+class PortChain(Resource):
+    """ Show a single port chain, or delete them """
+
+    @pc.doc('get_port_chain')
+    @pc.marshal_with(portChain)
+    def get(self, id):
+        """ Fetch a port pair group """
+        response = net.sfc_data.get_port_chain(id)
+        if response is None:
+            abort(404)
+        else:
+            return response
+
+    @pc.doc('delete_port_chain')
+    @pc.response(204, 'Port chain deleted')
+    def delete(self, id):
+        """ Delete a port pair group """
+        net.sfc_data.delete_port_chain(id)
+        return '', 200  # 204 not possible, because flask returns content length 3 and thats not compliant
+
+
+@ppg.route('/')
+class PortPairGroups(Resource):
+    """ Show Port Pair Groups and add some"""
+
+    @ppg.doc('list_port_pair_groups')
+    @ppg.marshal_list_with(portPairGroup)
+    def get(self):
+        response = net.sfc_data.get_port_pair_groups()
+        if response is None:
+            abort(404)
+        else:
+            return response
+
+    @ppg.response(409, 'Port pair not found, create port pair before assign in port pair group')
+    @ppg.doc('create_port_pair')
+    @ppg.expect(portPairGroup)
+    @ppg.marshal_list_with(portPairGroup, code=201)
+    def post(self):
+        """ Add port pair group """
+        new_port_pair_group = net.sfc_add_port_pair_group(description=api.payload['description'],
+                                                          port_pairs=api.payload['port_pairs'])
+        if new_port_pair_group is None:
+            abort(409)
+        else:
+            return new_port_pair_group
+
+
+@ppg.route('/<int:id>')
+@ppg.response(404, 'Port pair group not found')
+@ppg.param('id', 'Port pair group identifier')
+class PortPairGroup(Resource):
+    """ Show a single port pair group, or delete them """
+
+    @ppg.doc('get_port_pair_group')
+    @ppg.marshal_with(portPairGroup)
+    def get(self, id):
+        """ Fetch a port pair group """
+        response = net.sfc_data.get_port_pair_group(id)
+        if response is None:
+            abort(404)
+        else:
+            return response
+
+    @ppg.doc('delete_port_pair_group')
+    @ppg.response(204, 'Port pair group deleted')
+    def delete(self, id):
+        """ Delete a port pair group """
+        net.sfc_data.delete_port_pair_group(id)
+        return '', 200  # 204 not possible, because flask returns content length 3 and thats not compliant
 
 
 @pp.route('/')
-class PortPair(Resource):
+class PortPairs(Resource):
     """ Show all Port Pairs and add some """
 
     @pp.doc('list_port_pairs')
     @pp.marshal_list_with(portPair)
     def get(self):
-        return ppDAO.delete(55)
+        """ Fetch all port pairs"""
+        return net.sfc_get_port_pair(None)
 
     @pp.doc('create_port_pair')
     @pp.expect(portPair)
     @pp.marshal_list_with(portPair, code=201)
     def post(self):
-        """ Create a new PortPair """
+        """ Create a new port pair """
         return ppDAO.create(api.payload), 201
+
+
+@pp.route('/<int:id>')
+@pp.response(404, 'Port pair not found')
+@pp.param('id', 'Port pair identifier')
+class PortPair(Resource):
+    """ Show a single port pair, or delete them """
+
+    @pp.doc('get_port_pair')
+    @pp.marshal_with(portPair)
+    def get(self, id):
+        """ Fetch a port pair """
+        response = net.sfc_data.get_port_pair(id)
+        if response is None:
+            abort(404)
+        else:
+            return response
+
+    @pp.doc('delete_todo')
+    @pp.response(204, 'Todo deleted')
+    def delete(self, id):
+        """ Delete a port pair """
+        net.sfc_delete_port_pair(id)
+        return '', 200  # 204 not possible, because flask returns content length 3 and thats not compliant
