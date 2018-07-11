@@ -101,5 +101,19 @@ class PortPair(object):
 
 
 class RSP:
-    def __init__(self):
+    spi_counter = 0
+
+    def __init__(self, id, spi):
+        self.rspis = []
+        self.spi = RSP.spi_counter = RSP.spi_counter + 1
+
+
+class RSPI:
+    def __init__(self, si, ovs_sw, ovs_src_port, ovs_src_port_name, ovs_dst_port, ovs_dst_port_name):
+        self.si = si
+        self.ovs_sw = ovs_sw
+        self.ovs_src_port = ovs_src_port
+        self.ovs_src_port_name = ovs_src_port_name
+        self.ovs_dst_port = ovs_dst_port
+        self.ovs_dst_port_name = ovs_dst_port_name
         pass

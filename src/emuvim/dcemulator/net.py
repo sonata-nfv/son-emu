@@ -23,27 +23,26 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
+import json
 import logging
-
+import os
+import re
 import site
 import time
 from subprocess import Popen
-import re
-import requests
-import os
-import json
 
-from flask_restplus import abort
-from mininet.net import Containernet
-from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
+import networkx as nx
+import requests
+from mininet.clean import cleanup
 from mininet.cli import CLI
 from mininet.link import TCLink
-from mininet.clean import cleanup
-import networkx as nx
+from mininet.net import Containernet
+from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
+
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
-from emuvim.dcemulator.sfc import SFC, PortChain, PortPair, PortPairGroup
+from emuvim.dcemulator.sfc import SFC, PortChain, PortPair, PortPairGroup, RSP, RSPI
 
 LOG = logging.getLogger("dcemulator.net")
 LOG.setLevel(logging.DEBUG)
@@ -1073,5 +1072,60 @@ class DCNetwork(Containernet):
             if self.sfc_data.get_port_pair_group(port_pair_group) is None:
                 return
         new_port_chain = PortChain(description, port_pair_groups)
-        self.sfc_data.add_port_chain(new_port_chain)
+
+        rspis = self._sfc_translate_to_rsp(new_port_chain)
+
+        print("make sth with rspis")
+
         return new_port_chain
+
+    def _sfc_translate_to_rsp(self, port_chain):
+        rspis = []
+
+        for port_pair_group in port_chain.port_pair_groups:
+
+            port_pair = self.sfc_data.get_port_pair(
+                self.sfc_data.get_port_pair_group(port_pair_group).port_pairs[0])  # port_pair_group.port_pairs[0]
+
+            src_sw, src_sw_port_name, src_sw_port_nr = self.get_switch_data(port_pair.vnf_src_interface,
+                                                                            port_pair.vnf_src_name, part="src")
+            dst_sw, dst_sw_port_name, dst_sw_port_nr = self.get_switch_data(port_pair.vnf_dst_interface,
+                                                                            port_pair.vnf_dst_name, part="dst")
+            # Now, we know the start and the destination switch between the two service functions. Next: Get the path
+            # between them.
+
+            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw)
+            current_hop = src_sw
+            switch_inport_nr = src_sw_port_nr
+            for i in range(0, len(path)):
+                current_node = self.getNodeByName(current_hop)
+                if i < len(path) - 1:
+                    next_hop = path[i + 1]
+                else:
+                    # last switch reached
+                    next_hop = port_pair.vnf_dst_name
+
+                next_node = self.getNodeByName(next_hop)
+                if next_hop == port_pair.vnf_dst_name:
+                    switch_outport_nr = dst_sw_port_nr
+                    LOG.info("end node reached: {0}".format(port_pair.vnf_dst_name))
+                elif not isinstance(next_node, OVSSwitch):
+                    LOG.info("Next node: {0} is not a switch".format(next_hop))
+                    return "Next node: {0} is not a switch".format(next_hop)
+                else:
+                    # take first link between switches by default
+                    index_edge_out = 0
+                    switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
+
+                # create RSPI
+                if isinstance(current_node, OVSSwitch):
+                    rspis.append(
+                        RSPI(i, current_hop, switch_inport_nr, None, switch_outport_nr, None))
+
+                # set for next iteration
+                if isinstance(next_node, OVSSwitch):
+                    switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
+                    current_hop = next_hop
+        for i in range(0, len(rspis)):
+            rspis[i].si = len(rspis)-i
+        return rspis

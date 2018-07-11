@@ -74,34 +74,6 @@ class SfcApiEndpoint(object):
         self.http_server.serve_forever()
 
 
-class PortPairDAO(object):
-    def __init__(self):
-        self.counter = 0
-        self.portPairs = []
-
-    def get(self, id):
-        if id is None:
-            return net.sfc_get_port_pair(None)
-
-    def create(self, data):
-        global net
-        return net.sfc_add_port_pair(vnf_src_name=data['vnf_src_name'],
-                                     vnf_src_interface=data['vnf_src_interface'],
-                                     vnf_dst_name=data['vnf_dst_name'],
-                                     vnf_dst_interface=data['vnf_dst_interface'])
-
-    def update(self, id, data):
-        api.abort(404, "not implemented")
-
-    def delete(self, id):
-        api.abort(404, "not implemented")
-
-
-ppDAO = PortPairDAO()
-
-
-# ppDAO.create({'vnf_src_name': 'vnfsrc',               'vnf_dst_name': 'vnfdst',               'vnf_src_interface':
-# 'vnfsrciface',               'vnf_dst_interface': 'vnfdstiface'               })
 @pc.route('/')
 class PortChains(Resource):
     """ Show Port Chains and add some"""
@@ -219,7 +191,10 @@ class PortPairs(Resource):
     @pp.marshal_list_with(portPair, code=201)
     def post(self):
         """ Create a new port pair """
-        return ppDAO.create(api.payload), 201
+        return net.sfc_add_port_pair(vnf_src_name=api.payload['vnf_src_name'],
+                                     vnf_src_interface=api.payload['vnf_src_interface'],
+                                     vnf_dst_name=api.payload['vnf_dst_name'],
+                                     vnf_dst_interface=api.payload['vnf_dst_interface']), 201
 
 
 @pp.route('/<int:id>')
