@@ -1074,9 +1074,10 @@ class DCNetwork(Containernet):
         new_port_chain = PortChain(description, port_pair_groups)
 
         rspis = self._sfc_translate_to_rsp(new_port_chain)
-
         print("make sth with rspis")
-
+        rsp = RSP()
+        rsp.rspis = rspis
+        self._sfc_deploy_rsp(rsp)
         return new_port_chain
 
     def _sfc_translate_to_rsp(self, port_chain):
@@ -1120,12 +1121,26 @@ class DCNetwork(Containernet):
                 # create RSPI
                 if isinstance(current_node, OVSSwitch):
                     rspis.append(
-                        RSPI(i, current_hop, switch_inport_nr, None, switch_outport_nr, None))
+                        RSPI(i, current_node, switch_inport_nr, None, switch_outport_nr, None))
 
                 # set for next iteration
                 if isinstance(next_node, OVSSwitch):
                     switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
                     current_hop = next_hop
         for i in range(0, len(rspis)):
-            rspis[i].si = len(rspis)-i
+            rspis[i].si = len(rspis) - i
         return rspis
+
+    def _sfc_deploy_rsp(self, rsp, ):
+        for rspi in rsp.rspis:
+            self._sfc_set_flow_entry_dpctl(
+                rspi.ovs_sw, rspi.ovs_src_port, rspi.ovs_dst_port, rspi.si, rsp.spi)
+
+    def _sfc_set_flow_entry_dpctl(self, ovs_sw, ovs_src_port, ovs_dst_port, si, spi):
+        s=','
+        match = "-Oopenflow13 in_port={0},dl_type=0x894f,nsh_spi={1},nsh_si={2}".format(ovs_src_port, hex(spi), si)
+        action = "action=output={0}".format(ovs_dst_port)
+        s.join([match, action])
+        LOG.debug(ovs_sw.dpctl('add-flow', s.join([match, action])))
+
+

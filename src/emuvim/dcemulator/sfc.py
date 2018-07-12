@@ -103,7 +103,7 @@ class PortPair(object):
 class RSP:
     spi_counter = 0
 
-    def __init__(self, id, spi):
+    def __init__(self):
         self.rspis = []
         self.spi = RSP.spi_counter = RSP.spi_counter + 1
 
