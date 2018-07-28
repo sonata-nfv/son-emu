@@ -65,7 +65,7 @@ class DCNetwork(Containernet):
     """
 
     def __init__(self, controller=RemoteController, monitor=False,
-                 enable_learning=False,
+                 enable_learning=False, enable_sfc=False,
                  # learning switch behavior of the default ovs switches icw Ryu
                  # controller can be turned off/on, needed for E-LAN
                  # functionality
@@ -108,7 +108,7 @@ class DCNetwork(Containernet):
         # Ryu management
         if controller == RemoteController:
             # start Ryu controller
-            self.startRyu(learning_switch=enable_ryu_learning)
+            self.startRyu(enable_sfc, learning_switch=enable_ryu_learning)
 
         # add the specified controller
         self.addController('c0', controller=controller)
@@ -921,7 +921,7 @@ class DCNetwork(Containernet):
                                                                         switch_outport_nr, cmd))
 
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
-    def startRyu(self, learning_switch=True):
+    def startRyu(self, enable_sfc, learning_switch=True):
         # start Ryu controller with rest-API
         python_install_path = site.getsitepackages()[0]
         # ryu default learning switch
@@ -930,7 +930,7 @@ class DCNetwork(Containernet):
         # ovs switches
         dir_path = os.path.dirname(os.path.realpath(__file__))
         ryu_path = dir_path + '/son_emu_simple_switch_13.py'
-        ryu_path2 = python_install_path + '/ryu/app/ofctl_rest.py'
+        ryu_path2 = python_install_path + '/ryu/app/ofctl_rest.py ' + python_install_path + '/ryu/app/rest_router.py'
         # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
         # Ryu still uses 6633 as default
         ryu_option = '--ofp-tcp-listen-port'
