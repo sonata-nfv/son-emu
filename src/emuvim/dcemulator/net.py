@@ -37,7 +37,7 @@ from mininet.clean import cleanup
 from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.net import Containernet
-from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
+from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController, Node
 
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
@@ -329,6 +329,7 @@ class DCNetwork(Containernet):
         for dc in self.dcs.itervalues():
             dc.start()
         Containernet.start(self)
+        self._reconnect_switches()
 
     def stop(self):
 
@@ -929,8 +930,8 @@ class DCNetwork(Containernet):
         # custom learning switch that installs a default NORMAL action in the
         # ovs switches
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ryu_path = dir_path + '/son_emu_simple_switch_13.py'
-        ryu_path2 = python_install_path + '/ryu/app/ofctl_rest.py ' + python_install_path + '/ryu/app/rest_router.py'
+        ryu_path2 = python_install_path + '/ryu/app/rest_router.py'# dir_path + '/son_emu_simple_switch_13.py'
+        ryu_path = python_install_path + '/ryu/app/ofctl_rest.py'
         # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
         # Ryu still uses 6633 as default
         ryu_option = '--ofp-tcp-listen-port'
@@ -947,7 +948,7 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen(
                 [ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
             LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
-        time.sleep(1)
+        time.sleep(6) # Wait until ryu is ready
 
     def killRyu(self):
         """
@@ -1142,5 +1143,18 @@ class DCNetwork(Containernet):
         action = "action=output={0}".format(ovs_dst_port)
         s.join([match, action])
         LOG.debug(ovs_sw.dpctl('add-flow', s.join([match, action])))
+
+    def _reconnect_switches(self):
+        for dc in self.dcs:
+            dci = self.dcs[dc]
+            dcs = None
+            if isinstance(dci, Datacenter):
+                dcs = dci.switch
+            if isinstance(dcs, Node):
+                LOG.info(dcs.vsctl('del-controller', dcs.name))
+                time.sleep(1)
+                LOG.debug(dcs.vsctl('set-controller', dcs.name, 'tcp:127.0.0.1:6653'))
+        print("hallo")
+
 
 
