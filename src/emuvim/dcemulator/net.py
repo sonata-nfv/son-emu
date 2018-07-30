@@ -136,10 +136,11 @@ class DCNetwork(Containernet):
             dc_emulation_max_cpu, dc_emulation_max_mem)
         self.cpu_period = CPU_PERIOD
 
-    def addDatacenter(self, label, metadata={}, resource_log_path=None):
+    def addDatacenter(self, label, metadata={}, resource_log_path=None, network=None):
         """
         Create and add a logical cloud data center to the network.
         """
+
         if label in self.dcs:
             raise Exception("Data center label already exists: %s" % label)
         dc = Datacenter(label, metadata=metadata,
@@ -948,7 +949,8 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen(
                 [ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
             LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
-        time.sleep(6) # Wait until ryu is ready
+        time.sleep(8) # Wait until ryu is ready
+
 
     def killRyu(self):
         """
@@ -1155,6 +1157,3 @@ class DCNetwork(Containernet):
                 time.sleep(1)
                 LOG.debug(dcs.vsctl('set-controller', dcs.name, 'tcp:127.0.0.1:6653'))
         print("hallo")
-
-
-
