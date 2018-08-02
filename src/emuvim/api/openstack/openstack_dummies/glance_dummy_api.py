@@ -86,6 +86,7 @@ class GlanceSchema(Resource):
         resp = dict()
         resp['name'] = 'someImageName'
         resp['properties'] = dict()
+        resp['links'] = list()
         # just an ugly hack to allow the openstack client to work
         return Response(json.dumps(resp), status=200,
                         mimetype='application/json')
@@ -99,7 +100,7 @@ class GlanceListImagesApi(Resource):
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
             resp = dict()
-            resp['next'] = None
+            # resp['next'] = None
             resp['first'] = "/v2/images"
             resp['schema'] = "/v2/schemas/images"
             resp['images'] = list()
