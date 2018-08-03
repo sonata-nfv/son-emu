@@ -88,6 +88,7 @@ class DCNetwork(Containernet):
         self.deployed_elans = []
         self.installed_chains = []
         self.sfc_data = SFC()
+        self.enable_sfc = enable_sfc
 
         # always cleanup environment before we start the emulator
         self.killRyu()
@@ -119,6 +120,9 @@ class DCNetwork(Containernet):
         # initialize pool of vlan tags to setup the SDN paths
         self.vlans = range(1, 4095)[::-1]
 
+        # initialize pool of ip networks for SFC Layer 3 topology
+        self.ip_pool = range(1, 255)[::-1]
+
         # link to Ryu REST_API
         ryu_ip = 'localhost'
         ryu_port = '8080'
@@ -136,19 +140,22 @@ class DCNetwork(Containernet):
             dc_emulation_max_cpu, dc_emulation_max_mem)
         self.cpu_period = CPU_PERIOD
 
-    def addDatacenter(self, label, metadata={}, resource_log_path=None, network=None):
+    def addDatacenter(self, label, metadata={}, resource_log_path=None, switch_ip=None):
         """
         Create and add a logical cloud data center to the network.
         """
 
         if label in self.dcs:
             raise Exception("Data center label already exists: %s" % label)
+        if self.enable_sfc and switch_ip is None:
+            switch_ip = '{0}.0.0.1/24'.format(str(self.ip_pool.pop()))
         dc = Datacenter(label, metadata=metadata,
-                        resource_log_path=resource_log_path)
+                        resource_log_path=resource_log_path, switch_ip=switch_ip)
         dc.net = self  # set reference to network
         self.dcs[label] = dc
         dc.create()  # finally create the data center in our Mininet instance
         LOG.info("added data center: %s" % label)
+
         return dc
 
     def addLink(self, node1, node2, **params):
@@ -331,6 +338,11 @@ class DCNetwork(Containernet):
             dc.start()
         Containernet.start(self)
         self._reconnect_switches()
+        if self.enable_sfc:
+            for dc in self.dcs:
+                dci = self.dcs[dc]
+                if isinstance(dci, Datacenter):
+                    self._set_switch_ip(dci.switch, dci.switch_ip)
 
     def stop(self):
 
@@ -931,7 +943,7 @@ class DCNetwork(Containernet):
         # custom learning switch that installs a default NORMAL action in the
         # ovs switches
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ryu_path2 = python_install_path + '/ryu/app/rest_router.py'# dir_path + '/son_emu_simple_switch_13.py'
+        ryu_path2 = python_install_path + '/ryu/app/rest_router.py'  # dir_path + '/son_emu_simple_switch_13.py'
         ryu_path = python_install_path + '/ryu/app/ofctl_rest.py'
         # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
         # Ryu still uses 6633 as default
@@ -949,8 +961,7 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen(
                 [ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
             LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
-        time.sleep(8) # Wait until ryu is ready
-
+        time.sleep(8)  # Wait until ryu is ready
 
     def killRyu(self):
         """
@@ -1140,7 +1151,7 @@ class DCNetwork(Containernet):
                 rspi.ovs_sw, rspi.ovs_src_port, rspi.ovs_dst_port, rspi.si, rsp.spi)
 
     def _sfc_set_flow_entry_dpctl(self, ovs_sw, ovs_src_port, ovs_dst_port, si, spi):
-        s=','
+        s = ','
         match = "-Oopenflow13 in_port={0},dl_type=0x894f,nsh_spi={1},nsh_si={2}".format(ovs_src_port, hex(spi), si)
         action = "action=output={0}".format(ovs_dst_port)
         s.join([match, action])
@@ -1157,3 +1168,10 @@ class DCNetwork(Containernet):
                 time.sleep(1)
                 LOG.debug(dcs.vsctl('set-controller', dcs.name, 'tcp:127.0.0.1:6653'))
         print("hallo")
+
+    def _set_switch_ip(self, switch, switch_ip):
+        LOG.debug("debug" + switch.deployed_name)
+        post_data = {}
+        post_data['address'] = switch_ip
+        self.ryu_REST('router', dpid=switch.dpid, data=post_data)
+
