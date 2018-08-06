@@ -99,14 +99,15 @@ class GlanceListImagesApi(Resource):
     def get(self):
         LOG.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
+            img_list = self.api.compute.images.values()
+            LOG.debug("Found {} Docker images: {}".format(
+                len(img_list), [i.name for i in img_list]))
             resp = dict()
             # resp['next'] = None
             resp['first'] = "/v2/images"
             resp['schema'] = "/v2/schemas/images"
             resp['images'] = list()
-            limit = 18
-            c = 0
-            for image in self.api.compute.images.values():
+            for image in img_list:
                 f = dict()
                 f['id'] = image.id
                 f['name'] = str(image.name).replace(":latest", "")
@@ -128,9 +129,6 @@ class GlanceListImagesApi(Resource):
                 f['virtual_size'] = 1
                 f['marker'] = None
                 resp['images'].append(f)
-                c += 1
-                if c > limit:  # ugly hack to stop buggy glance client to do infinite requests
-                    break
             if "marker" in request.args:  # ugly hack to fix pageination of openstack client
                 resp['images'] = None
             return Response(json.dumps(resp), status=200,
