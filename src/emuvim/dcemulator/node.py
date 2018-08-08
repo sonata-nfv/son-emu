@@ -215,9 +215,6 @@ class Datacenter(object):
         self.switch = self.net.addSwitch(
             "%s.s1" % self.name, dpid=hex(self._get_next_dc_dpid())[2:])
         LOG.debug("created data center switch: %s" % str(self.switch))
-        self.net.assign_ip_address()
-        if self.switch_ip is not None:
-            net.
 
     def start(self):
         pass

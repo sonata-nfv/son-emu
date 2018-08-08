@@ -43,9 +43,10 @@ net = None  # type: DCNetwork
 
 
 class SfcApiEndpoint(object):
-    def __init__(self, listenip, port, ):
+    def __init__(self, ip, port, ):
         LOG.info("blubberquark")
-
+        self.ip = ip
+        self.port = port
     def start(self):
         self.thread = threading.Thread(target=self._start_flask, args=())
         self.thread.daemon = True
@@ -64,7 +65,7 @@ class SfcApiEndpoint(object):
         # self.app.run(self.ip, self.port, debug=False, use_reloader=False)
         # this should be a more production-fit http-server
         # self.app.logger.setLevel(logging.ERROR)
-        self.http_server = WSGIServer(("0.0.0.0", 5000),
+        self.http_server = WSGIServer((self.ip, self.port),
                                       app,
                                       # This disables HTTP request logs to not
                                       # mess up the CLI when e.g. the
