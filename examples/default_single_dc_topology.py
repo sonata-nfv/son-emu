@@ -52,28 +52,13 @@ setLogLevel('info')  # set Mininet loglevel
 
 
 def create_topology():
-    net = DCNetwork(monitor=False, enable_learning=False)
+    net = DCNetwork(monitor=False, enable_learning=True)
 
     dc1 = net.addDatacenter("dc1")
-    dc2 = net.addDatacenter("dc2")
-    net.addLink(dc1, dc2, cls=TCLink, delay="50ms")
-
-    # net.addDocker('d1', ip='10.0.0.251', dimage="ubuntu:trusty")
-    # net.addDocker('d2', ip='10.0.0.252', dimage="ubuntu:trusty")
-
-    # add OpenStack-like APIs to the emulated DC
-#    api1 = OpenstackApiEndpoint("0.0.0.0", 6001)
-#    api1.connect_datacenter(dc1)
-#    api1.start()
-#    api1.connect_dc_network(net)
     # add the command line interface endpoint to the emulated DC (REST API)
     rapi1 = RestApiEndpoint("0.0.0.0", 5001)
-    sapi1 = SfcApiEndpoint("das", 5001)
-    sapi1.connect_dc_network(net)
-    sapi1.start()
     rapi1.connectDCNetwork(net)
     rapi1.connectDatacenter(dc1)
-    rapi1.connectDatacenter(dc2)
     rapi1.start()
 
     net.start()
