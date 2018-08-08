@@ -42,7 +42,11 @@ setLogLevel('info')
 
 
 def create_topology():
-    net = DCNetwork(monitor=False, enable_learning=True, enable_sfc=True)
+    net = DCNetwork(monitor=False, enable_learning=True)
+
+    dc1 = net.addDatacenter("dc1")
+    dc2 = net.addDatacenter("dc2")
+    net.addLink(dc1, dc2, cls=TCLink, delay="50ms")
 
     dc1 = net.addDatacenter("dc1", switch_ip="10.0.0.1/24")
     dc2 = net.addDatacenter("dc2", switch_ip="20.0.0.1/24")
