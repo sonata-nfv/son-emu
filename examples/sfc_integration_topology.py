@@ -48,8 +48,11 @@ def create_topology():
     dc2 = net.addDatacenter("dc2")
     net.addLink(dc1, dc2, cls=TCLink, delay="50ms")
 
+    dc1 = net.addDatacenter("dc1", switch_ip="10.0.0.1/24")
+    dc2 = net.addDatacenter("dc2", switch_ip="20.0.0.1/24")
+    net.addLink(dc1, dc2)
     rapi1 = RestApiEndpoint("0.0.0.0", 5001)
-    sapi1 = SfcApiEndpoint("das", 5001)
+    sapi1 = SfcApiEndpoint("0.0.0.0", 5002)
     rapi1.connectDCNetwork(net)
     sapi1.connect_dc_network(net)
     rapi1.connectDatacenter(dc1)
