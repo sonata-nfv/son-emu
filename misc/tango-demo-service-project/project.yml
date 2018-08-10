@@ -1,0 +1,23 @@
+descriptor_extension: yml
+version: '0.5'
+files:
+  - path: tango_emulator_example.yml
+    type: application/vnd.5gtango.nsd
+    tags:
+      - eu.5gtango
+  - path: tango_default-vnf0.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+  - path: tango_default-vnf1.yml
+    type: application/vnd.5gtango.vnfd
+    tags:
+      - eu.5gtango
+package:
+  name: emulator-example-service
+  version: '0.1'
+  maintainer: Manuel Peuster (Paderborn University)
+  vendor: eu.5gtango
+  description: >-
+    This is a small example service to showcase how vim-emu can deploy simple
+    5GTANGO network service packages.

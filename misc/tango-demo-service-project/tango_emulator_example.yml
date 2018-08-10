@@ -1,0 +1,77 @@
+descriptor_schema: >-
+  https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/service-descriptor/nsd-schema.yml
+vendor: eu.5gtango
+name: emulator_example
+version: '0.9'
+author: Manuel Peuster (Paderborn University)
+description: >-
+  This is a small example service to showcase how vim-emu can deploy simple
+  5GTANGO network service packages.
+network_functions:
+  - vnf_id: vnf0
+    vnf_vendor: eu.5gtango
+    vnf_name: default-vnf0
+    vnf_version: '0.9'
+  - vnf_id: vnf1
+    vnf_name: default-vnf1
+    vnf_vendor: eu.5gtango
+    vnf_version: '0.9'
+connection_points:
+  - id: mgmt
+    interface: ipv4
+    type: management
+  - id: input
+    interface: ipv4
+    type: external
+  - id: output
+    interface: ipv4
+    type: external
+virtual_links:
+  - id: mgmt
+    connectivity_type: E-LAN
+    connection_points_reference:
+      - 'vnf0:mgmt'
+      - 'vnf1:mgmt'
+      - mgmt
+  - id: input-2-vnf0
+    connectivity_type: E-Line
+    connection_points_reference:
+      - input
+      - 'vnf0:input'
+  - id: vnf0-2-vnf1
+    connectivity_type: E-Line
+    connection_points_reference:
+      - 'vnf0:output'
+      - 'vnf1:input'
+  - id: vnf1-2-output
+    connectivity_type: E-Line
+    connection_points_reference:
+      - 'vnf1:output'
+      - output
+forwarding_graphs:
+  - fg_id: fg01
+    number_of_endpoints: 2
+    number_of_virtual_links: 3
+    constituent_virtual_links:
+      - input-2-vnf0
+      - vnf0-2-vnf1
+      - vnf1-2-output
+    constituent_vnfs:
+      - vnf0
+      - vnf1
+    network_forwarding_paths:
+      - fp_id: 'fg01:fp01'
+        policy: none
+        connection_points:
+          - connection_point_ref: input
+            position: 1
+          - connection_point_ref: 'vnf0:input'
+            position: 2
+          - connection_point_ref: 'vnf0:output'
+            position: 3
+          - connection_point_ref: 'vnf1:input'
+            position: 4
+          - connection_point_ref: 'vnf1:output'
+            position: 5
+          - connection_point_ref: output
+            position: 6

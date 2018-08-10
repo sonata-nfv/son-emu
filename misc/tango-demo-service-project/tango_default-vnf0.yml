@@ -1,0 +1,68 @@
+descriptor_schema: >-
+  https://raw.githubusercontent.com/sonata-nfv/tng-schema/master/function-descriptor/vnfd-schema.yml
+vendor: eu.5gtango
+name: default-vnf0
+version: '0.9'
+author: Manuel Peuster (Paderborn University)
+description: 'A VNF based on ubuntu:trusty'
+virtual_deployment_units:
+  - id: vdu01
+    vm_image: 'ubuntu:trusty'
+    vm_image_format: docker
+    resource_requirements:
+      cpu:
+        vcpus: 1
+      memory:
+        size: 1
+        size_unit: GB
+      storage:
+        size: 10
+        size_unit: GB
+    monitoring_parameters:
+      - name: vm_cpu_perc
+        unit: Percentage
+      - name: vm_mem_pers
+        unit: Percentage
+      - name: vm_net_rx_MB
+        unit: MB
+      - name: vm_net_tx_MB
+        unit: Mbps
+    connection_points:
+      - id: mgmt
+        interface: ipv4
+        type: internal
+      - id: input
+        interface: ipv4
+        type: internal
+      - id: output
+        interface: ipv4
+        type: internal
+connection_points:
+  - id: mgmt
+    interface: ipv4
+    type: management
+  - id: input
+    interface: ipv4
+    type: external
+  - id: output
+    interface: ipv4
+    type: external
+virtual_links:
+  - id: mgmt
+    connectivity_type: E-LAN
+    connection_points_reference:
+      - 'vdu01:mgmt'
+      - mgmt
+    dhcp: true
+  - id: input
+    connectivity_type: E-Line
+    connection_points_reference:
+      - 'vdu01:input'
+      - input
+    dhcp: true
+  - id: output
+    connectivity_type: E-Line
+    connection_points_reference:
+      - 'vdu01:output'
+      - output
+    dhcp: true

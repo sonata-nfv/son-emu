@@ -33,12 +33,11 @@ from emuvim.cli.rest import network as restnetw
 
 def help():
     print("Missing arguments.\n")
-    print("Usage: son-emu-cli compute|datacenter|network|monitor <arguments>\n")
+    print("Usage: vim-emu compute|datacenter|network <arguments>\n")
     print("Get more help:")
-    print("\tson-emu-cli compute --help")
-    print("\tson-emu-cli datacenter --help")
-    print("\tson-emu-cli network --help")
-    print("\tson-emu-cli monitor --help")
+    print("\tvim-emu compute --help")
+    print("\tvim-emu datacenter --help")
+    print("\tvim-emu network --help")
     exit(0)
 
 
