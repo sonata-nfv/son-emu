@@ -961,7 +961,7 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen(
                 [ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
             LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
-        time.sleep(8)  # Wait until ryu is ready
+        time.sleep(3)  # Wait until ryu is ready
 
     def killRyu(self):
         """
