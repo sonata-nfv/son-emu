@@ -40,12 +40,12 @@ setLogLevel('info')
 
 
 def create_topology():
-    net = DCNetwork(monitor=False, enable_learning=True)
+    net = DCNetwork(monitor=False, enable_learning=False)
 
     dc1 = net.addDatacenter("dc1")
     dc2 = net.addDatacenter("dc2")
-    net.addLink(dc1, dc2, cls=TCLink, delay="50ms")
-    rapi1 = RestApiEndpoint("0.0.0.0", 5001)
+    net.addLink(dc1, dc2)
+    rapi1 = RestApiEndpoint("0.0.0.0", 5011)
     sapi1 = SfcApiEndpoint("0.0.0.0", 5002)
     rapi1.connectDCNetwork(net)
     sapi1.connect_dc_network(net)

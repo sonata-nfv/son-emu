@@ -943,8 +943,8 @@ class DCNetwork(Containernet):
         # custom learning switch that installs a default NORMAL action in the
         # ovs switches
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ryu_path2 = dir_path + '/son_emu_simple_switch_13.py'
-        ryu_path = python_install_path + '/ryu/app/ofctl_rest.py'
+        ryu_path = dir_path + '/son_emu_simple_switch_13.py'
+        ryu_path2 = python_install_path + '/ryu/app/ofctl_rest.py'
         # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
         # Ryu still uses 6633 as default
         ryu_option = '--ofp-tcp-listen-port'
@@ -1100,7 +1100,7 @@ class DCNetwork(Containernet):
         for port_pair_group in port_chain.port_pair_groups:
 
             port_pair = self.sfc_data.get_port_pair(
-                self.sfc_data.get_port_pair_group(port_pair_group).port_pairs[0])  # port_pair_group.port_pairs[0]
+                self.sfc_data.get_port_pair_group(port_pair_group).port_pairs[0])  # supports currently just one port pair
 
             src_sw, src_sw_port_name, src_sw_port_nr = self.get_switch_data(port_pair.vnf_src_interface,
                                                                             port_pair.vnf_src_name, part="src")
