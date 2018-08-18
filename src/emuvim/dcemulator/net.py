@@ -1132,6 +1132,7 @@ class DCNetwork(Containernet):
                     index_edge_out = 0
                     switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
 
+
                 # create RSPI
                 if isinstance(current_node, OVSSwitch):
                     rspis.append(
@@ -1141,8 +1142,16 @@ class DCNetwork(Containernet):
                 if isinstance(next_node, OVSSwitch):
                     switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
                     current_hop = next_hop
+        # determine switch-to-switch without -> si-decrement
+        switch_to_switch = 0
+        for rsp in rspis:
+            if rsp.si is not 0:
+                switch_to_switch += 1
         for i in range(0, len(rspis)):
-            rspis[i].si = len(rspis) - i
+            if rspis[i].si is not 0:
+                switch_to_switch -= 1
+            rspis[i].si = len(rspis) - (i+switch_to_switch)
+
         return rspis
 
     def _sfc_deploy_rsp(self, rsp, ):
