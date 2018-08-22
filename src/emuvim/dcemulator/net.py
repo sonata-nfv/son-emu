@@ -1100,7 +1100,8 @@ class DCNetwork(Containernet):
         for port_pair_group in port_chain.port_pair_groups:
 
             port_pair = self.sfc_data.get_port_pair(
-                self.sfc_data.get_port_pair_group(port_pair_group).port_pairs[0])  # supports currently just one port pair
+                self.sfc_data.get_port_pair_group(port_pair_group).port_pairs[
+                    0])  # supports currently just one port pair
 
             src_sw, src_sw_port_name, src_sw_port_nr = self.get_switch_data(port_pair.vnf_src_interface,
                                                                             port_pair.vnf_src_name, part="src")
@@ -1132,7 +1133,6 @@ class DCNetwork(Containernet):
                     index_edge_out = 0
                     switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
 
-
                 # create RSPI
                 if isinstance(current_node, OVSSwitch):
                     rspis.append(
@@ -1150,13 +1150,13 @@ class DCNetwork(Containernet):
         for i in range(0, len(rspis)):
             if rspis[i].si is not 0:
                 switch_to_switch -= 1
-            rspis[i].si = len(rspis) - (i+switch_to_switch)
+            rspis[i].si = len(rspis) - (i + switch_to_switch)
 
         return rspis
 
     def _sfc_deploy_rsp(self, rsp, ):
         for rspi in rsp.rspis:
-            self._sfc_set_flow_entry_dpctl(
+            self._sfc_set_flow_entry_ryu(
                 rspi.ovs_sw, rspi.ovs_src_port, rspi.ovs_dst_port, rspi.si, rsp.spi)
 
     def _sfc_set_flow_entry_dpctl(self, ovs_sw, ovs_src_port, ovs_dst_port, si, spi):
@@ -1165,6 +1165,18 @@ class DCNetwork(Containernet):
         action = "action=output={0}".format(ovs_dst_port)
         s.join([match, action])
         LOG.debug(ovs_sw.dpctl('add-flow', s.join([match, action])))
+
+    def _sfc_set_flow_entry_ryu(self, switch, ovs_src_port, ovs_dst_port, si, spi):
+        LOG.debug("debug" + switch.deployed_name)
+        match = {'in_port': ovs_src_port, 'dl_type': "0x894f", 'nsh_spi': hex(spi), 'nsh_si': si}
+
+        post_data = {}
+        post_data['dpid'] = switch.dpid
+        post_data['table_id'] = 0
+        post_data['match'] = match
+        post_data['actions'] = "action=output={0}".format(ovs_dst_port)
+
+        self.ryu_REST('stats/flowentry/add', data=post_data)
 
     def _reconnect_switches(self):
         for dc in self.dcs:
@@ -1183,4 +1195,3 @@ class DCNetwork(Containernet):
         post_data = {}
         post_data['address'] = switch_ip
         self.ryu_REST('router', dpid=switch.dpid, data=post_data)
-
