@@ -71,6 +71,9 @@
    - name: install flask_restful
      pip: name=flask_restful state=latest
 
+   - name: install flask_restplus
+     pip: name=flask_restplus state=latest
+
    - name: install requests
      pip: name=requests state=latest
 

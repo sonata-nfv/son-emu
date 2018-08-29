@@ -23,25 +23,26 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
+import json
 import logging
-
+import os
+import re
 import site
 import time
 from subprocess import Popen
-import re
-import requests
-import os
-import json
 
-from mininet.net import Containernet
-from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
+import networkx as nx
+import requests
+from mininet.clean import cleanup
 from mininet.cli import CLI
 from mininet.link import TCLink
-from mininet.clean import cleanup
-import networkx as nx
+from mininet.net import Containernet
+from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController, Node
+
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
+from emuvim.dcemulator.sfc import SFC, PortChain, PortPair, PortPairGroup, RSP, RSPI
 
 LOG = logging.getLogger("dcemulator.net")
 LOG.setLevel(logging.DEBUG)
@@ -64,7 +65,7 @@ class DCNetwork(Containernet):
     """
 
     def __init__(self, controller=RemoteController, monitor=False,
-                 enable_learning=False,
+                 enable_learning=False, enable_sfc=False,
                  # learning switch behavior of the default ovs switches icw Ryu
                  # controller can be turned off/on, needed for E-LAN
                  # functionality
@@ -86,6 +87,8 @@ class DCNetwork(Containernet):
         self.deployed_elines = []
         self.deployed_elans = []
         self.installed_chains = []
+        self.sfc_data = SFC()
+        self.enable_sfc = enable_sfc
 
         # always cleanup environment before we start the emulator
         self.killRyu()
@@ -106,7 +109,7 @@ class DCNetwork(Containernet):
         # Ryu management
         if controller == RemoteController:
             # start Ryu controller
-            self.startRyu(learning_switch=enable_ryu_learning)
+            self.startRyu(enable_sfc, learning_switch=enable_ryu_learning)
 
         # add the specified controller
         self.addController('c0', controller=controller)
@@ -116,6 +119,9 @@ class DCNetwork(Containernet):
 
         # initialize pool of vlan tags to setup the SDN paths
         self.vlans = range(1, 4095)[::-1]
+
+        # initialize pool of ip networks for SFC Layer 3 topology
+        self.ip_pool = range(1, 255)[::-1]
 
         # link to Ryu REST_API
         ryu_ip = 'localhost'
@@ -134,18 +140,22 @@ class DCNetwork(Containernet):
             dc_emulation_max_cpu, dc_emulation_max_mem)
         self.cpu_period = CPU_PERIOD
 
-    def addDatacenter(self, label, metadata={}, resource_log_path=None):
+    def addDatacenter(self, label, metadata={}, resource_log_path=None, switch_ip=None):
         """
         Create and add a logical cloud data center to the network.
         """
+
         if label in self.dcs:
             raise Exception("Data center label already exists: %s" % label)
+        if self.enable_sfc and switch_ip is None:
+            switch_ip = '{0}.0.0.1/24'.format(str(self.ip_pool.pop()))
         dc = Datacenter(label, metadata=metadata,
-                        resource_log_path=resource_log_path)
+                        resource_log_path=resource_log_path, switch_ip=switch_ip)
         dc.net = self  # set reference to network
         self.dcs[label] = dc
         dc.create()  # finally create the data center in our Mininet instance
         LOG.info("added data center: %s" % label)
+
         return dc
 
     def addLink(self, node1, node2, **params):
@@ -327,6 +337,12 @@ class DCNetwork(Containernet):
         for dc in self.dcs.itervalues():
             dc.start()
         Containernet.start(self)
+        self._reconnect_switches()
+        if self.enable_sfc:
+            for dc in self.dcs:
+                dci = self.dcs[dc]
+                if isinstance(dci, Datacenter):
+                    self._set_switch_ip(dci.switch, dci.switch_ip)
 
     def stop(self):
 
@@ -371,7 +387,8 @@ class DCNetwork(Containernet):
                 link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
                 for link in link_dict:
                     if (link_dict[link]['src_port_id'] == vnf_src_interface or
-                            link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                            link_dict[link][
+                                'src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                         # found the right link and connected switch
                         src_sw = connected_sw
                         src_sw_inport_name = link_dict[link]['dst_port_name']
@@ -418,7 +435,8 @@ class DCNetwork(Containernet):
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             for link in link_dict:
                 if (link_dict[link]['src_port_id'] == vnf_src_interface or
-                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        link_dict[link][
+                            'src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     src_sw = connected_sw
                     src_sw_inport_nr = link_dict[link]['dst_port_nr']
@@ -436,7 +454,8 @@ class DCNetwork(Containernet):
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             for link in link_dict:
                 if link_dict[link]['dst_port_id'] == vnf_dst_interface or \
-                        link_dict[link]['dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        link_dict[link][
+                            'dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
                     # found the right link and connected switch
                     dst_sw = connected_sw
                     dst_sw_outport_nr = link_dict[link]['src_port_nr']
@@ -591,8 +610,8 @@ class DCNetwork(Containernet):
                 if kwargs.get('path') is not None:
                     kwargs['path'] = list(reversed(kwargs.get('path')))
                 ret = ret + '\n' + \
-                    self._chainAddFlow(
-                        vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
+                      self._chainAddFlow(
+                          vnf_dst_name, vnf_src_name, vnf_dst_interface, vnf_src_interface, **kwargs)
 
         else:
             ret = "Command unknown"
@@ -615,38 +634,18 @@ class DCNetwork(Containernet):
         # check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
-            connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
-            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
-            vnf_src_interface = link_dict[0]['src_port_id']
+            vnf_src_interface = self.set_vnf_interface(vnf_src_name, part="src")
 
-        for connected_sw in self.DCNetwork_graph.neighbors(vnf_src_name):
-            link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
-            for link in link_dict:
-                if (link_dict[link]['src_port_id'] == vnf_src_interface or
-                        link_dict[link]['src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
-                    # found the right link and connected switch
-                    src_sw = connected_sw
-                    src_sw_inport_nr = link_dict[link]['dst_port_nr']
-                    src_sw_inport_name = link_dict[link]['dst_port_name']
-                    break
+        src_sw, src_sw_inport_name, src_sw_inport_nr = self.get_switch_data(vnf_src_interface, vnf_src_name, part="src")
 
         if vnf_dst_interface is None:
             # take first interface by default
-            connected_sw = self.DCNetwork_graph.neighbors(vnf_dst_name)[0]
-            link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
-            vnf_dst_interface = link_dict[0]['dst_port_id']
+            vnf_dst_interface = self.set_vnf_interface(vnf_dst_name, part="dst")
 
         vnf_dst_name = vnf_dst_name.split(':')[0]
-        for connected_sw in self.DCNetwork_graph.neighbors(vnf_dst_name):
-            link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
-            for link in link_dict:
-                if link_dict[link]['dst_port_id'] == vnf_dst_interface or \
-                        link_dict[link]['dst_port_name'] == vnf_dst_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
-                    # found the right link and connected switch
-                    dst_sw = connected_sw
-                    dst_sw_outport_nr = link_dict[link]['src_port_nr']
-                    dst_sw_outport_name = link_dict[link]['src_port_name']
-                    break
+
+        dst_sw, dst_sw_outport_name, dst_sw_outport_nr = self.get_switch_data(vnf_dst_interface, vnf_dst_name,
+                                                                              part="dst")
 
         path = kwargs.get('path')
         if path is None:
@@ -748,6 +747,48 @@ class DCNetwork(Containernet):
         flow_options_str = json.dumps(flow_options, indent=1)
         return "success: {2} between {0} and {1} with options: {3}".format(
             vnf_src_name, vnf_dst_name, cmd, flow_options_str)
+
+    def get_switch_data(self, vnf_src_interface, vnf_name, part):
+        sw, sw_port_name, sw_port_nr = None, None, None
+        for connected_sw in self.DCNetwork_graph.neighbors(vnf_name):
+            if part == "src":
+                link_dict = self.DCNetwork_graph[vnf_name][connected_sw]
+                for link in link_dict:
+                    if (link_dict[link]['src_port_id'] == vnf_src_interface or
+                            link_dict[link][
+                                'src_port_name'] == vnf_src_interface):  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        # found the right link and connected switch
+                        sw = connected_sw
+                        sw_port_nr = link_dict[link]['dst_port_nr']
+                        sw_port_name = link_dict[link]['dst_port_name']
+                        break
+            elif part == "dst":
+                link_dict = self.DCNetwork_graph[connected_sw][vnf_name]
+                for link in link_dict:
+                    if link_dict[link]['dst_port_id'] == vnf_src_interface or \
+                            link_dict[link][
+                                'dst_port_name'] == vnf_src_interface:  # Fix: we might also get interface names, e.g, from a son-emu-cli call
+                        # found the right link and connected switch
+                        sw = connected_sw
+                        sw_port_nr = link_dict[link]['src_port_nr']
+                        sw_port_name = link_dict[link]['src_port_name']
+                        break
+
+        return sw, sw_port_name, sw_port_nr
+
+    # part: src or dst
+    def set_vnf_interface(self, vnf_name, part):
+        vnf_interface = None
+        connected_sw = self.DCNetwork_graph.neighbors(vnf_name)[0]
+
+        if part == "src":
+            link_dict = self.DCNetwork_graph[vnf_name][connected_sw]
+            vnf_interface = link_dict[0]['src_port_id']
+        elif part == "dst":
+            link_dict = self.DCNetwork_graph[connected_sw][vnf_name]
+            vnf_interface = link_dict[0]['dst_port_id']
+
+        return vnf_interface
 
     def _set_flow_entry_ryu_rest(
             self, node, switch_inport_nr, switch_outport_nr, **kwargs):
@@ -876,7 +917,7 @@ class DCNetwork(Containernet):
             if vlan is not None:
                 if index == 0:  # first node
                     action = ('action=mod_vlan_vid:%s' % vlan) + \
-                        (',output=%s' % switch_outport_nr)
+                             (',output=%s' % switch_outport_nr)
                     match = '-O OpenFlow13 ' + match
                 elif index == len(path) - 1:  # last node
                     match += ',dl_vlan=%s' % vlan
@@ -894,7 +935,7 @@ class DCNetwork(Containernet):
                                                                         switch_outport_nr, cmd))
 
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
-    def startRyu(self, learning_switch=True):
+    def startRyu(self, enable_sfc, learning_switch=True):
         # start Ryu controller with rest-API
         python_install_path = site.getsitepackages()[0]
         # ryu default learning switch
@@ -920,7 +961,7 @@ class DCNetwork(Containernet):
             self.ryu_process = Popen(
                 [ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
             LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
-        time.sleep(1)
+        time.sleep(3)  # Wait until ryu is ready
 
     def killRyu(self):
         """
@@ -999,3 +1040,158 @@ class DCNetwork(Containernet):
                     # found the right link and connected switch
                     src_sw_inport_name = link_dict[link]['dst_port_name']
                     return src_sw_inport_name
+
+    def sfc_add_port_pair(self, vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface):
+        LOG.info("SFC: Check reachability")
+        # check if port is specified (vnf:port)
+        if vnf_src_interface is None or vnf_dst_interface == '':
+            # take first interface by default
+            vnf_src_interface = self.set_vnf_interface(vnf_src_name, part="src")
+
+        src_sw, src_sw_inport_name, src_sw_inport_nr = self.get_switch_data(vnf_src_interface, vnf_src_name, part="src")
+
+        if vnf_dst_interface is None or vnf_dst_interface == '':
+            # take first interface by default
+            vnf_dst_interface = self.set_vnf_interface(vnf_dst_name, part="dst")
+
+        vnf_dst_name = vnf_dst_name.split(':')[0]
+
+        dst_sw, dst_sw_outport_name, dst_sw_outport_nr = self.get_switch_data(vnf_dst_interface, vnf_dst_name,
+                                                                              part="dst")
+
+        LOG.debug("Ports found, add to SFC store")
+        new_port_pair = PortPair(vnf_src_name, vnf_dst_name, vnf_src_interface, vnf_dst_interface)
+        self.sfc_data.add_port_pair(new_port_pair)
+        return vars(new_port_pair)
+
+    def sfc_get_port_pair(self, id):
+        if id is None:
+            return self.sfc_data.get_port_pairs()
+        return self.sfc_data.get_port_pair(id)
+
+    def sfc_delete_port_pair(self, id):
+        self.sfc_data.delete_port_pair(id)
+        return
+
+    def sfc_add_port_pair_group(self, description, port_pairs):
+        for port_pair in port_pairs:
+            if self.sfc_data.get_port_pair(port_pair) is None:
+                return
+        new_port_pair_group = PortPairGroup(description, port_pairs)
+        self.sfc_data.add_port_pair_group(new_port_pair_group)
+        return new_port_pair_group
+
+    def sfc_add_port_chain(self, description, port_pair_groups):
+        for port_pair_group in port_pair_groups:
+            if self.sfc_data.get_port_pair_group(port_pair_group) is None:
+                return
+        new_port_chain = PortChain(description, port_pair_groups)
+
+        rspis = self._sfc_translate_to_rsp(new_port_chain)
+        print("make sth with rspis")
+        rsp = RSP()
+        rsp.rspis = rspis
+        self._sfc_deploy_rsp(rsp)
+        return new_port_chain
+
+    def _sfc_translate_to_rsp(self, port_chain):
+        rspis = []
+
+        for port_pair_group in port_chain.port_pair_groups:
+
+            port_pair = self.sfc_data.get_port_pair(
+                self.sfc_data.get_port_pair_group(port_pair_group).port_pairs[
+                    0])  # supports currently just one port pair
+
+            src_sw, src_sw_port_name, src_sw_port_nr = self.get_switch_data(port_pair.vnf_src_interface,
+                                                                            port_pair.vnf_src_name, part="src")
+            dst_sw, dst_sw_port_name, dst_sw_port_nr = self.get_switch_data(port_pair.vnf_dst_interface,
+                                                                            port_pair.vnf_dst_name, part="dst")
+            # Now, we know the start and the destination switch between the two service functions. Next: Get the path
+            # between them.
+
+            path = nx.shortest_path(self.DCNetwork_graph, src_sw, dst_sw)
+            current_hop = src_sw
+            switch_inport_nr = src_sw_port_nr
+            for i in range(0, len(path)):
+                current_node = self.getNodeByName(current_hop)
+                if i < len(path) - 1:
+                    next_hop = path[i + 1]
+                else:
+                    # last switch reached
+                    next_hop = port_pair.vnf_dst_name
+
+                next_node = self.getNodeByName(next_hop)
+                if next_hop == port_pair.vnf_dst_name:
+                    switch_outport_nr = dst_sw_port_nr
+                    LOG.info("end node reached: {0}".format(port_pair.vnf_dst_name))
+                elif not isinstance(next_node, OVSSwitch):
+                    LOG.info("Next node: {0} is not a switch".format(next_hop))
+                    return "Next node: {0} is not a switch".format(next_hop)
+                else:
+                    # take first link between switches by default
+                    index_edge_out = 0
+                    switch_outport_nr = self.DCNetwork_graph[current_hop][next_hop][index_edge_out]['src_port_nr']
+
+                # create RSPI
+                if isinstance(current_node, OVSSwitch):
+                    rspis.append(
+                        RSPI(i, current_node, switch_inport_nr, None, switch_outport_nr, None))
+
+                # set for next iteration
+                if isinstance(next_node, OVSSwitch):
+                    switch_inport_nr = self.DCNetwork_graph[current_hop][next_hop][0]['dst_port_nr']
+                    current_hop = next_hop
+        # determine switch-to-switch without -> si-decrement
+        switch_to_switch = 0
+        for rsp in rspis:
+            if rsp.si is not 0:
+                switch_to_switch += 1
+        for i in range(0, len(rspis)):
+            if rspis[i].si is not 0:
+                switch_to_switch -= 1
+            rspis[i].si = len(rspis) - (i + switch_to_switch)
+
+        return rspis
+
+    def _sfc_deploy_rsp(self, rsp, ):
+        for rspi in rsp.rspis:
+            self._sfc_set_flow_entry_ryu(
+                rspi.ovs_sw, rspi.ovs_src_port, rspi.ovs_dst_port, rspi.si, rsp.spi)
+
+    def _sfc_set_flow_entry_dpctl(self, ovs_sw, ovs_src_port, ovs_dst_port, si, spi):
+        s = ','
+        match = "-Oopenflow13 in_port={0},dl_type=0x894f,nsh_spi={1},nsh_si={2}".format(ovs_src_port, hex(spi), si)
+        action = "action=output={0}".format(ovs_dst_port)
+        s.join([match, action])
+        LOG.debug(ovs_sw.dpctl('add-flow', s.join([match, action])))
+
+    def _sfc_set_flow_entry_ryu(self, switch, ovs_src_port, ovs_dst_port, si, spi):
+        LOG.debug("debug" + switch.deployed_name)
+        match = {'in_port': ovs_src_port, 'dl_type': "0x894f", 'nsh_spi': hex(spi), 'nsh_si': si}
+
+        post_data = {}
+        post_data['dpid'] = switch.dpid
+        post_data['table_id'] = 0
+        post_data['match'] = match
+        post_data['actions'] = "action=output={0}".format(ovs_dst_port)
+
+        self.ryu_REST('stats/flowentry/add', data=post_data)
+
+    def _reconnect_switches(self):
+        for dc in self.dcs:
+            dci = self.dcs[dc]
+            dcs = None
+            if isinstance(dci, Datacenter):
+                dcs = dci.switch
+            if isinstance(dcs, Node):
+                LOG.info(dcs.vsctl('del-controller', dcs.name))
+                time.sleep(1)
+                LOG.debug(dcs.vsctl('set-controller', dcs.name, 'tcp:127.0.0.1:6653'))
+        print("hallo")
+
+    def _set_switch_ip(self, switch, switch_ip):
+        LOG.debug("debug" + switch.deployed_name)
+        post_data = {}
+        post_data['address'] = switch_ip
+        self.ryu_REST('router', dpid=switch.dpid, data=post_data)

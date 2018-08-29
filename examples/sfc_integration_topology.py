@@ -35,30 +35,23 @@ from emuvim.dcemulator.net import DCNetwork
 from emuvim.api.rest.rest_api_endpoint import RestApiEndpoint
 from emuvim.api.rest.sfc_api_endpoint import SfcApiEndpoint
 
-#from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
-
 logging.basicConfig(level=logging.INFO)
-setLogLevel('info')  # set Mininet loglevel
-#logging.getLogger('werkzeug').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstack.base').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstack.compute').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.keystone').setLevel(logging.DEBUGexit
-#logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.nova').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.neutron').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstackSONATA's Service Platform Infrastructure Abstraction.heat').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstack.heat.parser').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstack.glance').setLevel(logging.DEBUG)
-#logging.getLogger('api.openstack.helper').setLevel(logging.DEBUG)
+setLogLevel('info')
 
 
 def create_topology():
     net = DCNetwork(monitor=False, enable_learning=True)
 
     dc1 = net.addDatacenter("dc1")
-    # add the command line interface endpoint to the emulated DC (REST API)
-    rapi1 = RestApiEndpoint("0.0.0.0", 5001)
+    dc2 = net.addDatacenter("dc2")
+    net.addLink(dc1, dc2)
+    rapi1 = RestApiEndpoint("0.0.0.0", 5011)
+    sapi1 = SfcApiEndpoint("0.0.0.0", 5002)
     rapi1.connectDCNetwork(net)
+    sapi1.connect_dc_network(net)
     rapi1.connectDatacenter(dc1)
+    rapi1.connectDatacenter(dc2)
+    sapi1.start()
     rapi1.start()
 
     net.start()
