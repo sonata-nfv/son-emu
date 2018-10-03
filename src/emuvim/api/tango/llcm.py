@@ -346,6 +346,11 @@ class Service(object):
             # check if we need to deploy the management ports (defined as
             # type:management both on in the vnfd and nsd)
             intfs = vnfd.get("connection_points", [])
+            # do some re-naming of fields to be compatible to containernet
+            for i in intfs:
+                if i.get("address"):
+                    i["ip"] = i.get("address")
+
             mgmt_intf_names = []
             if USE_DOCKER_MGMT:
                 mgmt_intfs = [vnf_id + ':' + intf['id']
@@ -1049,7 +1054,7 @@ class Packages(fr.Resource):
             file_hash = hashlib.sha1(str(son_file)).hexdigest()
             # ensure that upload folder exists
             ensure_dir(UPLOAD_FOLDER)
-            upload_path = os.path.join(UPLOAD_FOLDER, "%s.son" % service_uuid)
+            upload_path = os.path.join(UPLOAD_FOLDER, "%s.tgo" % service_uuid)
             # store *.son file to disk
             if is_file_object:
                 son_file.save(upload_path)
