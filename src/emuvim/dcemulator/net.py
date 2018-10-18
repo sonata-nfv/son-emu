@@ -462,7 +462,7 @@ class DCNetwork(Containernet):
             return "No path could be found between {0} and {1}".format(
                 vnf_src_name, vnf_dst_name)
 
-        LOG.info("Path between {0} and {1}: {2}".format(
+        LOG.debug("Creating path between {0} and {1}: {2}".format(
             vnf_src_name, vnf_dst_name, path))
 
         current_hop = src_sw
@@ -484,7 +484,7 @@ class DCNetwork(Containernet):
 
             if next_hop == vnf_dst_name:
                 switch_outport_nr = dst_sw_outport_nr
-                LOG.info("end node reached: {0}".format(vnf_dst_name))
+                LOG.debug("end node reached: {0}".format(vnf_dst_name))
             elif not isinstance(next_node, OVSSwitch):
                 LOG.info("Next node: {0} is not a switch".format(next_hop))
                 return "Next node: {0} is not a switch".format(next_hop)
@@ -666,7 +666,7 @@ class DCNetwork(Containernet):
                 return "No path could be found between {0} and {1}".format(
                     vnf_src_name, vnf_dst_name)
 
-        LOG.info("Path between {0} and {1}: {2}".format(
+        LOG.debug("Creating path between {0} and {1}: {2}".format(
             vnf_src_name, vnf_dst_name, path))
 
         current_hop = src_sw
@@ -706,7 +706,7 @@ class DCNetwork(Containernet):
 
             if next_hop == vnf_dst_name:
                 switch_outport_nr = dst_sw_outport_nr
-                LOG.info("end node reached: {0}".format(vnf_dst_name))
+                LOG.debug("end node reached: {0}".format(vnf_dst_name))
             elif not isinstance(next_node, OVSSwitch):
                 LOG.info("Next node: {0} is not a switch".format(next_hop))
                 return "Next node: {0} is not a switch".format(next_hop)
@@ -746,6 +746,8 @@ class DCNetwork(Containernet):
             'match_input': kwargs.get('match')
         }
         flow_options_str = json.dumps(flow_options, indent=1)
+        LOG.info("Installed flow rule: ({}:{}) -> ({}:{}) with options: {}"
+                 .format(vnf_src_name, vnf_src_interface, vnf_dst_name, vnf_dst_interface, flow_options))
         return "success: {2} between {0} and {1} with options: {3}".format(
             vnf_src_name, vnf_dst_name, cmd, flow_options_str)
 
