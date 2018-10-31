@@ -41,7 +41,7 @@ echo "Tests executed by user: $(whoami)"
 cd /son-emu/
 # trigger pep8 style check
 echo "Doing flake8 style check ..."
-flake8 --exclude=.eggs,devops --ignore=E501 .
+flake8 --exclude=.eggs,devops --ignore=E501,W605,W504 .
 echo "done."
 # trigger the tests
 echo "Running unit tests ..."

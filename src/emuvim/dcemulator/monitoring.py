@@ -335,10 +335,10 @@ class DCNetworkMonitor():
             return 'Error stopping monitoring metric: {0} on {1}:{2}'.format(
                 metric, vnf_name, vnf_interface)
 
-
-# get all metrics defined in the list and export it to Prometheus
-
     def get_flow_metrics(self):
+        """
+        Get all metrics defined in the list and export it to Prometheus.
+        """
         while self.start_monitoring:
 
             self.monitor_flow_lock.acquire()
