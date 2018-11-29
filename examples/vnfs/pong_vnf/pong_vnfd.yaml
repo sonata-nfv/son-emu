@@ -25,7 +25,7 @@ vnfd-catalog:
     -   id: pong
         name: pong
         short-name: pong
-        description: Empty Container VNF
+        description: "Empty example container VNF"
         vendor: "Paderborn University"
         version: '1.1'
 
@@ -34,8 +34,8 @@ vnfd-catalog:
         connection-point:
             -   name: pong/cp0
                 type: VPORT
-            -   name: pong/cp1
-                type: VPORT
+            #-   name: pong/cp1
+            #    type: VPORT
         # Management interface
         mgmt-interface:
             cp: pong/cp0
@@ -65,12 +65,12 @@ vnfd-catalog:
                 virtual-interface:
                     type: VIRTIO
                 external-connection-point-ref: pong/cp0
-            -   name: pong1
-                position: 1
-                type: EXTERNAL
-                virtual-interface:
-                    type: VIRTIO
-                external-connection-point-ref: pong/cp1
+            #-   name: pong1
+            #    position: 1
+            #    type: EXTERNAL
+            #    virtual-interface:
+            #        type: VIRTIO
+            #    external-connection-point-ref: pong/cp1
 
         
 

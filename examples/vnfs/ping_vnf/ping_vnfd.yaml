@@ -34,8 +34,8 @@ vnfd-catalog:
         connection-point:
             -   name: ping/cp0
                 type: VPORT
-            -   name: ping/cp1
-                type: VPORT
+            #-   name: ping/cp1
+            #    type: VPORT
         # Management interface
         mgmt-interface:
             cp: ping/cp0
@@ -65,12 +65,12 @@ vnfd-catalog:
                 virtual-interface:
                     type: VIRTIO
                 external-connection-point-ref: ping/cp0
-            -   name: ping1
-                position: 1
-                type: EXTERNAL
-                virtual-interface:
-                    type: VIRTIO
-                external-connection-point-ref: ping/cp1
+            #-   name: ping1
+            #    position: 1
+            #    type: EXTERNAL
+            #    virtual-interface:
+            #        type: VIRTIO
+            #    external-connection-point-ref: ping/cp1
 
         
 
