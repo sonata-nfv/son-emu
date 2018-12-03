@@ -488,6 +488,7 @@ class OpenstackCompute(object):
                             intf.setMAC(port.mac_address)
                         else:
                             port.mac_address = intf.MAC()
+                        port.assigned_container = c
 
         # Start the real emulator command now as specified in the dockerfile
         # ENV SON_EMU_CMD

@@ -972,30 +972,23 @@ class NeutronAddFloatingIp(Resource):
 
     def get(self):
         """
-        Added a quick and dirty fake for the OSM integration. Returns a list of
-        floating IPs. Has nothing to do with the setup inside the emulator.
-        But its enough to make the OSM driver happy.
-        @PG Sandman: Feel free to improve this and let it do something meaningful.
+        Returns a Floating IP for a port.
+
+        Currently ports are not mapped to individual IPs, but the
+        (potentially shared) Docker external IP is returned.
         """
+        port_id = request.args.get("port_id")
+        if not port_id:
+            message = "Neutron: List API for FloatingIPs is not implemented"
+            LOG.exception(message)
+            return Response(message, status=500,
+                            mimetype='application/json')
+        port = self.api.compute.find_port_by_name_or_id(port_id)
+        ip = port.assigned_container.dcinfo["NetworkSettings"]["IPAddress"]
         resp = dict()
-        resp["floatingips"] = list()
-        # create a list of floting IP definitions and return it
-        for i in range(100, 110):
-            ip = dict()
-            ip["router_id"] = "router_id"
-            ip["description"] = "hardcoded in api"
-            ip["created_at"] = "router_id"
-            ip["updated_at"] = "router_id"
-            ip["revision_number"] = 1
-            ip["tenant_id"] = "tenant_id"
-            ip["project_id"] = "project_id"
-            ip["floating_network_id"] = str(i)
-            ip["status"] = "ACTIVE"
-            ip["id"] = str(i)
-            ip["port_id"] = "port_id"
-            ip["floating_ip_address"] = "172.0.0.%d" % i
-            ip["fixed_ip_address"] = "10.0.0.%d" % i
-            resp["floatingips"].append(ip)
+        resp["floatingips"] = [
+            {'floating_ip_address': ip}
+        ]
         return Response(json.dumps(resp), status=200,
                         mimetype='application/json')
 

@@ -45,6 +45,7 @@ class Port:
         self.mac_address = mac_address
         self.floating_ip = floating_ip
         self.net_name = None
+        self.assigned_container = None
 
     def set_name(self, name):
         """
