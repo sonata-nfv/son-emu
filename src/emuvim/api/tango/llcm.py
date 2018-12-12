@@ -382,10 +382,23 @@ class Service(object):
             if not os.path.exists(docker_log_path):
                 LOG.debug("Creating folder %s" % docker_log_path)
                 os.makedirs(docker_log_path)
-
             volumes.append(docker_log_path + ":/mnt/share/")
 
-            # 5. do the dc.startCompute(name="foobar") call to run the container
+            # 5. collect additional information to start container
+            cenv = dict()
+            # 5.1 inject descriptor based start/stop commands into env (overwrite)
+            VNFD_CMD_START = u.get("vm_cmd_start")
+            VNFD_CMD_STOP = u.get("vm_cmd_stop")
+            if VNFD_CMD_START and not VNFD_CMD_START == "None":
+                LOG.info("Found 'vm_cmd_start'='{}' in VNFD.".format(VNFD_CMD_START) +
+                         " Overwriting SON_EMU_CMD.")
+                cenv["SON_EMU_CMD"] = VNFD_CMD_START
+            if VNFD_CMD_STOP and not VNFD_CMD_STOP == "None":
+                LOG.info("Found 'vm_cmd_start'='{}' in VNFD.".format(VNFD_CMD_STOP) +
+                         " Overwriting SON_EMU_CMD_STOP.")
+                cenv["SON_EMU_CMD_STOP"] = VNFD_CMD_STOP
+
+            # 6. do the dc.startCompute(name="foobar") call to run the container
             # TODO consider flavors, and other annotations
             # TODO: get all vnf id's from the nsd for this vnfd and use those as dockername
             # use the vnf_id in the nsd as docker name
@@ -403,6 +416,7 @@ class Service(object):
                 cpuset=cpu_list,
                 mem_limit=mem_limit,
                 volumes=volumes,
+                properties=cenv,  # environment
                 type=kwargs.get('type', 'docker'))
 
             # add vnfd reference to vnfi
@@ -482,14 +496,15 @@ class Service(object):
             for env_var in env:
                 var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
                 LOG.debug("%r = %r" % (var, cmd))
-                if var == "SON_EMU_CMD":
-                    LOG.info("Executing entry point script in %r: %r" %
-                             (vnfi.name, cmd))
+                if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
+                    LOG.info("Executing script in '{}': {}={}"
+                             .format(vnfi.name, var, cmd))
                     # execute command in new thread to ensure that GK is not
                     # blocked by VNF
                     t = threading.Thread(target=vnfi.cmdPrint, args=(cmd,))
                     t.daemon = True
                     t.start()
+                    break  # only execute one command
 
     def _trigger_emulator_stop_scripts_in_vnfis(self, vnfi_list):
         for vnfi in vnfi_list:
@@ -497,14 +512,15 @@ class Service(object):
             env = config.get("Env", list())
             for env_var in env:
                 var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
-                if var == "SON_EMU_CMD_STOP":
-                    LOG.info("Executing stop script in %r: %r" %
-                             (vnfi.name, cmd))
+                if var == "SON_EMU_CMD_STOP" or var == "VIM_EMU_CMD_STOP":
+                    LOG.info("Executing script in '{}': {}={}"
+                             .format(vnfi.name, var, cmd))
                     # execute command in new thread to ensure that GK is not
                     # blocked by VNF
                     t = threading.Thread(target=vnfi.cmdPrint, args=(cmd,))
                     t.daemon = True
                     t.start()
+                    break  # only execute one command
 
     def _unpack_service_package(self):
         """
