@@ -218,16 +218,11 @@ class Service(object):
         # 3. start all vnfds that we have in the service (except SAPs)
         for vnf_id in self.vnfds:
             vnfd = self.vnfds[vnf_id]
-            vnfi = None
-            if not GK_STANDALONE_MODE:
-                vnfi = self._start_vnfd(vnfd, vnf_id)
-            self.instances[instance_uuid]["vnf_instances"].append(vnfi)
+            vnfis = self._start_vnfd(vnfd, vnf_id)
+            # add list of VNFIs to total VNFI list
+            self.instances[instance_uuid]["vnf_instances"] + vnfis
 
-        # 4. start all SAPs in the service
-        for sap in self.saps:
-            self._start_sap(self.saps[sap], instance_uuid)
-
-        # 5. Deploy E-Line and E_LAN links
+        # 4. Deploy E-Line and E_LAN links
         # Attention: Only done if ""forwarding_graphs" section in NSD exists,
         # even if "forwarding_graphs" are not used directly.
         if "virtual_links" in self.nsd and "forwarding_graphs" in self.nsd:
@@ -323,6 +318,7 @@ class Service(object):
         :param vnf_id: unique id of this vnf in the nsd
         :return:
         """
+        vnfis = list()
         # the vnf_name refers to the container image to be deployed
         vnf_name = vnfd.get("name")
         # combine VDUs and CDUs
@@ -330,19 +326,22 @@ class Service(object):
                             vnfd.get("cloudnative_deployment_units", []))
         # iterate over all deployment units within each VNFDs
         for u in deployment_units:
-            # 1. get the name of the docker image to start and the assigned DC
-            if vnf_id not in self.remote_docker_image_urls:
-                raise Exception("No image name for %r found. Abort." % vnf_id)
-            docker_name = self.remote_docker_image_urls.get(vnf_id)
+            # 0. vnf_container_name = vnf_id.vdu_id
+            vnf_container_name = get_container_name(vnf_id, u.get("id"))
+            # 1. get the name of the docker image to star
+            if vnf_container_name not in self.remote_docker_image_urls:
+                raise Exception("No image name for %r found. Abort." % vnf_container_name)
+            docker_image_name = self.remote_docker_image_urls.get(vnf_container_name)
+            # 2. select datacenter to start the VNF in
             target_dc = vnfd.get("dc")
-            # 2. perform some checks to ensure we can start the container
-            assert(docker_name is not None)
+            # 3. perform some checks to ensure we can start the container
+            assert(docker_image_name is not None)
             assert(target_dc is not None)
-            if not self._check_docker_image_exists(docker_name):
-                raise Exception(
-                    "Docker image %r not found. Abort." % docker_name)
+            if not self._check_docker_image_exists(docker_image_name):
+                raise Exception("Docker image {} not found. Abort."
+                                .format(docker_image_name))
 
-            # 3. get the resource limits
+            # 4. get the resource limits
             cpu_list, cpu_period, cpu_quota, mem_limit = self._get_resource_limits(u)
 
             # check if we need to deploy the management ports (defined as
@@ -353,38 +352,8 @@ class Service(object):
                 if i.get("address"):
                     i["ip"] = i.get("address")
 
-            mgmt_intf_names = []
-            if USE_DOCKER_MGMT:
-                mgmt_intfs = [vnf_id + ':' + intf['id']
-                              for intf in intfs if intf.get('type') == 'management']
-                # check if any of these management interfaces are used in a
-                # management-type network in the nsd
-                for nsd_intf_name in mgmt_intfs:
-                    vlinks = [l["connection_points_reference"]
-                              for l in self.nsd.get("virtual_links", [])]
-                    for link in vlinks:
-                        if nsd_intf_name in link and self.check_mgmt_interface(
-                                link):
-                            # this is indeed a management interface and can be
-                            # skipped
-                            vnf_id, vnf_interface, vnf_sap_docker_name = parse_interface(
-                                nsd_intf_name)
-                            found_interfaces = [
-                                intf for intf in intfs if intf.get('id') == vnf_interface]
-                            intfs.remove(found_interfaces[0])
-                            mgmt_intf_names.append(vnf_interface)
-
-            # 4. generate the volume paths for the docker container
-            volumes = list()
-            # a volume to extract log files
-            docker_log_path = "/tmp/results/%s/%s" % (self.uuid, vnf_id)
-            LOG.debug("LOG path for vnf %s is %s." % (vnf_id, docker_log_path))
-            if not os.path.exists(docker_log_path):
-                LOG.debug("Creating folder %s" % docker_log_path)
-                os.makedirs(docker_log_path)
-            volumes.append(docker_log_path + ":/mnt/share/")
-
             # 5. collect additional information to start container
+            volumes = list()
             cenv = dict()
             # 5.1 inject descriptor based start/stop commands into env (overwrite)
             VNFD_CMD_START = u.get("vm_cmd_start")
@@ -398,18 +367,15 @@ class Service(object):
                          " Overwriting SON_EMU_CMD_STOP.")
                 cenv["SON_EMU_CMD_STOP"] = VNFD_CMD_STOP
 
-            # 6. do the dc.startCompute(name="foobar") call to run the container
-            # TODO consider flavors, and other annotations
-            # TODO: get all vnf id's from the nsd for this vnfd and use those as dockername
-            # use the vnf_id in the nsd as docker name
-            # so deployed containers can be easily mapped back to the nsd
+            # 6. Start the container
             LOG.info("Starting %r as %r in DC %r" %
-                     (vnf_name, vnf_id, vnfd.get("dc")))
+                     (vnf_name, vnf_container_name, vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_id, intfs))
+            # start the container
             vnfi = target_dc.startCompute(
-                vnf_id,
+                vnf_container_name,
                 network=intfs,
-                image=docker_name,
+                image=docker_image_name,
                 flavor_name="small",
                 cpu_quota=cpu_quota,
                 cpu_period=cpu_period,
@@ -418,18 +384,13 @@ class Service(object):
                 volumes=volumes,
                 properties=cenv,  # environment
                 type=kwargs.get('type', 'docker'))
-
             # add vnfd reference to vnfi
             vnfi.vnfd = vnfd
-
-            # rename the docker0 interfaces (eth0) to the management port name
-            # defined in the VNFD
-            if USE_DOCKER_MGMT:
-                for intf_name in mgmt_intf_names:
-                    self._vnf_reconfigure_network(
-                        vnfi, 'eth0', new_name=intf_name)
-
-            return vnfi
+            # add container name
+            vnfi.vnf_container_name = vnf_container_name
+            # store vnfi
+            vnfis.append(vnfi)
+        return vnfis
 
     def _stop_vnfi(self, vnfi):
         """
@@ -843,44 +804,50 @@ class Service(object):
         Get all paths to Dockerfiles from VNFDs and store them in dict.
         :return:
         """
-        for k, v in self.vnfds.iteritems():
+        for vnf_id, v in self.vnfds.iteritems():
             for vu in v.get("virtual_deployment_units", []):
+                vnf_container_name = get_container_name(vnf_id, vu.get("id"))
                 if vu.get("vm_image_format") == "docker":
                     vm_image = vu.get("vm_image")
                     docker_path = os.path.join(
                         self.package_content_path,
                         make_relative_path(vm_image))
-                    self.local_docker_files[k] = docker_path
-                    LOG.debug("Found Dockerfile (%r): %r" % (k, docker_path))
+                    self.local_docker_files[vnf_container_name] = docker_path
+                    LOG.debug("Found Dockerfile (%r): %r" % (vnf_container_name, docker_path))
             for cu in v.get("cloudnative_deployment_units", []):
+                vnf_container_name = get_container_name(vnf_id, cu.get("id"))
                 image = cu.get("image")
                 docker_path = os.path.join(
                     self.package_content_path,
                     make_relative_path(image))
-                self.local_docker_files[k] = docker_path
-                LOG.debug("Found Dockerfile (%r): %r" % (k, docker_path))
+                self.local_docker_files[vnf_container_name] = docker_path
+                LOG.debug("Found Dockerfile (%r): %r" % (vnf_container_name, docker_path))
 
     def _load_docker_urls(self):
         """
         Get all URLs to pre-build docker images in some repo.
         :return:
         """
-        for k, v in self.vnfds.iteritems():
+        for vnf_id, v in self.vnfds.iteritems():
             for vu in v.get("virtual_deployment_units", []):
+                vnf_container_name = get_container_name(vnf_id, vu.get("id"))
                 if vu.get("vm_image_format") == "docker":
                     url = vu.get("vm_image")
                     if url is not None:
                         url = url.replace("http://", "")
-                        self.remote_docker_image_urls[k] = url
+                        self.remote_docker_image_urls[vnf_container_name] = url
                         LOG.debug("Found Docker image URL (%r): %r" %
-                                  (k, self.remote_docker_image_urls[k]))
+                                  (vnf_container_name,
+                                   self.remote_docker_image_urls[vnf_container_name]))
             for cu in v.get("cloudnative_deployment_units", []):
+                vnf_container_name = get_container_name(vnf_id, cu.get("id"))
                 url = cu.get("image")
                 if url is not None:
                     url = url.replace("http://", "")
-                    self.remote_docker_image_urls[k] = url
+                    self.remote_docker_image_urls[vnf_container_name] = url
                     LOG.debug("Found Docker image URL (%r): %r" %
-                              (k, self.remote_docker_image_urls[k]))
+                              (vnf_container_name,
+                               self.remote_docker_image_urls[vnf_container_name]))
 
     def _build_images_from_dockerfiles(self):
         """
@@ -1262,6 +1229,10 @@ def reset_subnets():
     # 10.30.xxx.0/30
     global ELINE_SUBNETS
     ELINE_SUBNETS = generate_subnets('10.30', 0, subnet_size=50, mask=30)
+
+
+def get_container_name(vnf_id, vdu_id):
+    return "{}.{}".format(vnf_id, vdu_id)
 
 
 if __name__ == '__main__':
