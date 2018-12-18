@@ -256,7 +256,7 @@ class Datacenter(object):
         properties['VNF_NAME'] = name
         # create the container
         d = self.net.addDocker(
-            "%s" % (name),
+            str(name),
             dimage=image,
             dcmd=command,
             datacenter=self,
@@ -293,7 +293,6 @@ class Datacenter(object):
                              cls=Link, intfName1=nw.get('id'))
         # do bookkeeping
         self.containers[name] = d
-
         return d  # we might use UUIDs for naming later on
 
     def stopCompute(self, name):

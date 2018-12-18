@@ -135,10 +135,6 @@ class Gatekeeper(object):
         # lets perform all steps needed to onboard the service
         service.onboard()
 
-    def get_next_vnf_name(self):
-        self.vnf_counter += 1
-        return "vnf%d" % self.vnf_counter
-
 
 class Service(object):
     """
@@ -215,14 +211,15 @@ class Service(object):
         if not GK_STANDALONE_MODE:
             # self._calculate_placement(FirstDcPlacement)
             self._calculate_placement(RoundRobinDcPlacement)
-        # 3. start all vnfds that we have in the service (except SAPs)
+        # 3. start all vnfds that we have in the service
         for vnf_id in self.vnfds:
             vnfd = self.vnfds[vnf_id]
+            # attention: returns a list of started deployment units
             vnfis = self._start_vnfd(vnfd, vnf_id)
             # add list of VNFIs to total VNFI list
-            self.instances[instance_uuid]["vnf_instances"] + vnfis
+            self.instances[instance_uuid]["vnf_instances"].extend(vnfis)
 
-        # 4. Deploy E-Line and E_LAN links
+        # 4. Deploy E-Line, E-Tree and E-LAN links
         # Attention: Only done if ""forwarding_graphs" section in NSD exists,
         # even if "forwarding_graphs" are not used directly.
         if "virtual_links" in self.nsd and "forwarding_graphs" in self.nsd:
@@ -235,13 +232,11 @@ class Service(object):
                 l["connectivity_type"] == "E-LAN" or
                 l["connectivity_type"] == "E-Tree")]  # Treat E-Tree as E-LAN
 
-            GK.net.deployed_elines.extend(eline_fwd_links)
-            GK.net.deployed_elans.extend(elan_fwd_links)
-
             # 5a. deploy E-Line links
+            GK.net.deployed_elines.extend(eline_fwd_links)  # bookkeeping
             self._connect_elines(eline_fwd_links, instance_uuid)
-
-            # 5b. deploy E-LAN links
+            # 5b. deploy E-Tree/E-LAN links
+            GK.net.deployed_elans.extend(elan_fwd_links)  # bookkeeping
             self._connect_elans(elan_fwd_links, instance_uuid)
 
         # 6. run the emulator specific entrypoint scripts in the VNFIs of this
@@ -344,9 +339,8 @@ class Service(object):
             # 4. get the resource limits
             cpu_list, cpu_period, cpu_quota, mem_limit = self._get_resource_limits(u)
 
-            # check if we need to deploy the management ports (defined as
-            # type:management both on in the vnfd and nsd)
-            intfs = vnfd.get("connection_points", [])
+            # get connection points defined for the DU
+            intfs = u.get("connection_points", [])
             # do some re-naming of fields to be compatible to containernet
             for i in intfs:
                 if i.get("address"):
@@ -376,7 +370,6 @@ class Service(object):
                 vnf_container_name,
                 network=intfs,
                 image=docker_image_name,
-                flavor_name="small",
                 cpu_quota=cpu_quota,
                 cpu_period=cpu_period,
                 cpuset=cpu_list,
@@ -409,16 +402,30 @@ class Service(object):
 
     def _get_vnf_instance(self, instance_uuid, vnf_id):
         """
-        Returns the Docker object for the given VNF id (or Docker name).
-        :param instance_uuid: UUID of the service instance to search in.
-        :param name: VNF name or Docker name. We are fuzzy here.
-        :return:
+        Returns VNFI object for a given "vnf_id" or "vnf_container_namse" taken from an NSD.
+        :return: single object
         """
-        dn = vnf_id
         for vnfi in self.instances[instance_uuid]["vnf_instances"]:
-            if vnfi.name == dn:
+            if str(vnfi.name) == str(vnf_id):
                 return vnfi
-        LOG.warning("No container with name: {0} found.".format(dn))
+        LOG.warning("No container with name: {0} found.".format(vnf_id))
+        return None
+
+    def _get_vnf_instance_units(self, instance_uuid, vnf_id):
+        """
+        Returns a list of VNFI objects (all deployment units) for a given
+        "vnf_id" taken from an NSD.
+        :return: list
+        """
+        r = list()
+        for vnfi in self.instances[instance_uuid]["vnf_instances"]:
+            if vnf_id in vnfi.name:
+                r.append(vnfi)
+        if len(r) > 0:
+            LOG.debug("Found units: {} for vnf_id: {}"
+                      .format([i.name for i in r], vnf_id))
+            return r
+        LOG.warning("No container(s) with name: {0} found.".format(vnf_id))
         return None
 
     @staticmethod
@@ -456,7 +463,7 @@ class Service(object):
             env = config.get("Env", list())
             for env_var in env:
                 var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
-                LOG.debug("%r = %r" % (var, cmd))
+                # LOG.debug("%r = %r" % (var, cmd))
                 if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
                     LOG.info("Executing script in '{}': {}={}"
                              .format(vnfi.name, var, cmd))
@@ -629,6 +636,7 @@ class Service(object):
     def _connect_elines(self, eline_fwd_links, instance_uuid):
         """
         Connect all E-LINE links in the NSD
+        Attention: This method DOES NOT support multi V/CDU VNFs!
         :param eline_fwd_links: list of E-LINE links in the NSD
         :param: instance_uuid of the service
         :return:
@@ -737,65 +745,49 @@ class Service(object):
 
     def _connect_elans(self, elan_fwd_links, instance_uuid):
         """
-        Connect all E-LAN links in the NSD
+        Connect all E-LAN/E-Tree links in the NSD
+        This method supports multi-V/CDU VNFs if the connection
+        point names of the DUs are the same as the ones in the NSD.
         :param elan_fwd_links: list of E-LAN links in the NSD
         :param: instance_uuid of the service
         :return:
         """
         for link in elan_fwd_links:
-            # check if we need to deploy this link when its a management link:
-            if USE_DOCKER_MGMT:
-                if self.check_mgmt_interface(
-                        link["connection_points_reference"]):
-                    continue
-
+            # a new E-LAN/E-Tree
             elan_vnf_list = []
-            # check if an external SAP is in the E-LAN (then a subnet is
-            # already defined)
-            intfs_elan = [intf for intf in link["connection_points_reference"]]
-            lan_sap = self.check_ext_saps(intfs_elan)
-            if lan_sap:
-                lan_net = self.saps[lan_sap]['net']
-                lan_hosts = list(lan_net.hosts())
-            else:
-                lan_net = ELAN_SUBNETS.pop(0)
-                lan_hosts = list(lan_net.hosts())
+            lan_net = ELAN_SUBNETS.pop(0)
+            lan_hosts = list(lan_net.hosts())
 
-            # generate lan ip address for all interfaces except external SAPs
+            # generate lan ip address for all interfaces (of all involved (V/CDUs))
             for intf in link["connection_points_reference"]:
-
-                # skip external SAPs, they already have an ip
-                vnf_id, vnf_interface, vnf_sap_docker_name = parse_interface(
-                    intf)
-                if vnf_sap_docker_name in self.saps_ext:
-                    elan_vnf_list.append(
-                        {'name': vnf_sap_docker_name, 'interface': vnf_interface})
-                    continue
-
-                ip_address = "{0}/{1}".format(str(lan_hosts.pop(0)),
-                                              lan_net.prefixlen)
-                vnf_id, intf_name, vnf_sap_id = parse_interface(intf)
-
-                # make sure we use the correct sap vnf name
-                src_docker_name = vnf_id
-                if vnf_sap_id in self.saps_int:
-                    src_docker_name = vnf_sap_id
-                    vnf_id = vnf_sap_id
-
-                LOG.debug(
-                    "Setting up E-LAN interface. (%s:%s) -> %s" % (
-                        vnf_id, intf_name, ip_address))
-
-                # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
-                # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
-                # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is necessary.
-                vnfi = self._get_vnf_instance(instance_uuid, vnf_id)
-                if vnfi is not None:
-                    self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
-                    # add this vnf and interface to the E-LAN for tagging
-                    elan_vnf_list.append(
-                        {'name': src_docker_name, 'interface': intf_name})
-
+                vnf_id, intf_name, _ = parse_interface(intf)
+                if vnf_id is None:
+                    continue  # skip references to NS connection points
+                units = self._get_vnf_instance_units(instance_uuid, vnf_id)
+                if units is None:
+                    continue  # skip if no deployment unit is present
+                # iterate over all involved deployment units
+                for uvnfi in units:
+                    # Attention: we apply a simplification for multi DU VNFs here:
+                    # the connection points of all involved DUs have to have the same
+                    # name as the connection points of the surrounding VNF to be mapped.
+                    # This is because we do not consider links specified in the VNFds
+                    container_name = uvnfi.name
+                    ip_address = "{0}/{1}".format(str(lan_hosts.pop(0)),
+                                                  lan_net.prefixlen)
+                    LOG.debug(
+                        "Setting up E-LAN/E-Tree interface. (%s:%s) -> %s" % (
+                            container_name, intf_name, ip_address))
+                    # re-configure the VNFs IP assignment and ensure that a new subnet is used for each E-LAN
+                    # E-LAN relies on the learning switch capability of Ryu which has to be turned on in the topology
+                    # (DCNetwork(controller=RemoteController, enable_learning=True)), so no explicit chaining is
+                    # necessary.
+                    vnfi = self._get_vnf_instance(instance_uuid, container_name)
+                    if vnfi is not None:
+                        self._vnf_reconfigure_network(vnfi, intf_name, ip_address)
+                        # add this vnf and interface to the E-LAN for tagging
+                        elan_vnf_list.append(
+                            {'name': container_name, 'interface': intf_name})
             # install the VLAN tags for this E-LAN
             GK.net.setLAN(elan_vnf_list)
 
@@ -1206,16 +1198,12 @@ def parse_interface(interface_name):
     :param interface_name:
     :return:
     """
-
     if ':' in interface_name:
         vnf_id, vnf_interface = interface_name.split(':')
-        vnf_sap_docker_name = interface_name.replace(':', '_')
     else:
-        vnf_id = interface_name
+        vnf_id = None
         vnf_interface = interface_name
-        vnf_sap_docker_name = interface_name
-
-    return vnf_id, vnf_interface, vnf_sap_docker_name
+    return vnf_id, vnf_interface, None
 
 
 def reset_subnets():
