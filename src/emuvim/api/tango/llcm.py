@@ -883,7 +883,15 @@ class Instantiations(fr.Resource):
         # try to extract the service uuid from the request
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
+        service_name = json_data.get("service_name")
 
+        # first try to find by service_name
+        if service_name is not None:
+            for s_uuid, s in GK.services.iteritems():
+                if s.manifest.get("name") == service_name:
+                    LOG.info("Found service: {} with UUID: {}"
+                             .format(service_name, s_uuid))
+                    service_uuid = s_uuid
         # lets be a bit fuzzy here to make testing easier
         if (service_uuid is None or service_uuid ==
                 "latest") and len(GK.services) > 0:
