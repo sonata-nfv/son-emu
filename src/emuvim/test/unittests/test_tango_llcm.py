@@ -62,7 +62,6 @@ class testTangoLLCM(SimpleTestTopology):
         self.startNet()
         time.sleep(3)
 
-        print "starting tests"
         # board package
         files = {"package": open(PACKAGE_PATH, "rb")}
         r = requests.post("http://127.0.0.1:56000/packages", files=files)
@@ -97,7 +96,7 @@ class testTangoLLCM(SimpleTestTopology):
 
         # check E-Line connection, by checking the IP addresses
         for link in self.net.deployed_elines:
-            vnf_src, intf_src, vnf_sap_docker_name = parse_interface(
+            vnf_src, intf_src = parse_interface(
                 link['connection_points_reference'][0])
             print vnf_src, intf_src
             src = self.net.getNodeByName(vnf_src)
@@ -109,7 +108,7 @@ class testTangoLLCM(SimpleTestTopology):
             src_mask = [intf['netmask']
                         for intf in network_list if intf['intf_name'] == intf_src][0]
 
-            vnf_dst, intf_dst, vnf_sap_docker_name = parse_interface(
+            vnf_dst, intf_dst = parse_interface(
                 link['connection_points_reference'][1])
             dst = self.net.getNodeByName(vnf_dst)
             if not dst:
