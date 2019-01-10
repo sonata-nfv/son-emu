@@ -920,24 +920,32 @@ class Instantiations(fr.Resource):
         """
         # try to extract the service  and instance UUID from the request
         json_data = request.get_json(force=True)
-        service_uuid = json_data.get("service_uuid")
-        instance_uuid = json_data.get("service_instance_uuid")
-
+        service_uuid_input = json_data.get("service_uuid")
+        instance_uuid_input = json_data.get("service_instance_uuid")
+        if len(GK.services) < 1:
+            return "No service on-boarded.", 404
         # try to be fuzzy
-        if service_uuid is None and len(GK.services) > 0:
-            # if we don't get a service uuid, we simply stop the last service
-            # in the list
-            service_uuid = list(GK.services.iterkeys())[0]
-        if instance_uuid is None and len(
-                GK.services[service_uuid].instances) > 0:
-            instance_uuid = list(
-                GK.services[service_uuid].instances.iterkeys())[0]
-
-        if service_uuid in GK.services and instance_uuid in GK.services[service_uuid].instances:
-            # valid service and instance UUID, stop service
-            GK.services.get(service_uuid).stop_service(instance_uuid)
-            return "service instance with uuid %r stopped." % instance_uuid, 200
-        return "Service not found", 404
+        if service_uuid_input is None:
+            # if we don't get a service uuid we stop all services
+            service_uuid_list = list(GK.services.iterkeys())
+            LOG.info("No service_uuid given, stopping all.")
+        else:
+            service_uuid_list = [service_uuid_input]
+        # for each service
+        for service_uuid in service_uuid_list:
+            if instance_uuid_input is None:
+                instance_uuid_list = list(
+                    GK.services[service_uuid].instances.iterkeys())
+            else:
+                instance_uuid_list = [instance_uuid_input]
+            # for all service instances
+            for instance_uuid in instance_uuid_list:
+                if (service_uuid in GK.services and
+                        instance_uuid in GK.services[service_uuid].instances):
+                    # valid service and instance UUID, stop service
+                    GK.services.get(service_uuid).stop_service(instance_uuid)
+                    LOG.info("Service instance with uuid %r stopped." % instance_uuid)
+        return "Service(s) stopped.", 200
 
 
 class Exit(fr.Resource):
