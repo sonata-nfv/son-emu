@@ -240,27 +240,33 @@ class Service(object):
         Extract resource limits from deployment units.
         """
         # defaults
-        cpu_list = "1"
+        cpu_list = None
         cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(1.0))
-        mem_limit = 0
+        mem_limit = None
         # update from descriptor
         if "resource_requirements" in deployment_unit:
             res_req = deployment_unit.get("resource_requirements")
-            cpu_list = res_req.get("cpu").get("cores")
+            cpu_list = res_req.get("cpu").get("cpuset")
             if cpu_list is None:
                 cpu_list = res_req.get("cpu").get("vcpus")
-            cpu_bw = res_req.get("cpu").get("cpu_bw", 1.0)
+            if cpu_list is not None:
+                # attention: docker expects list as string w/o spaces:
+                cpu_list = str(cpu_list).replace(" ", "").strip()
+            cpu_bw = res_req.get("cpu").get("cpu_bw")
+            if cpu_bw is None:
+                cpu_bw = 1.0
             cpu_period, cpu_quota = self._calculate_cpu_cfs_values(float(cpu_bw))
-            mem_num = str(res_req.get("memory").get("size", 2))
+            mem_limit = res_req.get("memory").get("size")
             mem_unit = str(res_req.get("memory").get("size_unit", "GB"))
-            mem_limit = float(mem_num)
-            if mem_unit == "GB":
-                mem_limit = mem_limit * 1024 * 1024 * 1024
-            elif mem_unit == "MB":
-                mem_limit = mem_limit * 1024 * 1024
-            elif mem_unit == "KB":
-                mem_limit = mem_limit * 1024
-            mem_limit = int(mem_limit)
+            if mem_limit is not None:
+                mem_limit = int(mem_limit)
+                # to bytes
+                if "G" in mem_unit:
+                    mem_limit = mem_limit * 1024 * 1024 * 1024
+                elif "M" in mem_unit:
+                    mem_limit = mem_limit * 1024 * 1024
+                elif "K" in mem_unit:
+                    mem_limit = mem_limit * 1024
         return cpu_list, cpu_period, cpu_quota, mem_limit
 
     def _start_vnfd(self, vnfd, vnf_id, **kwargs):
@@ -329,7 +335,7 @@ class Service(object):
                 image=docker_image_name,
                 cpu_quota=cpu_quota,
                 cpu_period=cpu_period,
-                cpuset=cpu_list,
+                cpuset_cpus=cpu_list,
                 mem_limit=mem_limit,
                 volumes=volumes,
                 properties=cenv,  # environment
