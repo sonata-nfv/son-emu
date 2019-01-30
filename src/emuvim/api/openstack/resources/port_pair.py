@@ -43,6 +43,7 @@ class PortPair(object):
             "description": self.description,
             "ingress": self.ingress.id,
             "egress": self.egress.id,
-            "id": self.id
+            "id": self.id,
+            "service_function_parameters": [],
         }
         return representation
