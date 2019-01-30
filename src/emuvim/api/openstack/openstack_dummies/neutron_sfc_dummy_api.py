@@ -114,10 +114,11 @@ class PortPairsList(SFC):
     def get(self):
         logging.debug("API CALL: %s GET" % str(self.__class__.__name__))
         try:
-            port_pair_list = []
-            for port_pair in self.api.compute.port_pairs.values():
-                port_pair_list.append(port_pair.create_dict(self.api.compute))
-            resp = {"port_pairs": port_pair_list}
+            port_pairs = self.api.compute.port_pairs.values()
+            id = request.args.get('id')
+            if id and any(id):
+                port_pairs = filter(lambda port_pair: port_pair.id == id, port_pairs)
+            resp = {"port_pairs": map(lambda port_pair: port_pair.create_dict(self.api.compute), port_pairs)}
 
             return Response(json.dumps(resp), status=200,
                             mimetype='application/json')
