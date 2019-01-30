@@ -246,10 +246,10 @@ class NovaListServersApi(Resource):
 
             if networks is not None:
                 for net in networks:
-                    port = self.api.compute.find_port_by_name_or_id(
-                        net.get('port', ""))
+                    port_name_or_id = net.get('port', "")
+                    port = self.api.compute.find_port_by_name_or_id(port_name_or_id)
                     if port is not None:
-                        server.port_names.append(port.name)
+                        server.port_names.append(port_name_or_id)
                     else:
                         return Response(
                             "Currently only networking by port is supported.", status=400)

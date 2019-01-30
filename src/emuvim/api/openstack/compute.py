@@ -687,12 +687,6 @@ class OpenstackCompute(object):
         :return: Returns the created port.
         :rtype: :class:`heat.resources.port`
         """
-        port = self.find_port_by_name_or_id(name)
-        if port is not None and not stack_operation:
-            LOG.warning(
-                "Creating port with name %s failed, as it already exists" % name)
-            raise Exception("Port with name %s already exists." % name)
-        LOG.debug("Creating port with name %s" % name)
         port = Port(name)
         if not stack_operation:
             self.ports[port.id] = port
@@ -708,12 +702,19 @@ class OpenstackCompute(object):
         :return: Returns the port reference if it was found or None
         :rtype: :class:`heat.resources.port`
         """
+        # find by id
         if name_or_id in self.ports:
             return self.ports[name_or_id]
-        for port in self.ports.values():
-            if port.name == name_or_id or port.template_name == name_or_id:
-                return port
-
+        # find by name
+        matching_ports = filter(
+            lambda port: port.name == name_or_id or port.template_name == name_or_id,
+            self.ports.values()
+        )
+        matching_ports_count = len(matching_ports)
+        if matching_ports_count == 1:
+            return matching_ports[0]
+        if matching_ports_count > 1:
+            raise RuntimeError("Ambiguous port name %s" % name_or_id)
         return None
 
     def delete_port(self, name_or_id):

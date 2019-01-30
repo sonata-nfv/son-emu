@@ -610,18 +610,26 @@ class testRestApi(ApiBaseOpenStack):
             url, data=createportdata, headers=headers)
         self.assertEqual(createportresponse.status_code, 201)
         print(createportresponse.content)
-        self.assertEqual(json.loads(createportresponse.content)[
-                         "port"]["name"], "new_port")
+        createport = json.loads(createportresponse.content)["port"]
+        self.assertEqual(createport["name"], "new_port")
         print(" ")
 
         print('->>>>>>> test Neutron Create Port With Existing Name ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:19696/v2.0/ports"
-        createportwithexistingnamedata = '{"port": {"name": "new_port", "network_id": "%s"} }' % (
-            json.loads(createnetworkresponse.content)["network"]["id"])
-        createportwithexistingnameresponse = requests.post(
+        network_id = json.loads(createnetworkresponse.content)["network"]["id"]
+        createportwithexistingnamedata = '{"port": {"name": "duplicate_port_name", "network_id": "%s"} }' % network_id
+        createportwithexistingnameresponse1 = requests.post(
             url, data=createportwithexistingnamedata, headers=headers)
-        self.assertEqual(createportwithexistingnameresponse.status_code, 500)
+        createportwithexistingnameresponse2 = requests.post(
+            url, data=createportwithexistingnamedata, headers=headers)
+        createportwithexistingname1 = json.loads(createportwithexistingnameresponse1.content)["port"]
+        createportwithexistingname2 = json.loads(createportwithexistingnameresponse2.content)["port"]
+        self.assertEqual(createportwithexistingnameresponse1.status_code, 201)
+        self.assertEqual(createportwithexistingnameresponse2.status_code, 201)
+        self.assertEqual(createportwithexistingname1["name"], "duplicate_port_name")
+        self.assertEqual(createportwithexistingname2["name"], "duplicate_port_name")
+        self.assertNotEqual(createportwithexistingname1["id"], createportwithexistingname2["id"], "Duplicate port should have different id")
         print(" ")
 
         print('->>>>>>> test Neutron Create Port Without Name ->>>>>>>>>>>>>>>')

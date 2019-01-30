@@ -816,10 +816,6 @@ class NeutronCreatePort(Resource):
                 num_ports = len(self.api.compute.ports)
                 name = "port:cp%s:man:%s" % (num_ports, str(uuid.uuid4()))
 
-            if self.api.compute.find_port_by_name_or_id(name):
-                return Response("Port with name %s already exists.\n" %
-                                name, status=500, mimetype='application/json')
-
             port = self.api.compute.create_port(name)
 
             port.net_name = net.name
