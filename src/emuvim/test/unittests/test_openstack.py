@@ -568,6 +568,22 @@ class testRestApi(ApiBaseOpenStack):
                          "ports"][0]["id"], listPortsId1)
         print(" ")
 
+        print('->>>>>>> test Neutron List Ports By Device ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        server_url = "http://0.0.0.0:18774/v2.1/id_bla/servers/firewall1:9df6a98f-9e11-4cb7-b3c0-InAdUnitTest"
+        server_response = requests.get(server_url, headers=headers)
+        firewall1_server = json.loads(server_response.content)["server"]
+        device_id = firewall1_server["id"]
+        url = "http://0.0.0.0:19696/v2.0/ports?device_id=%s" % device_id
+        list_ports_by_device_id_response = requests.get(url, headers=headers)
+        self.assertEqual(list_ports_by_device_id_response.status_code, 200)
+        list_ports_by_device_id_ports = json.loads(list_ports_by_device_id_response.content)["ports"]
+
+        self.assertTrue(any(list_ports_by_device_id_ports), "Expected at least one port for device")
+        for port in list_ports_by_device_id_ports:
+            self.assertTrue(port["name"].startswith("firewall1:"), "Expected all ports to belong to firewall1")
+        print(" ")
+
         print('->>>>>>> test Neutron List Non-Existing Ports ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:19696/v2.0/ports?id=non-existing-port-id"

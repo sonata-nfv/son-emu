@@ -717,20 +717,29 @@ class NeutronListPorts(Resource):
                 show_port = NeutronShowPort(self.api)
                 return show_port.get_port(request.args.get('id'), True)
 
-            port_list = list()
+            ports = self.api.compute.ports.values()
+            if len(id_list) != 0:
+                ports = filter(lambda port: port.id in id_list, ports)
+
+            device_id = request.args.get('device_id')
+            if device_id:
+                server = self.api.compute.find_server_by_name_or_id(device_id)
+                if not server:
+                    raise RuntimeError("Unable to find server '%s' in order to return it's ports" % server)
+
+                ports = filter(lambda port: (
+                    any(
+                        filter(
+                            lambda server_port_name_or_id: (
+                                port.id == server_port_name_or_id or port.name == server_port_name_or_id
+                            ),
+                            server.port_names
+                        )
+                    )
+                ), ports)
+
             port_dict = dict()
-
-            if len(id_list) == 0:
-                for port in self.api.compute.ports.values():
-                    tmp_port_dict = port.create_port_dict(self.api.compute)
-                    port_list.append(tmp_port_dict)
-            else:
-                for port in self.api.compute.ports.values():
-                    if port.id in id_list:
-                        tmp_port_dict = port.create_port_dict(self.api.compute)
-                        port_list.append(tmp_port_dict)
-
-            port_dict["ports"] = port_list
+            port_dict["ports"] = map(lambda x: x.create_port_dict(self.api.compute), ports)
 
             return Response(json.dumps(port_dict), status=200,
                             mimetype='application/json')
