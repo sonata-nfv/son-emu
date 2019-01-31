@@ -71,9 +71,9 @@ class PortChain(object):
                 server_ingress = None
                 server_egress = None
                 for server in compute.computeUnits.values():
-                    if port_pair.ingress.name in server.port_names:
+                    if port_pair.ingress.name in server.port_names or port_pair.ingress.id in server.port_names:
                         server_ingress = server
-                    elif port_pair.egress.name in server.port_names:
+                    elif port_pair.egress.name in server.port_names or port_pair.egress.id in server.port_names:
                         server_egress = server
 
                 # TODO: Not sure, if this should throw an error
