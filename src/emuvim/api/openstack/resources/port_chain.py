@@ -76,15 +76,12 @@ class PortChain(object):
                     if port_pair.egress.name in server.port_names or port_pair.egress.id in server.port_names:
                         server_egress = server
 
-                # TODO: Not sure, if this should throw an error
                 if not server_ingress:
-                    logging.warn("Neutron SFC: ingress port %s not connected." % str(
-                        port_pair.ingress.name))
-                    continue
+                    raise RuntimeError("Neutron SFC: ingress port %s not connected to any server." %
+                                       port_pair.ingress.name)
                 if not server_egress:
-                    logging.warn("Neutron SFC: egress port %s not connected." % str(
-                        port_pair.egress.name))
-                    continue
+                    raise RuntimeError("Neutron SFC: egress port %s not connected to any server." %
+                                       port_pair.egress.name)
 
                 compute.dc.net.setChain(
                     server_ingress.name, server_egress.name,

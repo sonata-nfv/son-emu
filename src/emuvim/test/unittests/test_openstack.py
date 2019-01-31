@@ -904,6 +904,34 @@ class testRestApi(ApiBaseOpenStack):
         p3_id = json.loads(p3_resp.content)["port"]["id"]
         p4_id = json.loads(p4_resp.content)["port"]["id"]
 
+        listflavorsresponse = requests.get("http://0.0.0.0:18774/v2.1/id_bla/flavors", headers=headers)
+        self.assertEqual(listflavorsresponse.status_code, 200)
+        flavors = json.loads(listflavorsresponse.content)["flavors"]
+        m1_tiny_flavor = filter(lambda flavor: flavor["name"] == "m1.tiny", flavors)[0]
+
+        listimagesdetailsresponse = requests.get("http://0.0.0.0:18774/v2.1/id_bla/images/detail", headers=headers)
+        self.assertEqual(listimagesdetailsresponse.status_code, 200)
+        images = json.loads(listimagesdetailsresponse.content)["images"]
+        ubuntu_image = filter(lambda image: image["name"] == "ubuntu:trusty", images)[0]
+
+        server_url = "http://0.0.0.0:18774/v2.1/id_bla/servers"
+        s1 = '{"server": {' \
+             '"name": "s1",' \
+             '"networks": [{"port": "p1"}, {"port": "p2"}],' \
+             '"flavorRef": "%s",' \
+             '"imageRef": "%s"' \
+             '}}' % (m1_tiny_flavor["id"], ubuntu_image["id"])
+        s2 = '{"server": {' \
+             '"name": "s2",' \
+             '"networks": [{"port": "p3"}, {"port": "p4"}],' \
+             '"flavorRef": "%s",' \
+             '"imageRef": "%s"' \
+             '}}' % (m1_tiny_flavor["id"], ubuntu_image["id"])
+        s1_response = requests.post(server_url, data=s1, headers=headers)
+        s2_response = requests.post(server_url, data=s2, headers=headers)
+        self.assertEqual(s1_response.status_code, 200)
+        self.assertEqual(s2_response.status_code, 200)
+
         print('->>>>>>> test Neutron SFC Port Pair Create ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs"
