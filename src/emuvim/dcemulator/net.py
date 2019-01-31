@@ -25,7 +25,6 @@
 # partner consortium (www.sonata-nfv.eu).
 import logging
 
-import site
 import time
 from subprocess import Popen
 import re
@@ -898,14 +897,14 @@ class DCNetwork(Containernet):
     # start Ryu Openflow controller as Remote Controller for the DCNetwork
     def startRyu(self, learning_switch=True):
         # start Ryu controller with rest-API
-        python_install_path = site.getsitepackages()[0]
+
         # ryu default learning switch
-        # ryu_path = python_install_path + '/ryu/app/simple_switch_13.py'
+        # ryu_learning_app = python_install_path + '/ryu/app/simple_switch_13.py'
         # custom learning switch that installs a default NORMAL action in the
         # ovs switches
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        ryu_path = dir_path + '/son_emu_simple_switch_13.py'
-        ryu_path2 = python_install_path + '/ryu/app/ofctl_rest.py'
+        ryu_learning_app = dir_path + '/son_emu_simple_switch_13.py'
+        ryu_rest_app = 'ryu.app.ofctl_rest'
         # change the default Openflow controller port to 6653 (official IANA-assigned port number), as used by Mininet
         # Ryu still uses 6633 as default
         ryu_option = '--ofp-tcp-listen-port'
@@ -913,15 +912,13 @@ class DCNetwork(Containernet):
         ryu_cmd = 'ryu-manager'
         FNULL = open("/tmp/ryu.log", 'w')
         if learning_switch:
-            self.ryu_process = Popen(
-                [ryu_cmd, ryu_path, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
-            LOG.debug('starting ryu-controller with {0}'.format(ryu_path))
-            LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
+            # learning and rest api
+            args = [ryu_cmd, ryu_learning_app, ryu_rest_app, ryu_option, ryu_of_port]
         else:
             # no learning switch, but with rest api
-            self.ryu_process = Popen(
-                [ryu_cmd, ryu_path2, ryu_option, ryu_of_port], stdout=FNULL, stderr=FNULL)
-            LOG.debug('starting ryu-controller with {0}'.format(ryu_path2))
+            args = [ryu_cmd, ryu_rest_app, ryu_option, ryu_of_port]
+        self.ryu_process = Popen(args, stdout=FNULL, stderr=FNULL)
+        LOG.debug('starting ryu-controller with %s' % args)
         time.sleep(1)
 
     def killRyu(self):
