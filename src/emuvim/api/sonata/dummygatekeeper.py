@@ -330,8 +330,7 @@ class Service(object):
             cpu_period, cpu_quota = self._calculate_cpu_cfs_values(
                 float(cpu_bw))
 
-            # check if we need to deploy the management ports (defined as
-            # type:management both on in the vnfd and nsd)
+            # check if we need to deploy the management ports
             intfs = vnfd.get("connection_points", [])
             mgmt_intf_names = []
             if USE_DOCKER_MGMT:
