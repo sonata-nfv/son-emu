@@ -917,9 +917,18 @@ class testRestApi(ApiBaseOpenStack):
         url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs"
         pp_list_resp = requests.get(url, headers=headers)
         self.assertEqual(pp_list_resp.status_code, 200)
+        pp_list = json.loads(pp_list_resp.content)["port_pairs"]
         # only pp1 and pp2 should be left
-        self.assertEqual(
-            len(json.loads(pp_list_resp.content)["port_pairs"]), 2)
+        self.assertEqual(len(pp_list), 2)
+
+        print('->>>>>>> test Neutron SFC Port Pair List filtered by id ->>>>>>>>>>>>>>>')
+        print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs?id=%s" % pp_list[0]["id"]
+        pp_list_filtered_by_id_resp = requests.get(url, headers=headers)
+        pp_list_filtered_by_id = json.loads(pp_list_filtered_by_id_resp.content)["port_pairs"]
+        self.assertEqual(pp_list_filtered_by_id_resp.status_code, 200)
+        self.assertEqual(len(pp_list_filtered_by_id), 1)
+        self.assertEqual(pp_list_filtered_by_id[0], pp_list[0])
 
         print('->>>>>>> test Neutron SFC Port Pair Show ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
