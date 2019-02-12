@@ -58,6 +58,9 @@ RUN ansible-playbook -i "localhost," -c local --skip-tags "notindocker" install.
 WORKDIR /son-emu
 RUN python setup.py develop
 
+# Hotfix: https://github.com/pytest-dev/pytest/issues/4770
+RUN pip2 install "more-itertools<=5.0.0"
+
 # Important: This entrypoint is required to start the OVS service
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 CMD ["python", "examples/default_single_dc_topology.py"]

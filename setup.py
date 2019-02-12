@@ -57,7 +57,9 @@ setup(name='emuvim',
           'ipaddress',
           'simplejson',
           'gevent',
-          'flake8'
+          'flake8',
+          # fixes: https://github.com/pytest-dev/pytest/issues/4770
+          'more-itertools<=5.0.0'
       ],
       zip_safe=False,
       entry_points={
@@ -66,5 +68,5 @@ setup(name='emuvim',
           ],
       },
       setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
+      tests_require=['pytest', 'more-itertools<=5.0.0'],
       )

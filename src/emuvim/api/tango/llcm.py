@@ -423,7 +423,6 @@ class Service(object):
             env = config.get("Env", list())
             for env_var in env:
                 var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
-                # LOG.debug("%r = %r" % (var, cmd))
                 if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
                     LOG.info("Executing script in '{}': {}={}"
                              .format(vnfi.name, var, cmd))

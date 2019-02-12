@@ -83,8 +83,8 @@ class Compute(Resource):
                     var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
                     logging.debug("%r = %r" % (var, cmd))
                     if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
-                        logging.info(
-                            "Executing entry point script in %r: %r" % (c.name, cmd))
+                        logging.info("Executing script in '{}': {}={}"
+                                     .format(compute_name, var, cmd))
                         # execute command in new thread to ensure that API is
                         # not blocked by VNF
                         t = threading.Thread(target=c.cmdPrint, args=(cmd,))

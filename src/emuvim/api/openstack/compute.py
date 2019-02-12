@@ -491,18 +491,19 @@ class OpenstackCompute(object):
                         port.assigned_container = c
 
         # Start the real emulator command now as specified in the dockerfile
-        # ENV SON_EMU_CMD
         config = c.dcinfo.get("Config", dict())
         env = config.get("Env", list())
         for env_var in env:
-            if "SON_EMU_CMD=" in env_var:
-                cmd = str(env_var.split("=")[1])
-                server.son_emu_command = cmd
+            var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
+            if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
+                LOG.info("Executing script in '{}': {}={}"
+                         .format(server.name, var, cmd))
                 # execute command in new thread to ensure that GK is not
                 # blocked by VNF
                 t = threading.Thread(target=c.cmdPrint, args=(cmd,))
                 t.daemon = True
                 t.start()
+                break  # only execute one command
 
     def stop_compute(self, server):
         """
