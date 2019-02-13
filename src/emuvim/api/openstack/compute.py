@@ -587,11 +587,10 @@ class OpenstackCompute(object):
         This function provides a shorter name if needed
         """
         if len(name) > char_limit:
-            LOG.info("Long server name: {}".format(name))
             # construct a short name
             h = hashlib.sha224(name).hexdigest()
             h = h[0:char_limit]
-            LOG.info("Short server name: {}".format(h))
+            LOG.debug("Shortened server name '%s' to '%s'" % (name, h))
         return name
 
     def delete_server(self, server):
