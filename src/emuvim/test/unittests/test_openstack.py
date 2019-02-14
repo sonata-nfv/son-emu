@@ -876,7 +876,7 @@ class testRestApi(ApiBaseOpenStack):
 
         headers = {'Content-type': 'application/json'}
 
-        print('->>>>>>> Create ports p1 - p4 ->>>>>>>>>>>>>>>')
+        print('->>>>>>> Create ports p1 - p6 ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         # Get network id
         network_resp = requests.get(
@@ -884,25 +884,16 @@ class testRestApi(ApiBaseOpenStack):
         self.assertEqual(network_resp.status_code, 200)
         network_id = json.loads(network_resp.content)["networks"][0]["id"]
 
-        url = "http://0.0.0.0:19696/v2.0/ports"
-        port_request = '{"port": {"name": "%s", "network_id": "%s"}}'
-        p1_resp = requests.post(url, data=port_request %
-                                ("p1", network_id), headers=headers)
-        self.assertEqual(p1_resp.status_code, 201)
-        p2_resp = requests.post(url, data=port_request %
-                                ("p2", network_id), headers=headers)
-        self.assertEqual(p2_resp.status_code, 201)
-        p3_resp = requests.post(url, data=port_request %
-                                ("p3", network_id), headers=headers)
-        self.assertEqual(p3_resp.status_code, 201)
-        p4_resp = requests.post(url, data=port_request %
-                                ("p4", network_id), headers=headers)
-        self.assertEqual(p4_resp.status_code, 201)
+        port_responses = map(lambda name: requests.post("http://0.0.0.0:19696/v2.0/ports",
+                                                        data='{"port": {"name": "%s", "network_id": "%s"}}' %
+                                                             (name, network_id),
+                                                        headers=headers),
+                             ["p1", "p2", "p3", "p4", "p5", "p6"])
 
-        p1_id = json.loads(p1_resp.content)["port"]["id"]
-        p2_id = json.loads(p2_resp.content)["port"]["id"]
-        p3_id = json.loads(p3_resp.content)["port"]["id"]
-        p4_id = json.loads(p4_resp.content)["port"]["id"]
+        for port in port_responses:
+            self.assertEqual(port.status_code, 201)
+
+        port_ids = map(lambda response: json.loads(response.content)["port"]["id"], port_responses)
 
         listflavorsresponse = requests.get("http://0.0.0.0:18774/v2.1/id_bla/flavors", headers=headers)
         self.assertEqual(listflavorsresponse.status_code, 200)
@@ -915,34 +906,42 @@ class testRestApi(ApiBaseOpenStack):
         ubuntu_image = filter(lambda image: image["name"] == "ubuntu:trusty", images)[0]
 
         server_url = "http://0.0.0.0:18774/v2.1/id_bla/servers"
-        s1 = '{"server": {' \
-             '"name": "s1",' \
-             '"networks": [{"port": "p1"}, {"port": "p2"}],' \
-             '"flavorRef": "%s",' \
-             '"imageRef": "%s"' \
-             '}}' % (m1_tiny_flavor["id"], ubuntu_image["id"])
-        s2 = '{"server": {' \
-             '"name": "s2",' \
-             '"networks": [{"port": "p3"}, {"port": "p4"}],' \
-             '"flavorRef": "%s",' \
-             '"imageRef": "%s"' \
-             '}}' % (m1_tiny_flavor["id"], ubuntu_image["id"])
-        s1_response = requests.post(server_url, data=s1, headers=headers)
-        s2_response = requests.post(server_url, data=s2, headers=headers)
-        self.assertEqual(s1_response.status_code, 200)
-        self.assertEqual(s2_response.status_code, 200)
+        server_template = \
+            '{"server": {' \
+            '"name": "%s",' \
+            '"networks": [{"port": "%s"}, {"port": "%s"}],' \
+            '"flavorRef": "%s",' \
+            '"imageRef": "%s"' \
+            '}}'
+        server_responses = map(lambda spec: (
+            requests.post(server_url,
+                          data=server_template % (
+                              spec["name"],
+                              spec["ingress"],
+                              spec["egress"],
+                              m1_tiny_flavor["id"],
+                              ubuntu_image["id"]
+                          ),
+                          headers=headers)
+        ), [
+            {"name": "s1", "ingress": "p1", "egress": "p2"},
+            {"name": "s2", "ingress": "p3", "egress": "p4"},
+            {"name": "s3", "ingress": "p5", "egress": "p6"},
+        ])
+        for response in server_responses:
+            self.assertEqual(response.status_code, 200)
 
         print('->>>>>>> test Neutron SFC Port Pair Create ->>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:19696/v2.0/sfc/port_pairs"
         pp1_resp = requests.post(url, data='{"port_pair": {"name": "pp1", "ingress": "%s", "egress": "%s"}}' % (
-            p1_id, p2_id), headers=headers)
+            port_ids[0], port_ids[1]), headers=headers)
         self.assertEqual(pp1_resp.status_code, 201)
         pp2_resp = requests.post(url, data='{"port_pair": {"name": "pp2", "ingress": "%s", "egress": "%s"}}' % (
-            p3_id, p4_id), headers=headers)
+            port_ids[2], port_ids[3]), headers=headers)
         self.assertEqual(pp2_resp.status_code, 201)
         pp3_resp = requests.post(url, data='{"port_pair": {"name": "pp3", "ingress": "%s", "egress": "%s"}}' % (
-            p3_id, p4_id), headers=headers)
+            port_ids[4], port_ids[5]), headers=headers)
         self.assertEqual(pp3_resp.status_code, 201)
 
         pp1_id = json.loads(pp1_resp.content)["port_pair"]["id"]
@@ -1043,10 +1042,10 @@ class testRestApi(ApiBaseOpenStack):
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         url = "http://0.0.0.0:19696/v2.0/sfc/flow_classifiers"
         fc1_resp = requests.post(
-            url, data='{"flow_classifier": {"name": "fc1", "source_port_range_min": 22, "source_port_range_max": 4000}}', headers=headers)
+            url, data='{"flow_classifier": {"name": "fc1", "logical_source_port": "p1", "source_port_range_min": 22, "source_port_range_max": 4000}}', headers=headers)
         self.assertEqual(fc1_resp.status_code, 201)
         fc2_resp = requests.post(
-            url, data='{"flow_classifier": {"name": "fc2", "source_port_range_min": 22, "source_port_range_max": 4000}}', headers=headers)
+            url, data='{"flow_classifier": {"name": "fc2", "logical_source_port": "p2", "source_port_range_min": 22, "source_port_range_max": 4000}}', headers=headers)
         self.assertEqual(fc2_resp.status_code, 201)
 
         fc1_id = json.loads(fc1_resp.content)["flow_classifier"]["id"]

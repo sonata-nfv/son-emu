@@ -60,19 +60,22 @@ class PortChain(object):
         return compute.find_port_pair_by_name_or_id(port_pair_group.port_pairs[0])
 
     def install(self, compute):
-        for flow_classifier_id in self.flow_classifiers:
-            flow_classifier = compute.find_flow_classifier_by_name_or_id(
-                flow_classifier_id)
-            if flow_classifier:
-                pass
-                # TODO: for every flow classifier create match and pass it to
-                # setChain
 
         port_pair_chain = map(lambda port_pair_group_id: self._get_port_pair(port_pair_group_id, compute),
                               self.port_pair_groups)
         ingress_ports = map(lambda port_pair: port_pair.ingress, port_pair_chain)
         egress_ports = map(lambda port_pair: port_pair.ingress, port_pair_chain)
-        chain = zip(egress_ports, ingress_ports[1:])
+        chain_start = ingress_ports[0]
+        chain_rest = ingress_ports[1:]
+
+        source_port_to_chain_start = []
+        for flow_classifier_id in self.flow_classifiers:
+            flow_classifier = compute.find_flow_classifier_by_name_or_id(flow_classifier_id)
+            if flow_classifier:
+                port = compute.find_port_by_name_or_id(flow_classifier.logical_source_port)
+                source_port_to_chain_start.append((port, chain_start))
+
+        chain = source_port_to_chain_start + zip(egress_ports, chain_rest)
 
         for (egress_port, ingress_port) in chain:
             server_egress = None
