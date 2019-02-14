@@ -53,6 +53,12 @@ class PortChain(object):
         }
         return representation
 
+    def _get_port_pair(self, port_pair_group_id, compute):
+        port_pair_group = compute.find_port_pair_group_by_name_or_id(port_pair_group_id)
+        if len(port_pair_group.port_pairs) != 1:
+            raise RuntimeError("Only port pair groups with a single port pair are supported!")
+        return compute.find_port_pair_by_name_or_id(port_pair_group.port_pairs[0])
+
     def install(self, compute):
         for flow_classifier_id in self.flow_classifiers:
             flow_classifier = compute.find_flow_classifier_by_name_or_id(
@@ -62,33 +68,34 @@ class PortChain(object):
                 # TODO: for every flow classifier create match and pass it to
                 # setChain
 
-        for group_id in self.port_pair_groups:
-            port_pair_group = compute.find_port_pair_group_by_name_or_id(
-                group_id)
-            for port_pair_id in port_pair_group.port_pairs:
-                port_pair = compute.find_port_pair_by_name_or_id(port_pair_id)
+        port_pair_chain = map(lambda port_pair_group_id: self._get_port_pair(port_pair_group_id, compute),
+                              self.port_pair_groups)
+        ingress_ports = map(lambda port_pair: port_pair.ingress, port_pair_chain)
+        egress_ports = map(lambda port_pair: port_pair.ingress, port_pair_chain)
+        chain = zip(egress_ports, ingress_ports[1:])
 
-                server_ingress = None
-                server_egress = None
-                for server in compute.computeUnits.values():
-                    if port_pair.ingress.name in server.port_names or port_pair.ingress.id in server.port_names:
-                        server_ingress = server
-                    if port_pair.egress.name in server.port_names or port_pair.egress.id in server.port_names:
-                        server_egress = server
+        for (egress_port, ingress_port) in chain:
+            server_egress = None
+            server_ingress = None
+            for server in compute.computeUnits.values():
+                if egress_port.name in server.port_names or egress_port.id in server.port_names:
+                    server_egress = server
+                if ingress_port.name in server.port_names or ingress_port.id in server.port_names:
+                    server_ingress = server
 
-                if not server_ingress:
-                    raise RuntimeError("Neutron SFC: ingress port %s not connected to any server." %
-                                       port_pair.ingress.name)
-                if not server_egress:
-                    raise RuntimeError("Neutron SFC: egress port %s not connected to any server." %
-                                       port_pair.egress.name)
+            if not server_egress:
+                raise RuntimeError("Neutron SFC: egress port %s not connected to any server." %
+                                   egress_port.name)
+            if not server_ingress:
+                raise RuntimeError("Neutron SFC: ingress port %s not connected to any server." %
+                                   ingress_port.name)
 
-                compute.dc.net.setChain(
-                    server_ingress.name, server_egress.name,
-                    port_pair.ingress.intf_name, port_pair.egress.intf_name,
-                    cmd="add-flow", cookie=self.cookie, priority=10, bidirectional=False,
-                    monitor=False
-                )
+            compute.dc.net.setChain(
+                server_egress.name, server_ingress.name,
+                egress_port.intf_name, ingress_port.intf_name,
+                cmd="add-flow", cookie=self.cookie, priority=10, bidirectional=False,
+                monitor=False
+            )
 
     def uninstall(self, compute):
         # TODO: implement
