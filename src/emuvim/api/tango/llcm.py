@@ -378,6 +378,8 @@ class Service(object):
         "vnf_id" taken from an NSD.
         :return: list
         """
+        if vnf_id is None:
+            return None
         r = list()
         for vnfi in self.instances[instance_uuid]["vnf_instances"]:
             if vnf_id in vnfi.name:
@@ -527,23 +529,33 @@ class Service(object):
         cookie = 1
         for link in eline_fwd_links:
             LOG.info("Found E-Line: {}".format(link))
-            # check if we need to deploy this link when its a management link:
-            if USE_DOCKER_MGMT:
-                if self.check_mgmt_interface(
-                        link["connection_points_reference"]):
-                    continue
-
             src_id, src_if_name = parse_interface(
                 link["connection_points_reference"][0])
             dst_id, dst_if_name = parse_interface(
                 link["connection_points_reference"][1])
-            setChaining = False
-            LOG.info("Creating E-Line: src={}, dst={}"
-                     .format(src_id, dst_id))
+            LOG.info("Searching C/VDU for E-Line: src={}, src_if={}, dst={}, dst_if={}"
+                     .format(src_id, src_if_name, dst_id, dst_if_name))
+            # handle C/VDUs (ugly hack, only one V/CDU per VNF for now)
+            src_units = self._get_vnf_instance_units(instance_uuid, src_id)
+            dst_units = self._get_vnf_instance_units(instance_uuid, dst_id)
+            if src_units is None or dst_units is None:
+                LOG.info("No VNF-VNF link. Skipping: src={}, src_if={}, dst={}, dst_if={}"
+                         .format(src_id, src_if_name, dst_id, dst_if_name))
+                return
+            # we only support VNFs with one V/CDU right now
+            if len(src_units) != 1 or len(dst_units) != 1:
+                raise BaseException("LLCM does not support E-LINES for multi V/CDU VNFs.")
+            # get the full name from that C/VDU and use it as src_id and dst_id
+            src_id = src_units[0].name
+            dst_id = dst_units[0].name
+            # from here we have all info we need
+            LOG.info("Creating E-Line for C/VDU: src={}, src_if={}, dst={}, dst_if={}"
+                     .format(src_id, src_if_name, dst_id, dst_if_name))
             # get involved vnfis
-            src_vnfi = self._get_vnf_instance(instance_uuid, src_id)
-            dst_vnfi = self._get_vnf_instance(instance_uuid, dst_id)
-
+            src_vnfi = src_units[0]
+            dst_vnfi = dst_units[0]
+            # proceed with chaining setup
+            setChaining = False
             if src_vnfi is not None and dst_vnfi is not None:
                 setChaining = True
                 # re-configure the VNFs IP assignment and ensure that a new
