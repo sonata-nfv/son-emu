@@ -97,7 +97,7 @@ class PortChain(object):
                 server_egress.name, server_ingress.name,
                 egress_port.intf_name, ingress_port.intf_name,
                 cmd="add-flow", cookie=self.cookie, priority=10, bidirectional=False,
-                monitor=False
+                monitor=False, skip_vlan_tag=True
             )
 
     def uninstall(self, compute):
