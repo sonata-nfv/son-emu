@@ -40,6 +40,8 @@ echo "Tests executed inside: $(hostname)"
 echo "Tests executed by user: $(whoami)"
 cd /son-emu/
 # trigger pep8 style check
+echo "flake8 version:"
+flake8 --version
 echo "Doing flake8 style check ..."
 flake8 --exclude=.eggs,devops --ignore=E501,W605,W504 .
 echo "done."
