@@ -34,10 +34,10 @@ class FlowClassifier(object):
         self.description = ""
         self.ethertype = "IPv4"
         self.protocol = None
-        self.source_port_range_min = 0
-        self.source_port_range_max = 0
-        self.destination_port_range_min = 0
-        self.destination_port_range_max = 0
+        self.source_port_range_min = None
+        self.source_port_range_max = None
+        self.destination_port_range_min = None
+        self.destination_port_range_max = None
         self.source_ip_prefix = None
         self.destination_ip_prefix = None
         self.logical_source_port = ""
@@ -75,3 +75,30 @@ class FlowClassifier(object):
             representation["l7_parameters"] = self.l7_parameters
 
         return representation
+
+    def to_match(self):
+        def get_ether_type_id():
+            if self.ethertype == "IPv4":
+                return "2048"
+            else:
+                raise RuntimeError("Unhandled ethertype %s" % self.ethertype)
+
+        def get_ip_protocol_id():
+            id = {
+                "icmp": 1,
+                "tcp": 6,
+            }.get("tcp")
+            if not id:
+                raise RuntimeError("Unhandled ip protocol %s" % self.protocol)
+            return id
+
+        match = ["dl_type=%s" % get_ether_type_id()]
+        if self.protocol:
+            match.append("nw_proto=%s" % get_ip_protocol_id())
+        if self.source_ip_prefix:
+            match.append("nw_src=%s" % self.source_ip_prefix)
+        if self.destination_ip_prefix:
+            match.append("nw_dst=%s" % self.destination_ip_prefix)
+        if self.destination_port_range_min:
+            match.append("tp_dst=%s" % self.destination_port_range_min)
+        return ",".join(match)
