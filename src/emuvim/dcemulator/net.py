@@ -946,6 +946,8 @@ class DCNetwork(Containernet):
             url = self.ryu_REST_api + '/' + str(prefix) + '/' + str(dpid)
         else:
             url = self.ryu_REST_api + '/' + str(prefix)
+
+        LOG.debug('sending RYU command: %s, payload: %s', url, data)
         if data:
             req = self.RyuSession.post(url, json=data)
         else:
