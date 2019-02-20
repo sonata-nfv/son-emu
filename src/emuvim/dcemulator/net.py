@@ -953,7 +953,7 @@ class DCNetwork(Containernet):
 
         # do extra logging if status code is not 200 (OK)
         if req.status_code is not requests.codes.ok:
-            logging.info(
+            LOG.info(
                 'type {0}  encoding: {1} text: {2} headers: {3} history: {4}'.format(req.headers['content-type'],
                                                                                      req.encoding, req.text,
                                                                                      req.headers, req.history))
