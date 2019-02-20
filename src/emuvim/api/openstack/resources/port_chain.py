@@ -96,6 +96,7 @@ class PortChain(object):
             compute.dc.net.setChain(
                 server_egress.name, server_ingress.name,
                 egress_port.intf_name, ingress_port.intf_name,
+                mod_dl_dst=ingress_port.mac_address,
                 cmd="add-flow", cookie=self.cookie, priority=10, bidirectional=False,
                 monitor=False, skip_vlan_tag=True
             )

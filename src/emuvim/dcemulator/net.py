@@ -759,6 +759,7 @@ class DCNetwork(Containernet):
         cmd = kwargs.get('cmd')
         path = kwargs.get('path')
         index = kwargs.get('pathindex')
+        mod_dl_dst = kwargs.get('mod_dl_dst')
 
         vlan = kwargs.get('vlan')
         priority = kwargs.get('priority', DEFAULT_PRIORITY)
@@ -826,6 +827,12 @@ class DCNetwork(Containernet):
 
                 else:  # middle nodes
                     match += ',dl_vlan=%s' % vlan
+            if mod_dl_dst:
+                action = {}
+                action['type'] = 'SET_FIELD'
+                action['field'] = 'eth_dst'
+                action['value'] = mod_dl_dst
+                flow['actions'].append(action)
 
             # output action must come last
             action = {}
