@@ -68,38 +68,39 @@ class PortChain(object):
         chain_start = ingress_ports[0]
         chain_rest = ingress_ports[1:]
 
-        source_port_to_chain_start = []
         for flow_classifier_id in self.flow_classifiers:
             flow_classifier = compute.find_flow_classifier_by_name_or_id(flow_classifier_id)
-            if flow_classifier:
-                port = compute.find_port_by_name_or_id(flow_classifier.logical_source_port)
-                source_port_to_chain_start.append((port, chain_start))
+            if not flow_classifier:
+                raise RuntimeError("Unable to find flow_classifier %s" % flow_classifier_id)
 
-        chain = source_port_to_chain_start + zip(egress_ports, chain_rest)
+            port = compute.find_port_by_name_or_id(flow_classifier.logical_source_port)
 
-        for (egress_port, ingress_port) in chain:
-            server_egress = None
-            server_ingress = None
-            for server in compute.computeUnits.values():
-                if egress_port.name in server.port_names or egress_port.id in server.port_names:
-                    server_egress = server
-                if ingress_port.name in server.port_names or ingress_port.id in server.port_names:
-                    server_ingress = server
+            chain = [(port, chain_start)] + zip(egress_ports, chain_rest)
 
-            if not server_egress:
-                raise RuntimeError("Neutron SFC: egress port %s not connected to any server." %
-                                   egress_port.name)
-            if not server_ingress:
-                raise RuntimeError("Neutron SFC: ingress port %s not connected to any server." %
-                                   ingress_port.name)
+            for (egress_port, ingress_port) in chain:
+                server_egress = None
+                server_ingress = None
+                for server in compute.computeUnits.values():
+                    if egress_port.name in server.port_names or egress_port.id in server.port_names:
+                        server_egress = server
+                    if ingress_port.name in server.port_names or ingress_port.id in server.port_names:
+                        server_ingress = server
 
-            compute.dc.net.setChain(
-                server_egress.name, server_ingress.name,
-                egress_port.intf_name, ingress_port.intf_name,
-                mod_dl_dst=ingress_port.mac_address,
-                cmd="add-flow", cookie=self.cookie, priority=10, bidirectional=False,
-                monitor=False, skip_vlan_tag=True
-            )
+                if not server_egress:
+                    raise RuntimeError("Neutron SFC: egress port %s not connected to any server." %
+                                       egress_port.name)
+                if not server_ingress:
+                    raise RuntimeError("Neutron SFC: ingress port %s not connected to any server." %
+                                       ingress_port.name)
+
+                compute.dc.net.setChain(
+                    server_egress.name, server_ingress.name,
+                    egress_port.intf_name, ingress_port.intf_name,
+                    match=flow_classifier.to_match(),
+                    mod_dl_dst=ingress_port.mac_address,
+                    cmd="add-flow", cookie=self.cookie, priority=10, bidirectional=False,
+                    monitor=False, skip_vlan_tag=True
+                )
 
     def uninstall(self, compute):
         # TODO: implement
