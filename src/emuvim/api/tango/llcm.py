@@ -309,6 +309,26 @@ class Service(object):
                 if i.get("address"):
                     i["ip"] = i.get("address")
 
+            # get ports and port_bindings from the port and publish fields of CNFD
+            # see: https://github.com/containernet/containernet/wiki/Exposing-and-mapping-network-ports
+            ports = list()  # Containernet naming
+            port_bindings = dict()
+            for i in intfs:
+                if i.get("port"):
+                    if not isinstance(i.get("port"), int):
+                        LOG.error("Field 'port' is no int CP: {}".format(i))
+                    else:
+                        ports.append(i.get("port"))
+                if i.get("publish"):
+                    if not isinstance(i.get("publish"), dict):
+                        LOG.error("Field 'publish' is no dict CP: {}".format(i))
+                    else:
+                        port_bindings.update(i.get("publish"))
+            if len(ports) > 0:
+                LOG.info("{} exposes ports: {}".format(vnf_container_name, ports))
+            if len(port_bindings) > 0:
+                LOG.info("{} publishes ports: {}".format(vnf_container_name, port_bindings))
+
             # 5. collect additional information to start container
             volumes = list()
             cenv = dict()
@@ -339,6 +359,8 @@ class Service(object):
                 mem_limit=mem_limit,
                 volumes=volumes,
                 properties=cenv,  # environment
+                ports=ports,
+                port_bindings=port_bindings,
                 type=kwargs.get('type', 'docker'))
             # add vnfd reference to vnfi
             vnfi.vnfd = vnfd
@@ -363,7 +385,7 @@ class Service(object):
 
     def _get_vnf_instance(self, instance_uuid, vnf_id):
         """
-        Returns VNFI object for a given "vnf_id" or "vnf_container_namse" taken from an NSD.
+        Returns VNFI object for a given "vnf_id" or "vnf_container_name" taken from an NSD.
         :return: single object
         """
         for vnfi in self.instances[instance_uuid]["vnf_instances"]:
@@ -565,13 +587,17 @@ class Service(object):
                                        eline_net.prefixlen)
                 ip2 = "{0}/{1}".format(str(eline_net[2]),
                                        eline_net.prefixlen)
-                # check if VNFs have fixed IPs (address field in VNFDs)
-                if (self._get_vnfd_cp_from_vnfi(src_vnfi, src_if_name)
-                        .get("address") is None):
+                # check if VNFs have fixed IPs (ip/address field in VNFDs)
+                if (self._get_vnfd_cp_from_vnfi(
+                    src_vnfi, src_if_name).get("ip") is None and
+                    self._get_vnfd_cp_from_vnfi(
+                        src_vnfi, src_if_name).get("address") is None):
                     self._vnf_reconfigure_network(src_vnfi, src_if_name, ip1)
-                # check if VNFs have fixed IPs (address field in VNFDs)
-                if (self._get_vnfd_cp_from_vnfi(dst_vnfi, dst_if_name)
-                        .get("address") is None):
+                # check if VNFs have fixed IPs (ip field in VNFDs)
+                if (self._get_vnfd_cp_from_vnfi(
+                    dst_vnfi, dst_if_name).get("ip") is None and
+                    self._get_vnfd_cp_from_vnfi(
+                        dst_vnfi, dst_if_name).get("address") is None):
                     self._vnf_reconfigure_network(dst_vnfi, dst_if_name, ip2)
             # set the chaining
             if setChaining:
