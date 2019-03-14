@@ -1,0 +1,90 @@
+# Copyright (c) 2019 Erik Schilling
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+nsd:nsd-catalog:
+    nsd:
+    -   id: vnffg-example
+        short-name: vnffg-example
+        name: vnffg-example
+        constituent-vnfd:
+        -   member-vnf-index: 1
+            vnfd-id-ref: vnfd-traffic-view
+        {% for i in range(2, n + 2) %}
+        -   member-vnf-index: {{ i }}
+            vnfd-id-ref: vnfd-traffic-view
+        {% endfor %}
+        ip-profiles:
+        -   description: Inter VNF Link
+            ip-profile-params:
+                gateway-address: 10.0.{{ subnet }}.210
+                ip-version: ipv4
+                subnet-address: 10.0.{{ subnet }}.0/24
+                dns-server:
+                -   address: 8.8.8.8
+                -   address: 8.8.8.9
+                dhcp-params:
+                  count: 200
+                  start-address: 10.0.{{ subnet }}.1
+            name: ipprofileA
+        vld:
+            -   id: vld1
+                name: vld1-name
+                short-name: vld1-sname
+                type: ELAN
+                ip-profile-ref: ipprofileA
+                vnfd-connection-point-ref:
+                -   member-vnf-index-ref: 1
+                    vnfd-id-ref: vnfd-traffic-view
+                    vnfd-connection-point-ref: eth0
+                    ip-address: 10.0.{{ subnet }}.2
+                {% for i in range(2, n + 2) %}
+                -   member-vnf-index-ref: {{ i }}
+                    vnfd-id-ref: vnfd-traffic-view
+                    vnfd-connection-point-ref: eth0
+                    ip-address: 10.0.{{ subnet }}.{{ i + 1 }}
+                {% endfor %}
+        vnffgd:
+            -   id: vnffg1
+                name: vnffg1-name
+                short-name: vnffg1-sname
+                description: vnffg1-description
+                vendor: vnffg1-vendor
+                version: '1.0'
+                rsp:
+                -   id: rsp1
+                    name: rsp1-name
+                    vnfd-connection-point-ref:
+                    {% for i in range(n) %}
+                    -   member-vnf-index-ref: {{ i + 2 }}
+                        order: {{ i }}
+                        vnfd-id-ref: vnfd-traffic-view
+                        vnfd-ingress-connection-point-ref: eth0
+                        vnfd-egress-connection-point-ref: eth0
+                    {% endfor %}
+                classifier:
+                -   id: class1
+                    name: class1-name
+                    rsp-id-ref: rsp1
+                    member-vnf-index-ref: 1
+                    vnfd-id-ref: vnfd-traffic-view
+                    vnfd-connection-point-ref: eth0
+                    match-attributes:
+                    -   id: match1
+                        ip-proto: 6 # TCP
+                        source-ip-address: 10.0.{{ subnet }}.2
+                        destination-ip-address: 10.0.{{ subnet }}.{{ n + 2 }}
+                        source-port: 0
+                        destination-port: 80
+
