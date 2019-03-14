@@ -1,0 +1,61 @@
+# Copyright (c) 2019 Erik Schilling
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+vnfd:vnfd-catalog:
+  vnfd:
+  - id: charmed-vnf
+    short-name: charmed-vnf
+    name: charmed-vnf
+    vdu:
+    - id: charmed-vnf-vdu
+      vm-flavor:
+        vcpu-count: 1
+        memory-mb: 256
+        storage-gb: 6
+      image: sshcontainer
+      interface:
+      - name: eth0
+        type: EXTERNAL
+        position: 0
+        external-connection-point-ref: eth0
+    mgmt-interface:
+      vdu-id: charmed-vnf-vdu
+    connection-point:
+    - name: eth0
+      type: VPORT
+    vnf-configuration:
+      juju:
+        charm: simple
+      initial-config-primitive:
+      - seq: '1'
+        name: config
+        parameter:
+        - name: ssh-hostname
+          value: <rw_mgmt_ip>
+        - name: ssh-username
+          value: root
+        - name: ssh-password
+          value: test
+      - seq: '2'
+        name: touch
+        parameter:
+        - name: filename
+          value: /test
+      config-primitive:
+      - name: touch
+        parameter:
+        - name: filename
+          data-type: STRING
+          default-value: '/testmanual'

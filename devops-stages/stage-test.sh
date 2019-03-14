@@ -43,7 +43,7 @@ cd /son-emu/
 echo "flake8 version:"
 flake8 --version
 echo "Doing flake8 style check ..."
-flake8 --exclude=.eggs,devops --ignore=E501,W605,W504 .
+flake8 --exclude=.eggs,devops,examples/charms --ignore=E501,W605,W504 .
 echo "done."
 # trigger the tests
 echo "Running unit tests ..."

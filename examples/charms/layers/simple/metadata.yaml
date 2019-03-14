@@ -1,0 +1,5 @@
+name: simple
+summary: A simple VNF proxy charm
+maintainer: Adam Israel <adam.israel@canonical.com>
+subordinate: false
+series: ['xenial']
