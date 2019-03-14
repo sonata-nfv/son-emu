@@ -493,6 +493,7 @@ class OpenstackCompute(object):
         # Start the real emulator command now as specified in the dockerfile
         config = c.dcinfo.get("Config", dict())
         env = config.get("Env", list())
+        legacy_command_execution = False
         for env_var in env:
             var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
             if var == "SON_EMU_CMD" or var == "VIM_EMU_CMD":
@@ -503,7 +504,10 @@ class OpenstackCompute(object):
                 t = threading.Thread(target=c.cmdPrint, args=(cmd,))
                 t.daemon = True
                 t.start()
+                legacy_command_execution = True
                 break  # only execute one command
+        if not legacy_command_execution:
+            c.start()
 
     def stop_compute(self, server):
         """

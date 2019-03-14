@@ -79,6 +79,7 @@ class Compute(Resource):
             try:
                 config = c.dcinfo.get("Config", dict())
                 env = config.get("Env", list())
+                legacy_command_execution = False
                 for env_var in env:
                     var, cmd = map(str.strip, map(str, env_var.split('=', 1)))
                     logging.debug("%r = %r" % (var, cmd))
@@ -90,6 +91,10 @@ class Compute(Resource):
                         t = threading.Thread(target=c.cmdPrint, args=(cmd,))
                         t.daemon = True
                         t.start()
+                        legacy_command_execution = True
+                        break
+                if not legacy_command_execution:
+                    c.start()
             except Exception as ex:
                 logging.warning("Couldn't run Docker entry point VIM_EMU_CMD")
                 logging.exception("Exception:")
