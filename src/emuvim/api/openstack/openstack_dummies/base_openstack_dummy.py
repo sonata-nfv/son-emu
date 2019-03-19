@@ -23,10 +23,15 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
+import logging
+
+import threading
 from flask import Flask, request
 from flask_restful import Api, Resource
+from gevent import monkey
 from gevent.pywsgi import WSGIServer
-import logging
+
+monkey.patch_all()
 
 LOG = logging.getLogger("api.openstack.base")
 
@@ -51,9 +56,15 @@ class BaseOpenstackDummy(Resource):
         self.app = Flask(__name__)
         self.api = Api(self.app)
 
+    def start(self):
+        self.server_thread = threading.Thread(target=self._start_flask, args=())
+        self.server_thread.name = self.__class__.__name__
+        self.server_thread.start()
+
     def stop(self):
         if self.http_server:
-            self.http_server.stop(timeout=1.0)
+            LOG.info('Stopping %s' % self.__class__.__name__)
+            self.http_server.stop(timeout=1)
 
     def _start_flask(self):
         LOG.info("Starting %s endpoint @ http://%s:%d" % (
@@ -63,7 +74,8 @@ class BaseOpenstackDummy(Resource):
             self.app,
             log=open("/dev/null", "w")  # don't show http logs
         )
-        self.http_server.serve_forever(stop_timeout=1.0)
+        self.http_server.serve_forever(stop_timeout=1)
+        LOG.info('Stopped %s' % self.__class__.__name__)
 
     def dump_playbook(self):
         with self.manage.lock:

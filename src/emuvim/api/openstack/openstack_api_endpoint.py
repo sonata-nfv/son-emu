@@ -32,7 +32,6 @@ from openstack_dummies.neutron_dummy_api import NeutronDummyApi
 from openstack_dummies.nova_dummy_api import NovaDummyApi
 
 import logging
-import threading
 import compute
 import socket
 import time
@@ -99,10 +98,7 @@ class OpenstackApiEndpoint():
         for c in self.openstack_endpoints.values():
             c.compute = self.compute
             c.manage = self.manage
-            c.server_thread = threading.Thread(target=c._start_flask, args=())
-            c.server_thread.daemon = True
-            c.server_thread.name = c.__class__.__name__
-            c.server_thread.start()
+            c.start()
             if wait_for_port:
                 self._wait_for_port(c.ip, c.port)
 
@@ -112,10 +108,10 @@ class OpenstackApiEndpoint():
         """
         for c in self.openstack_endpoints.values():
             c.stop()
-        # for c in self.openstack_endpoints.values():
-        #    if c.server_thread:
-        #        print("Waiting for WSGIServers to be stopped ...")
-        #        c.server_thread.join()
+        for c in self.openstack_endpoints.values():
+            if c.server_thread:
+                c.server_thread.join()
+        self.manage.stop()
 
     def _wait_for_port(self, ip, port):
         for i in range(0, 10):

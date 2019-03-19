@@ -79,7 +79,6 @@ class OpenstackManage(object):
         # dependent!
         self.chain = chain_api.ChainApi(ip, port, self)
         self.thread = threading.Thread(target=self.chain._start_flask, args=())
-        self.thread.daemon = True
         self.thread.name = self.chain.__class__
         self.thread.start()
 
@@ -91,6 +90,10 @@ class OpenstackManage(object):
         self.floating_cookies = dict()
         self.floating_intf = None
         self.floating_links = dict()
+
+    def stop(self):
+        self.chain.stop()
+        self.thread.join()
 
     @property
     def net(self):

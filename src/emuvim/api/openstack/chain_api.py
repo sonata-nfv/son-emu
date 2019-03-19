@@ -27,11 +27,16 @@ import json
 import logging
 import copy
 
+from gevent import monkey
+from gevent.pywsgi import WSGIServer
+
 from mininet.node import OVSSwitch
 
 from flask import Flask
 from flask import Response, request
 from flask_restful import Api, Resource
+
+monkey.patch_all()
 
 
 class ChainApi(Resource):
@@ -65,7 +70,6 @@ class ChainApi(Resource):
                               resource_class_kwargs={'api': self})
         self.api.add_resource(QueryTopology, "/v1/topo",
                               resource_class_kwargs={'api': self})
-        self.api.add_resource(Shutdown, "/shutdown")
 
         @self.app.after_request
         def add_access_control_header(response):
@@ -75,9 +79,18 @@ class ChainApi(Resource):
     def _start_flask(self):
         logging.info("Starting %s endpoint @ http://%s:%d" %
                      ("ChainDummyApi", self.ip, self.port))
-        if self.app is not None:
-            self.app.before_request(self.dump_playbook)
-            self.app.run(self.ip, self.port, debug=True, use_reloader=False)
+        self.http_server = WSGIServer(
+            (self.ip, self.port),
+            self.app,
+            log=open("/dev/null", "w")  # don't show http logs
+        )
+        self.http_server.serve_forever(stop_timeout=1)
+        logging.info('Stopped %s' % self.__class__.__name__)
+
+    def stop(self):
+        if self.http_server:
+            logging.info('Stopping %s' % self.__class__.__name__)
+            self.http_server.stop(timeout=1)
 
     def dump_playbook(self):
         with self.manage.lock:
@@ -88,15 +101,6 @@ class ChainApi(Resource):
                                                                                                             data=request.data,
                                                                                                             url=request.url)
                     logfile.write(data + "\n")
-
-
-class Shutdown(Resource):
-    def get(self):
-        logging.debug(("%s is beeing shut down") % (__name__))
-        func = request.environ.get('werkzeug.server.shutdown')
-        if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
-        func()
 
 
 class ChainVersionsList(Resource):

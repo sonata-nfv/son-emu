@@ -49,7 +49,7 @@ RUN apt-get update \
 # install containernet (using its Ansible playbook)
 # Attention: Containernet installation fixed to specific commit. Change to update to latest Containernet version.
 RUN git clone https://github.com/containernet/containernet.git && \
-    (cd containernet && git checkout bc269d6f1cf9f50f71fda65c25fe1f2f4c1573b7)
+    (cd containernet && git checkout 6fcee82e192c8c0e6447650d6f512842185529ee)
 WORKDIR /containernet/ansible
 RUN ansible-playbook -i "localhost," -c local --skip-tags "notindocker" install.yml
 
