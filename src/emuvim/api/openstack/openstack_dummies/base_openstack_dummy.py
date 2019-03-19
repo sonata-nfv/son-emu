@@ -28,10 +28,8 @@ import logging
 import threading
 from flask import Flask, request
 from flask_restful import Api, Resource
-from gevent import monkey
 from gevent.pywsgi import WSGIServer
 
-monkey.patch_all()
 
 LOG = logging.getLogger("api.openstack.base")
 

@@ -28,7 +28,6 @@ import logging
 import threading
 from flask import Flask
 from flask_restful import Api
-from gevent import monkey
 from gevent.pywsgi import WSGIServer
 
 # need to import total module to set its global variable dcs
@@ -45,7 +44,6 @@ from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction
 import pkg_resources
 from os import path
 
-monkey.patch_all()
 
 logging.basicConfig()
 
