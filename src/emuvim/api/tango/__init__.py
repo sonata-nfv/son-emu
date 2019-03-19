@@ -72,3 +72,6 @@ class TangoLLCMEndpoint(object):
 
     def _api_server_thread(self):
         llcm.start_rest_api(self.ip, self.port, self.dcs)
+
+    def stop(self):
+        llcm.stop_rest_api()

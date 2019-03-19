@@ -39,6 +39,7 @@ import threading
 from docker import DockerClient
 from flask import Flask, request
 import flask_restful as fr
+from gevent.pywsgi import WSGIServer
 from subprocess import Popen
 import ipaddress
 import copy
@@ -1028,6 +1029,7 @@ def initialize_GK():
 GK = None
 initialize_GK()
 # setup Flask
+http_server = None
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
 api = fr.Api(app)
@@ -1039,14 +1041,22 @@ api.add_resource(Exit, '/emulator/exit')
 
 
 def start_rest_api(host, port, datacenters=dict()):
+    global http_server
     GK.dcs = datacenters
     GK.net = get_dc_network()
     # start the Flask server (not the best performance but ok for our use case)
-    app.run(host=host,
-            port=port,
-            debug=True,
-            use_reloader=False  # this is needed to run Flask in a non-main thread
-            )
+    # app.run(host=host,
+    #        port=port,
+    #        debug=True,
+    #        use_reloader=False  # this is needed to run Flask in a non-main thread
+    #        )
+    http_server = WSGIServer((host, port), app, log=open("/dev/null", "w"))
+    http_server.serve_forever()
+
+
+def stop_rest_api():
+    if http_server:
+        http_server.close()
 
 
 def ensure_dir(name):
