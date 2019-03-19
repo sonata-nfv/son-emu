@@ -24,24 +24,27 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
 import logging
-
 import time
-from subprocess import Popen
 import re
 import requests
 import os
 import json
-
+import networkx as nx
+from subprocess import Popen
+from gevent import monkey
 from mininet.net import Containernet
 from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
 from mininet.link import TCLink
 from mininet.clean import cleanup
-import networkx as nx
 from emuvim.dcemulator.monitoring import DCNetworkMonitor
 from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
+# ensure correct functionality of all gevent based REST servers
+monkey.patch_all(sys=True)
+
+# setup logging
 LOG = logging.getLogger("dcemulator.net")
 LOG.setLevel(logging.DEBUG)
 
