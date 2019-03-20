@@ -59,7 +59,8 @@ setup(name='emuvim',
           'gevent',
           'flake8',
           # fixes: https://github.com/pytest-dev/pytest/issues/4770
-          'more-itertools<=5.0.0'
+          'more-itertools<=5.0.0',
+          'jinja2'
       ],
       zip_safe=False,
       entry_points={

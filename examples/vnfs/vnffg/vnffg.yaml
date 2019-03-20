@@ -1,0 +1,40 @@
+# Copyright (c) 2019 Erik Schilling
+# ALL RIGHTS RESERVED.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+vnfd:vnfd-catalog:
+    vnfd:
+    -   id: vnfd-traffic-view
+        short-name: vnfd-traffic-view
+        name: vnfd-traffic-view
+        vdu:
+        -   id: vnfd-traffic-view-vdu
+            vm-flavor:
+                vcpu-count: 1
+                memory-mb: 256
+                storage-gb: 6
+            image: 'trafficdebug'
+            interface:
+            -   name: eth0
+                type: EXTERNAL
+                position: 0
+                external-connection-point-ref: eth0
+                virtual-interface:
+                    type: OM-MGMT
+                    bandwidth: '0'
+        mgmt-interface:
+            vdu-id: vnfd-traffic-view-vdu
+        connection-point:
+            -   name: eth0
+                type: VPORT
