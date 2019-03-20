@@ -23,10 +23,6 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
-
-from gevent import monkey
-monkey.patch_all()  # noqa: because otherwise pep complains about code before imports
-
 import unittest
 import os
 import subprocess

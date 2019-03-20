@@ -42,7 +42,7 @@ from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
 # ensure correct functionality of all gevent based REST servers
-monkey.patch_all(sys=True)
+monkey.patch_all()
 
 # setup logging
 LOG = logging.getLogger("dcemulator.net")
