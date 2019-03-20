@@ -28,7 +28,7 @@ with open('ping_pong_parallel_deploy_and_delete_%d.csv' % time.time(), 'w') as c
 
     MAX = 30
 
-    for n in range(30, MAX + 1, 1):
+    for n in range(0, MAX + 1, 1):
         start = time.time()
         with PreConfiguredOSM() as osm:
             start_done = time.time()
