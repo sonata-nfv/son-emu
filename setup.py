@@ -60,7 +60,8 @@ setup(name='emuvim',
           'flake8',
           # fixes: https://github.com/pytest-dev/pytest/issues/4770
           'more-itertools<=5.0.0',
-          'jinja2'
+          'jinja2',
+          'psutil'
       ],
       zip_safe=False,
       entry_points={
