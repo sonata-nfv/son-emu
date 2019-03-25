@@ -937,9 +937,12 @@ class DCNetwork(Containernet):
         :return:
         """
         # try it nicely
-        if self.ryu_process is not None:
-            self.ryu_process.terminate()
-            self.ryu_process.kill()
+        try:
+            if self.ryu_process is not None:
+                self.ryu_process.terminate()
+                self.ryu_process.kill()
+        except BaseException as ex:
+            LOG.warning("Error during Ryu stop: {}".format(ex))
         # ensure its death ;-)
         Popen(['pkill', '-f', 'ryu-manager'])
 
