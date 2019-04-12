@@ -31,7 +31,7 @@ import os
 import json
 import networkx as nx
 from subprocess import Popen
-from gevent import monkey
+# from gevent import monkey
 from mininet.net import Containernet
 from mininet.node import OVSSwitch, OVSKernelSwitch, Docker, RemoteController
 from mininet.cli import CLI
@@ -42,7 +42,7 @@ from emuvim.dcemulator.node import Datacenter, EmulatorCompute
 from emuvim.dcemulator.resourcemodel import ResourceModelRegistrar
 
 # ensure correct functionality of all gevent based REST servers
-monkey.patch_all()
+# monkey.patch_all()
 
 # setup logging
 LOG = logging.getLogger("dcemulator.net")
