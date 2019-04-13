@@ -86,6 +86,11 @@ ELINE_SUBNETS = None
 # Time in seconds to wait for vnf stop scripts to execute fully
 VNF_STOP_WAIT_TIME = 5
 
+# If services are instantiated multiple times, the public port
+# mappings need to be adapted to avoid colisions. We use this
+# offset for this: NEW_PORT (SSIID * OFFSET) + ORIGINAL_PORT
+MULTI_INSTANCE_PORT_OFFSET = 1000
+
 
 class OnBoardingException(BaseException):
     pass
@@ -135,6 +140,7 @@ class Service(object):
         self.local_docker_files = dict()
         self.remote_docker_image_urls = dict()
         self.instances = dict()
+        self._instance_counter = 0
 
     def onboard(self):
         """
@@ -158,7 +164,14 @@ class Service(object):
         else:
             self._load_docker_urls()
             self._pull_predefined_dockerimages()
-        LOG.info("On-boarded service: %r" % self.manifest.get("name"))
+        # 4. reserve subnets
+        eline_fwd_links, elan_fwd_links = self._get_elines_and_elans()
+        self.eline_subnets = [ELINE_SUBNETS.pop(0) for _ in eline_fwd_links]
+        self.elan_subnets = [ELAN_SUBNETS.pop(0) for _ in elan_fwd_links]
+        LOG.debug("Reserved subnets for service '{}': E-Line: {} / E-LAN: {}"
+                  .format(self.manifest.get("name"),
+                          self.eline_subnets, self.elan_subnets))
+        LOG.info("On-boarded service: {}".format(self.manifest.get("name")))
 
     def start_service(self):
         """
@@ -168,13 +181,20 @@ class Service(object):
         by the placement algorithm.
         :return:
         """
-        LOG.info("Starting service %r" % self.uuid)
+        LOG.info("Starting service {} ({})"
+                 .format(get_triple_id(self.nsd), self.uuid))
 
         # 1. each service instance gets a new uuid to identify it
         instance_uuid = str(uuid.uuid4())
         # build a instances dict (a bit like a NSR :))
         self.instances[instance_uuid] = dict()
+        self.instances[instance_uuid]["uuid"] = self.uuid
+        # SSIID = short service instance ID (to postfix Container names)
+        self.instances[instance_uuid]["ssiid"] = self._instance_counter
+        self.instances[instance_uuid]["name"] = get_triple_id(self.nsd)
         self.instances[instance_uuid]["vnf_instances"] = list()
+        # increase for next instance
+        self._instance_counter += 1
 
         # 2. compute placement of this service instance (adds DC names to
         # VNFDs)
@@ -184,35 +204,32 @@ class Service(object):
         for vnf_id in self.vnfds:
             vnfd = self.vnfds[vnf_id]
             # attention: returns a list of started deployment units
-            vnfis = self._start_vnfd(vnfd, vnf_id)
+            vnfis = self._start_vnfd(
+                vnfd, vnf_id, self.instances[instance_uuid]["ssiid"])
             # add list of VNFIs to total VNFI list
             self.instances[instance_uuid]["vnf_instances"].extend(vnfis)
 
         # 4. Deploy E-Line, E-Tree and E-LAN links
         # Attention: Only done if ""forwarding_graphs" section in NSD exists,
         # even if "forwarding_graphs" are not used directly.
-        if "virtual_links" in self.nsd and "forwarding_graphs" in self.nsd:
-            vlinks = self.nsd["virtual_links"]
-            # constituent virtual links are not checked
-            eline_fwd_links = [l for l in vlinks if (
-                l["connectivity_type"] == "E-Line")]
-            elan_fwd_links = [l for l in vlinks if (
-                l["connectivity_type"] == "E-LAN" or
-                l["connectivity_type"] == "E-Tree")]  # Treat E-Tree as E-LAN
-
-            # 5a. deploy E-Line links
-            GK.net.deployed_elines.extend(eline_fwd_links)  # bookkeeping
-            self._connect_elines(eline_fwd_links, instance_uuid)
-            # 5b. deploy E-Tree/E-LAN links
-            GK.net.deployed_elans.extend(elan_fwd_links)  # bookkeeping
-            self._connect_elans(elan_fwd_links, instance_uuid)
+        # Attention2: Do a copy of *_subnets with list() is important here!
+        eline_fwd_links, elan_fwd_links = self._get_elines_and_elans()
+        # 5a. deploy E-Line links
+        GK.net.deployed_elines.extend(eline_fwd_links)  # bookkeeping
+        self._connect_elines(eline_fwd_links, instance_uuid, list(self.eline_subnets))
+        # 5b. deploy E-Tree/E-LAN links
+        GK.net.deployed_elans.extend(elan_fwd_links)  # bookkeeping
+        self._connect_elans(elan_fwd_links, instance_uuid, list(self.elan_subnets))
 
         # 6. run the emulator specific entrypoint scripts in the VNFIs of this
         # service instance
         self._trigger_emulator_start_scripts_in_vnfis(
             self.instances[instance_uuid]["vnf_instances"])
         # done
-        LOG.info("Service started. Instance id: %r" % instance_uuid)
+        LOG.info("Service '{}' started. Instance id: {} SSIID: {}"
+                 .format(self.instances[instance_uuid]["name"],
+                         instance_uuid,
+                         self.instances[instance_uuid]["ssiid"]))
         return instance_uuid
 
     def stop_service(self, instance_uuid):
@@ -235,6 +252,24 @@ class Service(object):
             self._stop_vnfi(v)
         # last step: remove the instance from the list of all instances
         del self.instances[instance_uuid]
+
+    def _get_elines_and_elans(self):
+        """
+        Get the E-Line, E-LAN, E-Tree links from the NSD.
+        """
+        # Attention: Only done if ""forwarding_graphs" section in NSD exists,
+        # even if "forwarding_graphs" are not used directly.
+        eline_fwd_links = list()
+        elan_fwd_links = list()
+        if "virtual_links" in self.nsd and "forwarding_graphs" in self.nsd:
+            vlinks = self.nsd["virtual_links"]
+            # constituent virtual links are not checked
+            eline_fwd_links = [l for l in vlinks if (
+                l["connectivity_type"] == "E-Line")]
+            elan_fwd_links = [l for l in vlinks if (
+                l["connectivity_type"] == "E-LAN" or
+                l["connectivity_type"] == "E-Tree")]  # Treat E-Tree as E-LAN
+        return eline_fwd_links, elan_fwd_links
 
     def _get_resource_limits(self, deployment_unit):
         """
@@ -270,7 +305,7 @@ class Service(object):
                     mem_limit = mem_limit * 1024
         return cpu_list, cpu_period, cpu_quota, mem_limit
 
-    def _start_vnfd(self, vnfd, vnf_id, **kwargs):
+    def _start_vnfd(self, vnfd, vnf_id, ssiid, **kwargs):
         """
         Start a single VNFD of this service
         :param vnfd: vnfd descriptor dict
@@ -287,6 +322,7 @@ class Service(object):
         for u in deployment_units:
             # 0. vnf_container_name = vnf_id.vdu_id
             vnf_container_name = get_container_name(vnf_id, u.get("id"))
+            vnf_container_instance_name = get_container_name(vnf_id, u.get("id"), ssiid)
             # 1. get the name of the docker image to star
             if vnf_container_name not in self.remote_docker_image_urls:
                 raise Exception("No image name for %r found. Abort." % vnf_container_name)
@@ -317,18 +353,20 @@ class Service(object):
             for i in intfs:
                 if i.get("port"):
                     if not isinstance(i.get("port"), int):
-                        LOG.error("Field 'port' is no int CP: {}".format(i))
+                        LOG.info("Field 'port' is no int CP: {}".format(i))
                     else:
                         ports.append(i.get("port"))
                 if i.get("publish"):
                     if not isinstance(i.get("publish"), dict):
-                        LOG.error("Field 'publish' is no dict CP: {}".format(i))
+                        LOG.info("Field 'publish' is no dict CP: {}".format(i))
                     else:
                         port_bindings.update(i.get("publish"))
+            # update port mapping for cases where service is deployed > 1 times
+            port_bindings = update_port_mapping_multi_instance(ssiid, port_bindings)
             if len(ports) > 0:
-                LOG.info("{} exposes ports: {}".format(vnf_container_name, ports))
+                LOG.info("{} exposes ports: {}".format(vnf_container_instance_name, ports))
             if len(port_bindings) > 0:
-                LOG.info("{} publishes ports: {}".format(vnf_container_name, port_bindings))
+                LOG.info("{} publishes ports: {}".format(vnf_container_instance_name, port_bindings))
 
             # 5. collect additional information to start container
             volumes = list()
@@ -347,11 +385,11 @@ class Service(object):
 
             # 6. Start the container
             LOG.info("Starting %r as %r in DC %r" %
-                     (vnf_name, vnf_container_name, vnfd.get("dc")))
+                     (vnf_name, vnf_container_instance_name, vnfd.get("dc")))
             LOG.debug("Interfaces for %r: %r" % (vnf_id, intfs))
             # start the container
             vnfi = target_dc.startCompute(
-                vnf_container_name,
+                vnf_container_instance_name,
                 network=intfs,
                 image=docker_image_name,
                 cpu_quota=cpu_quota,
@@ -362,11 +400,15 @@ class Service(object):
                 properties=cenv,  # environment
                 ports=ports,
                 port_bindings=port_bindings,
+                # only publish if explicitly stated in descriptor
+                publish_all_ports=False,
                 type=kwargs.get('type', 'docker'))
             # add vnfd reference to vnfi
             vnfi.vnfd = vnfd
             # add container name
             vnfi.vnf_container_name = vnf_container_name
+            vnfi.vnf_container_instance_name = vnf_container_instance_name
+            vnfi.ssiid = ssiid
             # store vnfi
             vnfis.append(vnfi)
         return vnfis
@@ -539,12 +581,13 @@ class Service(object):
                 LOG.debug("Loaded VNFD: {0} id: {1}"
                           .format(v.get("vnf_name"), v.get("vnf_id")))
 
-    def _connect_elines(self, eline_fwd_links, instance_uuid):
+    def _connect_elines(self, eline_fwd_links, instance_uuid, subnets):
         """
         Connect all E-LINE links in the NSD
         Attention: This method DOES NOT support multi V/CDU VNFs!
         :param eline_fwd_links: list of E-LINE links in the NSD
         :param: instance_uuid of the service
+        :param: subnets list of subnets to be used
         :return:
         """
         # cookie is used as identifier for the flowrules installed by the dummygatekeeper
@@ -583,7 +626,7 @@ class Service(object):
                 setChaining = True
                 # re-configure the VNFs IP assignment and ensure that a new
                 # subnet is used for each E-Link
-                eline_net = ELINE_SUBNETS.pop(0)
+                eline_net = subnets.pop(0)
                 ip1 = "{0}/{1}".format(str(eline_net[1]),
                                        eline_net.prefixlen)
                 ip2 = "{0}/{1}".format(str(eline_net[2]),
@@ -619,19 +662,20 @@ class Service(object):
             if cp.get("id") == ifname:
                 return cp
 
-    def _connect_elans(self, elan_fwd_links, instance_uuid):
+    def _connect_elans(self, elan_fwd_links, instance_uuid, subnets):
         """
         Connect all E-LAN/E-Tree links in the NSD
         This method supports multi-V/CDU VNFs if the connection
         point names of the DUs are the same as the ones in the NSD.
         :param elan_fwd_links: list of E-LAN links in the NSD
         :param: instance_uuid of the service
+        :param: subnets list of subnets to be used
         :return:
         """
         for link in elan_fwd_links:
             # a new E-LAN/E-Tree
             elan_vnf_list = []
-            lan_net = ELAN_SUBNETS.pop(0)
+            lan_net = subnets.pop(0)
             lan_hosts = list(lan_net.hosts())
 
             # generate lan ip address for all interfaces (of all involved (V/CDUs))
@@ -933,7 +977,7 @@ class Instantiations(fr.Resource):
         if service_name is not None:
             for s_uuid, s in GK.services.iteritems():
                 if s.manifest.get("name") == service_name:
-                    LOG.info("Found service: {} with UUID: {}"
+                    LOG.info("Searched for: {}. Found service w. UUID: {}"
                              .format(service_name, s_uuid))
                     service_uuid = s_uuid
         # lets be a bit fuzzy here to make testing easier
@@ -1106,8 +1150,30 @@ def parse_interface(interface_name):
     return vnf_id, vnf_interface
 
 
-def get_container_name(vnf_id, vdu_id):
+def get_container_name(vnf_id, vdu_id, ssiid=None):
+    if ssiid is not None:
+        return "{}.{}.{}".format(vnf_id, vdu_id, ssiid)
     return "{}.{}".format(vnf_id, vdu_id)
+
+
+def get_triple_id(descr):
+    return "{}.{}.{}".format(
+        descr.get("vendor"), descr.get("name"), descr.get("version"))
+
+
+def update_port_mapping_multi_instance(ssiid, port_bindings):
+    """
+    Port_bindings are used to expose ports of the deployed containers.
+    They would collide if we deploy multiple service instances.
+    This function adds a offset to them which is based on the
+    short service instance id (SSIID).
+    MULTI_INSTANCE_PORT_OFFSET
+    """
+    def _offset(p):
+        return p + MULTI_INSTANCE_PORT_OFFSET * ssiid
+
+    port_bindings = {k: _offset(v) for k, v in port_bindings.iteritems()}
+    return port_bindings
 
 
 if __name__ == '__main__':
