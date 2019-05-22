@@ -1,0 +1,1 @@
+python sf1_s.py SF1 172.17.0.2 sfc 1,2 &
