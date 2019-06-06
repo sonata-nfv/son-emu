@@ -44,6 +44,7 @@ class testTangoLLCM(SimpleTestTopology):
 
     #    @unittest.skip("disabled")
     def test_tango_llcm_start_service(self):
+        initialize_GK()
         # create network
         self.createNet(nswitches=0, ndatacenter=2, nhosts=2,
                        ndockers=0, enable_learning=True)
@@ -79,15 +80,14 @@ class testTangoLLCM(SimpleTestTopology):
 
         # check get request APIs
         r3 = requests.get("http://127.0.0.1:56000/packages")
-        self.assertEqual(len(json.loads(r3.text).get("service_uuid_list")), 1)
+        self.assertEqual(len(json.loads(r3.text)), 1)
         r4 = requests.get("http://127.0.0.1:56000/instantiations")
-        self.assertEqual(len(json.loads(r4.text).get(
-            "service_instantiations_list")), 1)
+        self.assertEqual(len(json.loads(r4.text)), 1)
 
         # check number of running nodes
-        self.assertTrue(len(self.getContainernetContainers()) == 2)
-        self.assertTrue(len(self.net.hosts) == 4)
-        self.assertTrue(len(self.net.switches) == 2)
+        self.assertEqual(len(self.getContainernetContainers()), 2)
+        self.assertEqual(len(self.net.hosts), 4)
+        self.assertEqual(len(self.net.switches), 2)
         # check compute list result (considering placement)
         self.assertEqual(len(self.dc[0].listCompute()), 1)
         self.assertEqual(len(self.dc[1].listCompute()), 1)
@@ -163,6 +163,7 @@ class testTangoLLCM(SimpleTestTopology):
 
     # @unittest.skip("disabled")
     def test_tango_llcm_stop_service(self):
+        initialize_GK()
         # create network
         self.createNet(ndatacenter=2, nhosts=2)
         # setup links
@@ -198,15 +199,14 @@ class testTangoLLCM(SimpleTestTopology):
 
         # check get request APIs
         r3 = requests.get("http://127.0.0.1:56001/packages")
-        self.assertEqual(len(json.loads(r3.text).get("service_uuid_list")), 1)
+        self.assertEqual(len(json.loads(r3.text)), 1)
         r4 = requests.get("http://127.0.0.1:56001/instantiations")
-        self.assertEqual(len(json.loads(r4.text).get(
-            "service_instantiations_list")), 1)
+        self.assertEqual(len(json.loads(r4.text)), 1)
 
         # check number of running nodes
-        self.assertTrue(len(self.getContainernetContainers()) == 2)
-        self.assertTrue(len(self.net.hosts) == 4)
-        self.assertTrue(len(self.net.switches) == 2)
+        self.assertEqual(len(self.getContainernetContainers()), 2)
+        self.assertEqual(len(self.net.hosts), 4)
+        self.assertEqual(len(self.net.switches), 2)
         # check compute list result (considering placement)
         self.assertEqual(len(self.dc[0].listCompute()), 1)
         self.assertEqual(len(self.dc[1].listCompute()), 1)
@@ -220,8 +220,7 @@ class testTangoLLCM(SimpleTestTopology):
 
         r5 = requests.get("http://127.0.0.1:56001/instantiations")
         # note that there was 1 instance before
-        self.assertTrue(len(json.loads(r5.text).get(
-            "service_instantiations_list")), 0)
+        self.assertEqual(len(json.loads(r5.text)), 0)
 
         # stop Mininet network
         self.stopNet()

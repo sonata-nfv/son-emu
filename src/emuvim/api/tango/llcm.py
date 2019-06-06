@@ -1,3 +1,4 @@
+
 # Copyright (c) 2018 SONATA-NFV, 5GTANGO and Paderborn University
 # ALL RIGHTS RESERVED.
 #
@@ -36,6 +37,7 @@ import hashlib
 import zipfile
 import yaml
 import threading
+import datetime
 from docker import DockerClient
 from flask import Flask, request
 import flask_restful as fr
@@ -141,6 +143,7 @@ class Service(object):
         self.remote_docker_image_urls = dict()
         self.instances = dict()
         self._instance_counter = 0
+        self.created_at = str(datetime.datetime.now())
 
     def onboard(self):
         """
@@ -193,6 +196,7 @@ class Service(object):
         self.instances[instance_uuid]["ssiid"] = self._instance_counter
         self.instances[instance_uuid]["name"] = get_triple_id(self.nsd)
         self.instances[instance_uuid]["vnf_instances"] = list()
+        self.instances[instance_uuid]["created_at"] = str(datetime.datetime.now())
         # increase for next instance
         self._instance_counter += 1
 
@@ -952,11 +956,44 @@ class Packages(fr.Resource):
 
     def get(self):
         """
-        Return a list of UUID's of uploaded service packages.
-        :return: dict/list
+        Return a list of package descriptor headers.
+        Fakes the behavior of 5GTANGO's GK API to be
+        compatible with tng-cli.
+        :return: list
         """
         LOG.info("GET /packages")
-        return {"service_uuid_list": list(GK.services.iterkeys())}
+        result = list()
+        for suuid, sobj in GK.services.iteritems():
+            pkg = dict()
+            pkg["pd"] = dict()
+            pkg["uuid"] = suuid
+            pkg["pd"]["name"] = sobj.manifest.get("name")
+            pkg["pd"]["version"] = sobj.manifest.get("version")
+            pkg["created_at"] = sobj.created_at
+            result.append(pkg)
+        return result, 200
+
+
+class Services(fr.Resource):
+
+    def get(self):
+        """
+        Return a list of services.
+        Fakes the behavior of 5GTANGO's GK API to be
+        compatible with tng-cli.
+        :return: list
+        """
+        LOG.info("GET /services")
+        result = list()
+        for suuid, sobj in GK.services.iteritems():
+            service = dict()
+            service["nsd"] = dict()
+            service["uuid"] = suuid
+            service["nsd"]["name"] = sobj.nsd.get("name")
+            service["nsd"]["version"] = sobj.nsd.get("version")
+            service["created_at"] = sobj.created_at
+            result.append(service)
+        return result, 200
 
 
 class Instantiations(fr.Resource):
@@ -972,7 +1009,9 @@ class Instantiations(fr.Resource):
         json_data = request.get_json(force=True)
         service_uuid = json_data.get("service_uuid")
         service_name = json_data.get("service_name")
-
+        if service_name is None:
+            # lets be fuzzy
+            service_name = service_uuid
         # first try to find by service_name
         if service_name is not None:
             for s_uuid, s in GK.services.iteritems():
@@ -990,7 +1029,10 @@ class Instantiations(fr.Resource):
             # ok, we have a service uuid, lets start the service
             service_instance_uuid = GK.services.get(
                 service_uuid).start_service()
-            return {"service_instance_uuid": service_instance_uuid}, 201
+            # multiple ID fields to be compatible with tng-bench and tng-cli
+            return ({"service_instance_uuid": service_instance_uuid,
+                     "id": service_instance_uuid}, 201)
+        LOG.error("Service not found: {}/{}".format(service_uuid, service_name))
         return "Service not found", 404
 
     def get(self):
@@ -998,9 +1040,20 @@ class Instantiations(fr.Resource):
         Returns a list of UUIDs containing all running services.
         :return: dict / list
         """
-        LOG.info("GET /instantiations")
-        return {"service_instantiations_list": [
-            list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
+        LOG.info("GET /instantiations or /api/v3/records/services")
+        # return {"service_instantiations_list": [
+        #    list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
+        result = list()
+        for suuid, sobj in GK.services.iteritems():
+            for iuuid, iobj in sobj.instances.iteritems():
+                inst = dict()
+                inst["uuid"] = iobj.get("uuid")
+                inst["instance_name"] = "{}-inst.{}".format(
+                    iobj.get("name"), iobj.get("ssiid"))
+                inst["status"] = "running"
+                inst["created_at"] = iobj.get("created_at")
+                result.append(inst)
+        return result, 200
 
     def delete(self):
         """
@@ -1078,9 +1131,11 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB max upload
 api = fr.Api(app)
 # define endpoints
-api.add_resource(Packages, '/packages', '/api/v2/packages')
+api.add_resource(Packages, '/packages', '/api/v2/packages', '/api/v3/packages')
+api.add_resource(Services, '/services', '/api/v2/services', '/api/v3/services')
 api.add_resource(Instantiations, '/instantiations',
-                 '/api/v2/instantiations', '/api/v2/requests')
+                 '/api/v2/instantiations', '/api/v2/requests', '/api/v3/requests',
+                 '/api/v3/records/services')
 api.add_resource(Exit, '/emulator/exit')
 
 
