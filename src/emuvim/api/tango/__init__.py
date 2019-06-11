@@ -46,7 +46,7 @@ class TangoLLCMEndpoint(object):
 
     def __init__(self, listenip, port, deploy_sap=False, docker_management=False,
                  auto_deploy=False, auto_delete=False, sap_vnfd_path=None,
-                 placement_algorithm_obj=None):
+                 placement_algorithm_obj=None, env_conf_folder=None):
         self.dcs = {}
         self.ip = listenip
         self.port = port
@@ -59,6 +59,7 @@ class TangoLLCMEndpoint(object):
             # Default placement is RR placement
             placement_algorithm_obj = llcm.RoundRobinDcPlacement()
         llcm.PLACEMENT_ALGORITHM_OBJ = placement_algorithm_obj
+        llcm.PER_INSTANCE_ENV_CONFIGURATION_FOLDER = env_conf_folder
         LOG.info("Created 5GTANGO LLCM API endpoint %s" % self)
         LOG.info("Using placement algorithm: {}".format(
                  placement_algorithm_obj))

@@ -93,10 +93,14 @@ VNF_STOP_WAIT_TIME = 5
 # offset for this: NEW_PORT (SSIID * OFFSET) + ORIGINAL_PORT
 MULTI_INSTANCE_PORT_OFFSET = 1000
 
-
 # Selected Placement Algorithm: Points to the class of the selected
 # placement algorithm.
 PLACEMENT_ALGORITHM_OBJ = None
+
+# Path to folder with <container_name>.env.yml files that contain
+# environment variables injected into the specific container
+# when it is started.
+PER_INSTANCE_ENV_CONFIGURATION_FOLDER = None
 
 
 class OnBoardingException(BaseException):
@@ -388,6 +392,10 @@ class Service(object):
                          " Overwriting SON_EMU_CMD_STOP.")
                 cenv["SON_EMU_CMD_STOP"] = VNFD_CMD_STOP
 
+            # 5.2 inject per instance configurations based on envs
+            conf_envs = self._load_instance_conf_envs(vnf_container_instance_name)
+            cenv.update(conf_envs)
+
             # 6. Start the container
             LOG.info("Starting %r as %r in DC %r" %
                      (vnf_name, vnf_container_instance_name, target_dc))
@@ -520,6 +528,26 @@ class Service(object):
                     t.daemon = True
                     t.start()
                     break  # only execute one command
+
+    def _load_instance_conf_envs(self, cname):
+        """
+        Try to load an instance-specific env file. If not found,
+        just return an empty dict.
+        """
+        if PER_INSTANCE_ENV_CONFIGURATION_FOLDER is None:
+            return dict()
+        try:
+            path = os.path.expanduser(PER_INSTANCE_ENV_CONFIGURATION_FOLDER)
+            path = os.path.join(path, "{}.env.yml".format(cname))
+            res = load_yaml(path)
+            LOG.info("Loaded instance-specific env file for '{}': {}"
+                     .format(cname, res))
+            return res
+        except BaseException as ex:
+            LOG.info("No instance-specific env file found for: {}"
+                     .format(cname))
+            del ex
+        return dict()
 
     def _unpack_service_package(self):
         """
