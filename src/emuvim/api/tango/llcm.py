@@ -94,6 +94,11 @@ VNF_STOP_WAIT_TIME = 5
 MULTI_INSTANCE_PORT_OFFSET = 1000
 
 
+# Selected Placement Algorithm: Points to the class of the selected
+# placement algorithm.
+PLACEMENT_ALGORITHM_OBJ = None
+
+
 class OnBoardingException(BaseException):
     pass
 
@@ -200,10 +205,6 @@ class Service(object):
         # increase for next instance
         self._instance_counter += 1
 
-        # 2. compute placement of this service instance (adds DC names to
-        # VNFDs)
-        # self._calculate_placement(FirstDcPlacement)
-        self._calculate_placement(RoundRobinDcPlacement)
         # 3. start all vnfds that we have in the service
         for vnf_id in self.vnfds:
             vnfd = self.vnfds[vnf_id]
@@ -332,7 +333,7 @@ class Service(object):
                 raise Exception("No image name for %r found. Abort." % vnf_container_name)
             docker_image_name = self.remote_docker_image_urls.get(vnf_container_name)
             # 2. select datacenter to start the VNF in
-            target_dc = vnfd.get("dc")
+            target_dc = self._place(vnfd, vnf_id, u, ssiid)
             # 3. perform some checks to ensure we can start the container
             assert(docker_image_name is not None)
             assert(target_dc is not None)
@@ -389,7 +390,7 @@ class Service(object):
 
             # 6. Start the container
             LOG.info("Starting %r as %r in DC %r" %
-                     (vnf_name, vnf_container_instance_name, vnfd.get("dc")))
+                     (vnf_name, vnf_container_instance_name, target_dc))
             LOG.debug("Interfaces for %r: %r" % (vnf_id, intfs))
             # start the container
             vnfi = target_dc.startCompute(
@@ -810,21 +811,22 @@ class Service(object):
         """
         return len(DockerClient().images.list(name=image_name)) > 0
 
-    def _calculate_placement(self, algorithm):
+    def _place(self, vnfd, vnfid, vdu, ssiid):
         """
-        Do placement by adding the a field "dc" to
-        each VNFD that points to one of our
-        data center objects known to the gatekeeper.
+        Do placement. Return the name of the DC to place
+        the given VDU.
         """
         assert(len(self.vnfds) > 0)
         assert(len(GK.dcs) > 0)
-        # instantiate algorithm an place
-        p = algorithm()
-        p.place(self.nsd, self.vnfds, GK.dcs)
-        LOG.info("Using placement algorithm: %r" % p.__class__.__name__)
-        # lets print the placement result
-        for name, vnfd in self.vnfds.iteritems():
-            LOG.info("Placed VNF %r on DC %r" % (name, str(vnfd.get("dc"))))
+        if PLACEMENT_ALGORITHM_OBJ is None:
+            LOG.error("No placement algorithm given. Using FirstDcPlacement!")
+            p = FirstDcPlacement()
+        else:
+            p = PLACEMENT_ALGORITHM_OBJ
+        cname = get_container_name(vnfid, vdu.get("id"), ssiid)
+        rdc = p.place(GK.dcs, vnfd, vnfid, vdu, ssiid, cname)
+        LOG.info("Placement: '{}' --> '{}'".format(cname, rdc))
+        return rdc
 
     def _calculate_cpu_cfs_values(self, cpu_time_percentage):
         """
@@ -864,9 +866,8 @@ class FirstDcPlacement(object):
     Placement: Always use one and the same data center from the GK.dcs dict.
     """
 
-    def place(self, nsd, vnfds, dcs):
-        for id, vnfd in vnfds.iteritems():
-            vnfd["dc"] = list(dcs.itervalues())[0]
+    def place(self, dcs, vnfd, vnfid, vdu, ssiid, cname):
+        return list(dcs.itervalues())[0]
 
 
 class RoundRobinDcPlacement(object):
@@ -874,12 +875,50 @@ class RoundRobinDcPlacement(object):
     Placement: Distribute VNFs across all available DCs in a round robin fashion.
     """
 
-    def place(self, nsd, vnfds, dcs):
-        c = 0
+    def __init__(self):
+        self.count = 0
+
+    def place(self, dcs, vnfd, vnfid, vdu, ssiid, cname):
         dcs_list = list(dcs.itervalues())
-        for id, vnfd in vnfds.iteritems():
-            vnfd["dc"] = dcs_list[c % len(dcs_list)]
-            c += 1  # inc. c to use next DC
+        rdc = dcs_list[self.count % len(dcs_list)]
+        self.count += 1  # inc. count to use next DC
+        return rdc
+
+
+class StaticConfigPlacement(object):
+    """
+    Placement: Fixed assignment based on config file.
+    """
+
+    def __init__(self, path=None):
+        if path is None:
+            path = "static_placement.yml"
+        path = os.path.expanduser(path)
+        self.static_placement = dict()
+        try:
+            self.static_placement = load_yaml(path)
+        except BaseException as ex:
+            LOG.error(ex)
+            LOG.error("Couldn't load placement from {}"
+                      .format(path))
+        LOG.info("Loaded static placement: {}"
+                 .format(self.static_placement))
+
+    def place(self, dcs, vnfd, vnfid, vdu, ssiid, cname):
+        # check for container name entry
+        if cname not in self.static_placement:
+            LOG.error("Coudn't find {} in placement".format(cname))
+            LOG.error("Using first DC as fallback!")
+            return list(dcs.itervalues())[0]
+        # lookup
+        candidate_dc = self.static_placement.get(cname)
+        # check if DC exsits
+        if candidate_dc not in dcs:
+            LOG.error("Coudn't find DC {}".format(candidate_dc))
+            LOG.error("Using first DC as fallback!")
+            return list(dcs.itervalues())[0]
+        # return correct DC
+        return dcs.get(candidate_dc)
 
 
 """
