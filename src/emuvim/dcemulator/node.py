@@ -231,6 +231,7 @@ class Datacenter(object):
         :return:
         """
         assert name is not None
+        default_net = {"id": "emu0"}
         # no duplications
         if name in [c.name for c in self.net.getAllContainers()]:
             raise Exception("Container with name %s already exists." % name)
@@ -238,13 +239,17 @@ class Datacenter(object):
         if image is None:
             image = "ubuntu:trusty"
         if network is None:
-            network = {}  # {"ip": "10.0.0.254/8"}
+            network = {}
         if isinstance(network, dict):
+            if len(network) < 1:
+                # create at least one default interface
+                network = default_net
             # if we have only one network, put it in a list
             network = [network]
         if isinstance(network, list):
             if len(network) < 1:
-                network.append({})
+                # create at least one default interface
+                network.append(default_net)
 
         # apply hard-set resource limits=0
         cpu_percentage = params.get('cpu_percent')
