@@ -50,6 +50,7 @@ class EmulatorCompute(Docker):
             self, name, dimage, **kwargs):
         self.datacenter = kwargs.get("datacenter")  # pointer to current DC
         self.flavor_name = kwargs.get("flavor_name")
+        self._network_state_cache = None
         LOG.debug("Starting compute instance %r in data center %r" %
                   (name, str(self.datacenter)))
         # call original Docker.__init__
@@ -71,16 +72,21 @@ class EmulatorCompute(Docker):
             intf_dict = {'intf_name': str(i), 'ip': "{0}/{1}".format(i.IP(), i.prefixLen), 'netmask': i.prefixLen,
                          'mac': i.MAC(), 'up': i.isUp(), 'status': i.status(), 'dc_portname': dc_port_name}
             networkStatusList.append(intf_dict)
-
         return networkStatusList
 
     def getStatus(self):
         """
         Helper method to receive information about this compute instance.
         """
+        # inspect container
+        cinspect = self.dcli.inspect_container(self.dc)
+        # inspect networking (slow, so do only once)
+        if self._network_state_cache is None:
+            self._network_state_cache = self.getNetworkStatus()
+        # build status
         status = {}
         status["name"] = self.name
-        status["network"] = self.getNetworkStatus()
+        status["network"] = self._network_state_cache
         status["docker_network"] = self.dcinfo['NetworkSettings']['IPAddress']
         status["image"] = self.dimage
         status["flavor_name"] = self.flavor_name
@@ -90,11 +96,10 @@ class EmulatorCompute(Docker):
         status["cpuset"] = self.resources.get('cpuset_cpus')
         status["mem_limit"] = self.resources.get('mem_limit')
         status["memswap_limit"] = self.resources.get('memswap_limit')
-        status["state"] = self.dcli.inspect_container(self.dc)["State"]
-        status["id"] = self.dcli.inspect_container(self.dc)["Id"]
-        status["short_id"] = self.dcli.inspect_container(self.dc)["Id"][:12]
-        status["hostname"] = self.dcli.inspect_container(self.dc)[
-            "Config"]['Hostname']
+        status["state"] = cinspect["State"]
+        status["id"] = cinspect["Id"]
+        status["short_id"] = cinspect["Id"][:12]
+        status["hostname"] = cinspect["Config"]['Hostname']
         status["datacenter"] = (None if self.datacenter is None
                                 else self.datacenter.label)
 
