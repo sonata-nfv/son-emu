@@ -26,7 +26,7 @@
 
 import logging
 import threading
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_restful import Api
 from gevent.pywsgi import WSGIServer
 
@@ -64,18 +64,17 @@ class RestApiEndpoint(object):
         self.connectDCNetwork(DCnetwork)
 
         # setup Flask
-        # find directory of dashboard files
-        dashboard_file = pkg_resources.resource_filename(
-            'emuvim.dashboard', "index.html")
-        dashboard_dir = path.dirname(dashboard_file)
-        logging.info("Started emu dashboard: {0}".format(dashboard_dir))
-
-        self.app = Flask(__name__, static_folder=dashboard_dir,
-                         static_url_path='/dashboard')
+        self.app = Flask(__name__)
         self.api = Api(self.app)
 
-        # setup endpoints
+        # define dashboard endpoints
+        db_dir, db_file = self.get_dashboard_path()
+        @self.app.route('/dashboard/<path:path>')
+        def db_file(path):
+            logging.info("[DB] Serving: {}".format(path))
+            return send_from_directory(db_dir, path)
 
+        # define REST API endpoints
         # compute related actions (start/stop VNFs, get info)
         self.api.add_resource(
             Compute, "/restapi/compute/<dc_label>/<compute_name>")
@@ -117,6 +116,17 @@ class RestApiEndpoint(object):
 
         logging.debug("Created API endpoint %s(%s:%d)" %
                       (self.__class__.__name__, self.ip, self.port))
+
+    def get_dashboard_path(self):
+        """
+        Return absolute path to dashboard files.
+        """
+        db_file = pkg_resources.resource_filename(
+            'emuvim.dashboard', "index.html")
+        db_dir = path.dirname(db_file)
+        logging.info("[DB] Serving emulator dashboard from: {} and {}"
+                     .format(db_dir, db_file))
+        return db_dir, db_file
 
     def connectDatacenter(self, dc):
         compute.dcs[dc.label] = dc

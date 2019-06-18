@@ -26,7 +26,7 @@
  partner consortium (www.sonata-nfv.eu).
 -->
 
-# son-emu Dashboard
+# vim-emu dashbaord
 
-A simple web-based dashboard that polls the REST API and displays running services etc. It does not do much more than son-cli but it looks nicer and improves the visualization of the emulator state for live demos.
+Reachable under `<vim-emu-host>:<rest-api-port>/dashboard/dashboard.html`.
 
