@@ -52,6 +52,10 @@ LOG = logging.getLogger("5gtango.llcm")
 LOG.setLevel(logging.INFO)
 
 
+CORS_HEADER = {'Access-Control-Allow-Origin': '*',
+               'Access-Control-Allow-Methods': 'GET,OPTIONS'}
+
+
 GK_STORAGE = "/tmp/vim-emu-tango-llcm/"
 UPLOAD_FOLDER = os.path.join(GK_STORAGE, "uploads/")
 CATALOG_FOLDER = os.path.join(GK_STORAGE, "catalog/")
@@ -1038,7 +1042,7 @@ class Packages(fr.Resource):
             pkg["pd"]["version"] = sobj.manifest.get("version")
             pkg["created_at"] = sobj.created_at
             result.append(pkg)
-        return result, 200
+        return result, 200, CORS_HEADER
 
 
 class Services(fr.Resource):
@@ -1060,7 +1064,7 @@ class Services(fr.Resource):
             service["nsd"]["version"] = sobj.nsd.get("version")
             service["created_at"] = sobj.created_at
             result.append(service)
-        return result, 200
+        return result, 200, CORS_HEADER
 
 
 class Instantiations(fr.Resource):
@@ -1107,7 +1111,7 @@ class Instantiations(fr.Resource):
         Returns a list of UUIDs containing all running services.
         :return: dict / list
         """
-        LOG.info("GET /instantiations or /api/v3/records/services")
+        LOG.debug("GET /instantiations or /api/v3/records/services")
         # return {"service_instantiations_list": [
         #    list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
         result = list()
@@ -1120,7 +1124,7 @@ class Instantiations(fr.Resource):
                 inst["status"] = "running"
                 inst["created_at"] = iobj.get("created_at")
                 result.append(inst)
-        return result, 200
+        return result, 200, CORS_HEADER
 
     def delete(self):
         """
