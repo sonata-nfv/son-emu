@@ -63,7 +63,7 @@
      pip: name=oslo.config state=latest
 
    - name: install pytest
-     pip: name=pytest state=latest
+     pip: name=pytest version=4.6.4
 
    - name: install Flask
      pip: name=Flask state=latest

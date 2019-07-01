@@ -44,12 +44,13 @@ RUN apt-get update \
     curl \
     iptables \
     iputils-ping \
-    sudo
+    sudo \
+    vim
 
 # install containernet (using its Ansible playbook)
-# Attention: Containernet installation fixed to specific commit. Change to update to latest Containernet version.
-RUN git clone https://github.com/containernet/containernet.git && \
-    (cd containernet && git checkout 6fcee82e192c8c0e6447650d6f512842185529ee)
+#RUN git clone https://github.com/containernet/containernet.git && \
+#    (cd containernet && git checkout 6fcee82e192c8c0e6447650d6f512842185529ee)
+RUN git clone https://github.com/containernet/containernet.git
 WORKDIR /containernet/ansible
 RUN ansible-playbook -i "localhost," -c local --skip-tags "notindocker" install.yml
 
