@@ -385,6 +385,18 @@ class DCNetwork(Containernet):
             switch_node = self.getNodeByName(src_sw)
             self._set_vlan_tag(switch_node, src_sw_inport_name, vlan)
 
+    def getNodeByName(self, name):
+        """
+        Wraps Containernet's getNodeByName method to avoid
+        key not found exceptions.
+        """
+        try:
+            return super(DCNetwork, self).getNodeByName(name)
+        except BaseException as ex:
+            LOG.warning("Node not found: {}".format(name))
+            LOG.debug("Node not found: {}".format(ex))
+        return None
+
     def _addMonitorFlow(self, vnf_src_name, vnf_dst_name, vnf_src_interface=None, vnf_dst_interface=None,
                         tag=None, **kwargs):
         """
