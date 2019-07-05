@@ -42,6 +42,22 @@ If you use the emulation platform for your research and/or other publications, p
 
 * M. Peuster, H. Karl, and S. v. Rossem: [MeDICINE: Rapid Prototyping of Production-Ready Network Services in Multi-PoP Environments](http://ieeexplore.ieee.org/document/7919490/). IEEE Conference on Network Function Virtualization and Software Defined Networks (NFV-SDN), Palo Alto, CA, USA, pp. 148-153. doi: 10.1109/NFV-SDN.2016.7919490. (2016)
 
+Bibtex:
+
+```bibtex
+@inproceedings{peuster2016medicine, 
+    author={M. Peuster and H. Karl and S. van Rossem}, 
+    booktitle={2016 IEEE Conference on Network Function Virtualization and Software Defined Networks (NFV-SDN)}, 
+    title={MeDICINE: Rapid prototyping of production-ready network services in multi-PoP environments}, 
+    year={2016}, 
+    volume={}, 
+    number={}, 
+    pages={148-153}, 
+    doi={10.1109/NFV-SDN.2016.7919490},
+    month={Nov}
+}
+```
+
 ## Installation
 
 There are multiple ways to install and use the emulation platform. The easiest way is the automated installation using the OSM installer. The bare-metal installation requires a freshly installed Ubuntu 16.04 LTS and is done by an ansible playbook. Another option is to use a nested Docker environment to run the emulator inside a Docker container.
