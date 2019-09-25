@@ -364,11 +364,30 @@ class Service(object):
             ports = list()  # Containernet naming
             port_bindings = dict()
             for i in intfs:
-                if i.get("port"):
+                if i.get("port"):  # field with a single port
                     if not isinstance(i.get("port"), int):
                         LOG.info("Field 'port' is no int CP: {}".format(i))
                     else:
-                        ports.append(i.get("port"))
+                        ports.append(i.get("port"))  # collect all ports
+                if i.get("ports"):  # list with multiple ports
+                    if not isinstance(i.get("ports"), list):
+                        LOG.info("Field 'port' is no list CP: {}".format(i))
+                    else:
+                        for p in i.get("ports"):
+                            if not isinstance(p, int):
+                                # do some parsing
+                                try:
+                                    if "/udp" in p:
+                                        p = tuple(p.split("/"))
+                                    else:
+                                        p = int(p)
+                                    ports.append(p)  # collect all ports
+                                except BaseException as ex:
+                                    LOG.error(
+                                        "Could not parse ports list: {}".format(p))
+                                    LOG.error(ex)
+                            else:
+                                ports.append(p)  # collect all ports
                 if i.get("publish"):
                     if not isinstance(i.get("publish"), dict):
                         LOG.info("Field 'publish' is no dict CP: {}".format(i))
