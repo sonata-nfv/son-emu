@@ -43,7 +43,7 @@ node('docker') {
 
     // vim-emu: We need to use privileged mode, docker.sock, and host pids for the container
     // to test the emulator. Also needs -u 0:0 (root user inside container).
-    docker_args = "--privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0"
+    docker_args = "--privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock"
 
     ci_helper = load "devops/jenkins/ci-pipelines/ci_stage_2.groovy"
     ci_helper.ci_pipeline( 'vim-emu',
