@@ -29,31 +29,7 @@
 # the vim-emu Docker container by user "root". It requires the container
 # to be started in privileged mode.
 #
-set -e
-echo "vim-emu stage-test"
-# debugging
-echo "Tests executed inside: $(hostname)"
-echo "Tests executed by user: $(whoami)"
+echo "vim-emu stage archive: Not implemented. See stage-pre-test.sh instead."
 
-# disable root-required test for now to play around some more.
-echo "Stopping early."
-exit 0
 
-# Attention: The following needs to be done as root
-# trigger ovs setup since container entrypoint is overwritten by Jenkins
-service openvswitch-switch start
-# ensure the Docker image used during the unittests is there
-docker pull 'ubuntu:trusty'
-
-cd /son-emu/
-# trigger pep8 style check
-echo "flake8 version:"
-flake8 --version
-echo "Doing flake8 style check ..."
-flake8 --exclude=.eggs,devops,build,examples/charms --ignore=E501,W605,W504 .
-echo "done."
-# trigger the tests
-echo "Running unit tests ..."
-pytest -v
-echo "done."
 

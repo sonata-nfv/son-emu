@@ -24,4 +24,4 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
-echo "vim-emu stage archive: Not yet implemented!"
+echo "vim-emu stage archive: Not implemented."
