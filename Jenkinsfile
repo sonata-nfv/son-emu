@@ -39,12 +39,16 @@ def devops_checkout() {
 
 node('docker') {
     checkout scm
+
+    stage("Pre-Test") {
+        sh "docker build -t osm/vim-emu-pre-test ."
+    }
+    
     devops_checkout()
 
     // vim-emu: We need to use privileged mode, docker.sock, and host pids for the container
     // to test the emulator. Also needs -u 0:0 (root user inside container).
     //docker_args = "--privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0"
-    # TODO run the custom tests here
 
 
     // call the normal OSM devops jobs (without root rights)
