@@ -37,7 +37,6 @@ def devops_checkout() {
     }
 }
 
-
 node('docker') {
     checkout scm
     devops_checkout()
@@ -58,9 +57,8 @@ node('docker') {
     // custom test stage that executes vim-emu's unit tests as root
     stage("Post-Test") {
         sh "docker images"
-        sh "docker run --rm osm/vim-emu-master ls -l"
-        sh "docker run --rm --privileged --pid='host' -u 0:0 -v /var/run/docker.sock:/var/run/docker.sock osm/vim-emu-master pytest -v"
-        sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock osm/vim-emu-master flake8 --exclude=.eggs,devopsi,build,examples/charms --ignore=E501,W605,W504 ."
+        sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0 osm/vim-emu-master pytest -v"
+        sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0 osm/vim-emu-master flake8 --exclude=.eggs,devopsi,build,examples/charms --ignore=E501,W605,W504 ."
         sh "echo 'done'"
     }
 }
