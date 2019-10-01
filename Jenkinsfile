@@ -41,7 +41,8 @@ node('docker') {
     checkout scm
 
     stage("Pre-Test") {
-        sh "docker build -t osm/vim-emu-pre-test ."
+        //sh "docker build -t osm/vim-emu-pre-test ."
+        sh "devops-stages/stage-pre-test.sh"
     }
     
     devops_checkout()
