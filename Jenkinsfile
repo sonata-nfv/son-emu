@@ -56,6 +56,8 @@ node('docker') {
                            docker_args)
 
     // custom test stage that executes vim-emu's unit tests as root
+    // we cannot do this as part of the normal stage 2 since it would create
+    // files owned by root that could not be cleaned up.
     stage("Post-Test") {
         sh "docker images"
         sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0 osm/vim-emu-master pytest -v"
