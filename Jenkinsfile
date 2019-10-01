@@ -39,12 +39,6 @@ def devops_checkout() {
 
 node('docker') {
     checkout scm
-
-    stage("Pre-Test") {
-        //sh "docker build -t osm/vim-emu-pre-test ."
-        sh "devops-stages/stage-pre-test.sh"
-    }
-    
     devops_checkout()
 
     // vim-emu: We need to use privileged mode, docker.sock, and host pids for the container
@@ -63,5 +57,11 @@ node('docker') {
                            params.GERRIT_PATCHSET_REVISION,
                            params.TEST_INSTALL,
                            params.ARTIFACTORY_SERVER,
-                           docker_args)
+                          docker_args)
+
+    stage("Post-Test") {
+        //sh "docker build -t osm/vim-emu-pre-test ."
+        //sh "devops-stages/stage-pre-test.sh"
+        sh "docker images"
+    }
 }
