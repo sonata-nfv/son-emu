@@ -41,11 +41,6 @@ node('docker') {
     checkout scm
     devops_checkout()
 
-    // vim-emu: We need to use privileged mode, docker.sock, and host pids for the container
-    // to test the emulator. Also needs -u 0:0 (root user inside container).
-    //docker_args = "--privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0"
-
-
     // call the normal OSM devops jobs (without root rights)
     docker_args = ""
     ci_helper = load "devops/jenkins/ci-pipelines/ci_stage_2.groovy"
@@ -59,9 +54,11 @@ node('docker') {
                            params.ARTIFACTORY_SERVER,
                           docker_args)
 
+    // custom test stage that executes vim-emu's unit tests as root
     stage("Post-Test") {
-        //sh "docker build -t osm/vim-emu-pre-test ."
-        //sh "devops-stages/stage-pre-test.sh"
-        sh "docker images"
+        sh "Running post-test stage"
+        sh "docker run --rm --privileged --pid='host' -u 0:0 -v /var/run/docker.sock:/var/run/docker.sock osm/vim-emu-master pytest -v"
+        sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock osm/vim-emu-master flake8 --exclude=.eggs,devopsi,build,examples/charms --ignore=E501,W605,W504 ."
+        sh "echo 'done'"
     }
 }
