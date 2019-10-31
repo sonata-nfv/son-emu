@@ -86,6 +86,8 @@ cd
 git clone https://github.com/containernet/containernet.git
 cd ~/containernet/ansible
 sudo ansible-playbook -i "localhost," -c local install.yml
+cd ..
+sudo python setup.py install
 ```
 
 ##### Step 2. vim-emu installation
@@ -95,6 +97,8 @@ cd
 git clone https://osm.etsi.org/gerrit/osm/vim-emu.git
 cd ~/vim-emu/ansible
 sudo ansible-playbook -i "localhost," -c local install.yml
+cd ..
+sudo python setup.py install
 ```
 
 #### Option 2: Nested Docker Deployment
@@ -131,9 +135,7 @@ A more advanced example that includes OSM can be found in the [official vim-emu 
 ### Further documentation and useful links
 
 * [Official vim-emu documentation in the OSM wiki](https://osm.etsi.org/wikipub/index.php/VIM_emulator)
-* [Full CLI command documentation](https://github.com/sonata-nfv/son-emu/wiki/CLI-Command-Overview)
-* [Requirements for Docker containers executed by the emulator](https://github.com/sonata-nfv/son-emu/wiki/Container-Requirements)
-* [REST API](https://github.com/sonata-nfv/son-emu/wiki/APIs)
+* [Full vim-emu documentation on GitHub](https://github.com/containernet/vim-emu)
 * [Mininet](http://mininet.org)
 * [Containernet](https://containernet.github.io)
 * [Maxinet](https://maxinet.github.io)
