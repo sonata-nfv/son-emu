@@ -69,6 +69,7 @@ class RestApiEndpoint(object):
 
         # define dashboard endpoints
         db_dir, db_file = self.get_dashboard_path()
+
         @self.app.route('/dashboard/<path:path>')
         def db_file(path):
             logging.info("[DB] Serving: {}".format(path))

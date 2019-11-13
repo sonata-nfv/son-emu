@@ -64,6 +64,9 @@ RUN python setup.py develop
 # Hotfix: https://github.com/pytest-dev/pytest/issues/4770
 RUN pip2 install "more-itertools<=5.0.0"
 
+# Hotfix: Do not use latest tinyrpc lib, since it breaks Ryu
+RUN pip2 install "tinyrpc==1.0.3"
+
 # Important: This entrypoint is required to start the OVS service
 ENTRYPOINT ["/son-emu/utils/docker/entrypoint.sh"]
 CMD ["python", "examples/default_single_dc_topology.py"]

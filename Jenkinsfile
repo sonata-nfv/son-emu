@@ -60,6 +60,7 @@ node('docker') {
     // files owned by root that could not be cleaned up.
     stage("Post-Test") {
         sh "docker images"
+	sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0 osm/vim-emu-master pip list"
         sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0 osm/vim-emu-master pytest -v"
         sh "docker run --rm --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock -u 0:0 osm/vim-emu-master flake8 --exclude=.eggs,devops,build,examples/charms --ignore=E501,W605,W504 ."
         sh "echo 'done'"

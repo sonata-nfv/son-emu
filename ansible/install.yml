@@ -56,6 +56,9 @@
    - name: install six
      pip: name=six state=latest
 
+   - name: install tinyrpc (fixed version to not break ryu)
+     pip: name=tinyrpc version=1.0.3
+
    - name: install ryu
      pip: name=ryu state=latest
      
