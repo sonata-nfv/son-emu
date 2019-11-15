@@ -357,6 +357,8 @@ class Service(object):
             # do some re-naming of fields to be compatible to containernet
             for i in intfs:
                 if i.get("address"):
+                    LOG.info("Found static address for {}: {}"
+                             .format(i.get("id"), i.get("address")))
                     i["ip"] = i.get("address")
 
             # get ports and port_bindings from the port and publish fields of CNFD
@@ -735,8 +737,8 @@ class Service(object):
             lan_hosts = list(lan_net.hosts())
 
             # generate lan ip address for all interfaces (of all involved (V/CDUs))
-            for intf in link["connection_points_reference"]:
-                vnf_id, intf_name = parse_interface(intf)
+            for intf_ref in link["connection_points_reference"]:
+                vnf_id, intf_name = parse_interface(intf_ref)
                 if vnf_id is None:
                     continue  # skip references to NS connection points
                 units = self._get_vnf_instance_units(instance_uuid, vnf_id)
@@ -747,10 +749,20 @@ class Service(object):
                     # Attention: we apply a simplification for multi DU VNFs here:
                     # the connection points of all involved DUs have to have the same
                     # name as the connection points of the surrounding VNF to be mapped.
-                    # This is because we do not consider links specified in the VNFds
+                    # This is because we do not consider links specified in the VNFDs
                     container_name = uvnfi.name
-                    ip_address = "{0}/{1}".format(str(lan_hosts.pop(0)),
-                                                  lan_net.prefixlen)
+
+                    ip_address = None
+                    # get the interface of the unit
+                    intf = self._get_vnfd_cp_from_vnfi(uvnfi, intf_name)
+                    # check if there is a manually assigned address
+                    if intf is not None:
+                        if intf.get("address"):
+                            ip_address = intf.get("address")
+                    if ip_address is None:
+                        # automatically asign an IP from our pool
+                        ip_address = "{0}/{1}".format(str(lan_hosts.pop(0)),
+                                                      lan_net.prefixlen)
                     LOG.debug(
                         "Setting up E-LAN/E-Tree interface. (%s:%s) -> %s" % (
                             container_name, intf_name, ip_address))
