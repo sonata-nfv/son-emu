@@ -421,6 +421,11 @@ class Service(object):
             conf_envs = self._load_instance_conf_envs(vnf_container_instance_name)
             cenv.update(conf_envs)
 
+            # 5.3 handle optional ipc_mode setting
+            ipc_mode = u.get("ipc_mode", None)
+            # 5.4 handle optional devices setting
+            devices = u.get("devices", [])
+
             # 6. Start the container
             LOG.info("Starting %r as %r in DC %r" %
                      (vnf_name, vnf_container_instance_name, target_dc))
@@ -440,6 +445,8 @@ class Service(object):
                 port_bindings=port_bindings,
                 # only publish if explicitly stated in descriptor
                 publish_all_ports=False,
+                ipc_mode=ipc_mode,
+                devices=devices,
                 type=kwargs.get('type', 'docker'))
             # add vnfd reference to vnfi
             vnfi.vnfd = vnfd
