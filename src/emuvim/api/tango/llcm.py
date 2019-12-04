@@ -425,6 +425,8 @@ class Service(object):
             ipc_mode = u.get("ipc_mode", None)
             # 5.4 handle optional devices setting
             devices = u.get("devices", [])
+            # 5.5 handle optional cap_add setting
+            cap_add = u.get("cap_add", [])
 
             # 6. Start the container
             LOG.info("Starting %r as %r in DC %r" %
@@ -447,6 +449,7 @@ class Service(object):
                 publish_all_ports=False,
                 ipc_mode=ipc_mode,
                 devices=devices,
+                cap_add=cap_add,
                 type=kwargs.get('type', 'docker'))
             # add vnfd reference to vnfi
             vnfi.vnfd = vnfd
