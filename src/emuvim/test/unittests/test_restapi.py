@@ -66,22 +66,24 @@ class testRestApi(SimpleTestTopology):
         print('->>>>>>> checking running nodes, compute list, and connectivity >>>>>>>>>>')
 
         # check number of running nodes
-        self.assertTrue(len(self.getContainernetContainers()) == 3)
-        self.assertTrue(len(self.net.hosts) == 5)
-        self.assertTrue(len(self.net.switches) == 2)
+        self.assertEqual(len(self.getContainernetContainers()), 3)
+        self.assertEqual(len(self.net.hosts), 5)
+        self.assertEqual(len(self.net.switches), 2)
 
         # check compute list result
-        self.assertTrue(len(self.dc[0].listCompute()) == 2)
-        self.assertTrue(len(self.dc[1].listCompute()) == 1)
+        self.assertEqual(len(self.dc[0].listCompute()), 2)
+        self.assertEqual(len(self.dc[1].listCompute()), 1)
         self.assertTrue(isinstance(
             self.dc[0].listCompute()[0], EmulatorCompute))
         self.assertTrue(isinstance(
             self.dc[0].listCompute()[1], EmulatorCompute))
         self.assertTrue(isinstance(
             self.dc[1].listCompute()[0], EmulatorCompute))
-        self.assertTrue(self.dc[0].listCompute()[1].name == "vnf1")
-        self.assertTrue(self.dc[0].listCompute()[0].name == "vnf2")
-        self.assertTrue(self.dc[1].listCompute()[0].name == "vnf3")
+        print("dc1: ", self.dc[0].listCompute())
+        print("dc2: ", self.dc[1].listCompute())
+        self.assertIn("vnf1", list(map(lambda x: x.name, self.dc[0].listCompute())))
+        self.assertIn("vnf2", list(map(lambda x: x.name, self.dc[0].listCompute())))
+        self.assertIn("vnf3", list(map(lambda x: x.name, self.dc[1].listCompute())))
 
         # check connectivity by using ping
         self.assertTrue(self.net.ping(
@@ -95,15 +97,17 @@ class testRestApi(SimpleTestTopology):
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         output = subprocess.check_output(
             "vim-emu network add -src vnf1 -dst vnf2 -b -c 10", shell=True)
-        self.assertTrue("add-flow" in output)
-        self.assertTrue("success" in output)
+        print("output: ", output)
+        print("type: ", type(output))
+        self.assertIn("add-flow", output.decode())
+        self.assertIn("success", output.decode())
 
         print('network remove vnf1 vnf2->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         output = subprocess.check_output(
             "vim-emu network remove -src vnf1 -dst vnf2 -b", shell=True)
-        self.assertTrue("del-flows" in output)
-        self.assertTrue("success" in output)
+        self.assertIn("del-flows", output.decode())
+        self.assertIn("success", output.decode())
 
         print('>>>>> checking --> vim-emu compute stop -d datacenter0 -n vnf2 ->>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -111,42 +115,42 @@ class testRestApi(SimpleTestTopology):
             "vim-emu compute stop -d datacenter0 -n vnf2", shell=True)
 
         # check number of running nodes
-        self.assertTrue(len(self.getContainernetContainers()) == 2)
-        self.assertTrue(len(self.net.hosts) == 4)
-        self.assertTrue(len(self.net.switches) == 2)
+        self.assertEqual(len(self.getContainernetContainers()), 2)
+        self.assertEqual(len(self.net.hosts), 4)
+        self.assertEqual(len(self.net.switches), 2)
         # check compute list result
-        self.assertTrue(len(self.dc[0].listCompute()) == 1)
-        self.assertTrue(len(self.dc[1].listCompute()) == 1)
+        self.assertEqual(len(self.dc[0].listCompute()), 1)
+        self.assertEqual(len(self.dc[1].listCompute()), 1)
 
         print('>>>>> checking --> vim-emu compute list ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         output = subprocess.check_output("vim-emu compute list", shell=True)
 
         # check datacenter list result
-        self.assertTrue("datacenter0" in output)
+        self.assertIn("datacenter0", output.decode())
 
         print('>>>>> checking --> vim-emu compute status -d datacenter0 -n vnf1 ->>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         output = subprocess.check_output(
             "vim-emu compute status -d datacenter0 -n vnf1", shell=True)
-        output = ast.literal_eval(output)
+        output = ast.literal_eval(output.decode())
 
         # check compute status result
-        self.assertTrue(output["name"] == "vnf1")
+        self.assertEqual(output["name"], "vnf1")
         self.assertTrue(output["state"]["Running"])
 
         print('>>>>> checking --> vim-emu datacenter list ->>>>>>>>>>>>>>>>>>>>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         output = subprocess.check_output("vim-emu datacenter list", shell=True)
         # check datacenter list result
-        self.assertTrue("datacenter0" in output)
+        self.assertIn("datacenter0", output.decode())
 
         print('->>>>> checking --> vim-emu datacenter status -d datacenter0 ->>>>>>>>')
         print('->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         output = subprocess.check_output(
             "vim-emu datacenter status -d datacenter0", shell=True)
         # check datacenter status result
-        self.assertTrue("datacenter0" in output)
+        self.assertIn("datacenter0", output.decode())
         self.stopApi()
         self.stopNet()
 

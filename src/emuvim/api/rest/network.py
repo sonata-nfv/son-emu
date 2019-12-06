@@ -115,7 +115,7 @@ class NetworkAction(Resource):
             return str(c), 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
-            return ex.message, 500, CORS_HEADER
+            return str(ex), 500, CORS_HEADER
 
 
 class DrawD3jsgraph(Resource):

@@ -29,8 +29,8 @@
    - name: updates apt
      apt: update_cache=yes
      
-   - name: install python-dev
-     apt: pkg=python-dev state=installed
+   - name: install python3-dev
+     apt: pkg=python3-dev state=installed
 
    - name: install libffi-dev
      apt: pkg=libffi-dev state=installed
@@ -38,8 +38,8 @@
    - name: install libssl-dev
      apt: pkg=libssl-dev state=installed
 
-   - name: install pip
-     apt: pkg=python-pip state=installed
+   - name: install pip3
+     apt: pkg=python3-pip state=installed
 
    - name: install libevent-dev
      apt: pkg=libevent-dev state=installed
@@ -48,7 +48,7 @@
      apt: pkg=python-all-dev state=installed
 
    - name: find pip executable
-     shell: "which pip"
+     shell: "which pip3"
      register: pip_path
 
    - name: install setuptools
@@ -104,5 +104,7 @@
 
    - name: install gevent
      pip: name=gevent executable={{pip_path.stdout}}
+
+
 
 

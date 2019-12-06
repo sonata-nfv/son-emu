@@ -25,9 +25,10 @@
 # partner consortium (www.sonata-nfv.eu).
 from flask_restful import Resource
 from flask import request, Response
-from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import BaseOpenstackDummy
+from emuvim.api.openstack.openstack_dummies.base_openstack_dummy import \
+    BaseOpenstackDummy
 from datetime import datetime
-import neutron_sfc_dummy_api as SFC
+import emuvim.api.openstack.openstack_dummies.neutron_sfc_dummy_api as SFC
 import logging
 import json
 import uuid
@@ -269,7 +270,7 @@ class NeutronListNetworks(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: List networks exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -319,7 +320,7 @@ class NeutronShowNetwork(Resource):
 
         except Exception as ex:
             logging.exception("Neutron: Show network exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -350,7 +351,7 @@ class NeutronCreateNetwork(Resource):
                 {"network": net.create_network_dict()}), status=201, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Create network excepiton.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -397,7 +398,7 @@ class NeutronUpdateNetwork(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: Show networks exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -434,7 +435,7 @@ class NeutronDeleteNetwork(Resource):
             return Response('', status=204, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Delete network exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -481,7 +482,7 @@ class NeutronListSubnets(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: List subnets exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -529,7 +530,7 @@ class NeutronShowSubnet(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: Show subnet exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -589,7 +590,7 @@ class NeutronCreateSubnet(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: Create network excepiton.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -643,7 +644,7 @@ class NeutronUpdateSubnet(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: Show networks exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -691,7 +692,7 @@ class NeutronDeleteSubnet(Resource):
                             status=404, mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Delete subnet exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -739,14 +740,14 @@ class NeutronListPorts(Resource):
                 ), ports)
 
             port_dict = dict()
-            port_dict["ports"] = map(lambda x: x.create_port_dict(self.api.compute), ports)
+            port_dict["ports"] = list(map(lambda x: x.create_port_dict(self.api.compute), ports))
 
             return Response(json.dumps(port_dict), status=200,
                             mimetype='application/json')
 
         except Exception as ex:
             LOG.exception("Neutron: List ports exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -792,7 +793,7 @@ class NeutronShowPort(Resource):
                             mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Show port exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -856,7 +857,7 @@ class NeutronCreatePort(Resource):
                             mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Show port exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -920,7 +921,7 @@ class NeutronUpdatePort(Resource):
                             mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Update port exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -967,7 +968,7 @@ class NeutronDeletePort(Resource):
 
         except Exception as ex:
             LOG.exception("Neutron: Delete port exception.")
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -1048,5 +1049,5 @@ class NeutronAddFloatingIp(Resource):
                             mimetype='application/json')
         except Exception as ex:
             LOG.exception("Neutron: Create FloatingIP exception %s.", ex)
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')

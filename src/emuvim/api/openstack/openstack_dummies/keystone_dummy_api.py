@@ -323,7 +323,7 @@ class KeystoneGetToken(Resource):
 
         except Exception as ex:
             logging.exception("Keystone: Get token failed.")
-            return ex.message, 500
+            return str(ex), 500
 
 
 class KeystoneGetTokenv3(Resource):
@@ -454,4 +454,4 @@ class KeystoneGetTokenv3(Resource):
 
         except Exception as ex:
             logging.exception("Keystone: Get token failed.")
-            return ex.message, 500
+            return str(ex), 500

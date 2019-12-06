@@ -116,7 +116,7 @@ class NovaVersionsList(Resource):
 
         except Exception as ex:
             LOG.exception(u"%s: Could not show list of versions." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaVersionShow(Resource):
@@ -170,7 +170,7 @@ class NovaVersionShow(Resource):
 
         except Exception as ex:
             LOG.exception(u"%s: Could not show list of versions." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaListServersApi(Resource):
@@ -208,7 +208,7 @@ class NovaListServersApi(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of servers." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
     def post(self, id):
         """
@@ -262,7 +262,7 @@ class NovaListServersApi(Resource):
 
         except Exception as ex:
             LOG.exception(u"%s: Could not create the server." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaListServersAndPortsApi(Resource):
@@ -311,7 +311,7 @@ class NovaListServersAndPortsApi(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of servers." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaListServersDetailed(Resource):
@@ -375,7 +375,7 @@ class NovaListServersDetailed(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of servers." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaListFlavors(Resource):
@@ -413,7 +413,7 @@ class NovaListFlavors(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of servers." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
     def post(self, id):
         LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
@@ -480,7 +480,7 @@ class NovaListFlavorsDetails(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of servers." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
     def post(self, id):
         LOG.debug("API CALL: %s POST" % str(self.__class__.__name__))
@@ -542,7 +542,7 @@ class NovaListFlavorById(Resource):
         except Exception as ex:
             LOG.exception(u"%s: Could not retrieve flavor with id %s" %
                           (__name__, flavorid))
-            return ex.message, 500
+            return str(ex), 500
 
     def delete(self, id, flavorid):
         """
@@ -587,7 +587,7 @@ class NovaListImages(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of images." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaListImagesDetails(Resource):
@@ -633,7 +633,7 @@ class NovaListImagesDetails(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of images." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaListImageById(Resource):
@@ -671,7 +671,7 @@ class NovaListImageById(Resource):
         except Exception as ex:
             LOG.exception(u"%s: Could not retrieve image with id %s." %
                           (__name__, imageid))
-            return ex.message, 500
+            return str(ex), 500
 
     def delete(self, id, imageid):
         """
@@ -744,7 +744,7 @@ class NovaShowServerDetails(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the server details." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
     def delete(self, id, serverid):
         """
@@ -772,7 +772,7 @@ class NovaShowServerDetails(Resource):
 
         except Exception as ex:
             LOG.exception(u"%s: Could not create the server." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaInterfaceToServer(Resource):
@@ -863,7 +863,7 @@ class NovaInterfaceToServer(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not add interface to the server." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaShowAndDeleteInterfaceAtServer(Resource):
@@ -908,7 +908,7 @@ class NovaShowAndDeleteInterfaceAtServer(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not detach interface from the server." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
 
 class NovaLimits(Resource):
@@ -963,4 +963,4 @@ class NovaLimits(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of images." % __name__)
-            return ex.message, 500
+            return str(ex), 500

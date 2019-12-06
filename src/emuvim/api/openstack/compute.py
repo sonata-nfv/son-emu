@@ -25,22 +25,22 @@
 # partner consortium (www.sonata-nfv.eu).
 from mininet.link import Link
 
-from resources.instance_flavor import InstanceFlavor
-from resources.net import Net
-from resources.port import Port
-from resources.port_pair import PortPair
-from resources.port_pair_group import PortPairGroup
-from resources.flow_classifier import FlowClassifier
-from resources.port_chain import PortChain
-from resources.server import Server
-from resources.image import Image
+from emuvim.api.openstack.resources.instance_flavor import InstanceFlavor
+from emuvim.api.openstack.resources.net import Net
+from emuvim.api.openstack.resources.port import Port
+from emuvim.api.openstack.resources.port_pair import PortPair
+from emuvim.api.openstack.resources.port_pair_group import PortPairGroup
+from emuvim.api.openstack.resources.flow_classifier import FlowClassifier
+from emuvim.api.openstack.resources.port_chain import PortChain
+from emuvim.api.openstack.resources.server import Server
+from emuvim.api.openstack.resources.image import Image
 
 from docker import DockerClient
 import logging
 import threading
 import uuid
 import time
-import ip_handler as IP
+import emuvim.api.openstack.ip_handler as IP
 import hashlib
 
 
@@ -232,8 +232,12 @@ class OpenstackCompute(object):
         for server in self.stacks[stack_id].servers.values():
             self.stop_compute(server)
             self.delete_server(server)
-        for net in self.stacks[stack_id].nets.values():
-            self.delete_network(net.id)
+        stack = list(self.stacks[stack_id].nets.values())
+        while stack:
+            id = stack.pop().id
+            self.delete_network(id)
+        # for net in self.stacks[stack_id].nets.values():
+        # self.delete_network(net.id)
         for port in self.stacks[stack_id].ports.values():
             self.delete_port(port.id)
 
@@ -592,7 +596,7 @@ class OpenstackCompute(object):
         """
         if len(name) > char_limit:
             # construct a short name
-            h = hashlib.sha224(name).hexdigest()
+            h = hashlib.sha224(name.encode()).hexdigest()
             h = h[0:char_limit]
             LOG.debug("Shortened server name '%s' to '%s'" % (name, h))
         return name
@@ -630,6 +634,7 @@ class OpenstackCompute(object):
         """
         if name_or_id in self.nets:
             return self.nets[name_or_id]
+        print("name_or_id: ", name_or_id)
         for net in self.nets.values():
             if net.name == name_or_id:
                 return net
@@ -710,10 +715,10 @@ class OpenstackCompute(object):
         if name_or_id in self.ports:
             return self.ports[name_or_id]
         # find by name
-        matching_ports = filter(
+        matching_ports = list(filter(
             lambda port: port.name == name_or_id or port.template_name == name_or_id,
             self.ports.values()
-        )
+        ))
         matching_ports_count = len(matching_ports)
         if matching_ports_count == 1:
             return matching_ports[0]

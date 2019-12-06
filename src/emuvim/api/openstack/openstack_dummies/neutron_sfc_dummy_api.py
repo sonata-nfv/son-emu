@@ -67,7 +67,7 @@ class PortPairsCreate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -91,7 +91,7 @@ class PortPairsUpdate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -106,7 +106,7 @@ class PortPairsDelete(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -118,14 +118,14 @@ class PortPairsList(SFC):
             id = request.args.get('id')
             if id and any(id):
                 port_pairs = filter(lambda port_pair: port_pair.id == id, port_pairs)
-            resp = {"port_pairs": map(lambda port_pair: port_pair.create_dict(self.api.compute), port_pairs)}
+            resp = {"port_pairs": list(map(lambda port_pair: port_pair.create_dict(self.api.compute), port_pairs))}
 
             return Response(json.dumps(resp), status=200,
                             mimetype='application/json')
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -143,7 +143,7 @@ class PortPairsShow(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -175,7 +175,7 @@ class PortPairGroupCreate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -202,7 +202,7 @@ class PortPairGroupUpdate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -217,7 +217,7 @@ class PortPairGroupDelete(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -236,7 +236,7 @@ class PortPairGroupList(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -255,7 +255,7 @@ class PortPairGroupShow(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -307,7 +307,7 @@ class FlowClassifierCreate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -332,7 +332,7 @@ class FlowClassifierUpdate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -347,7 +347,7 @@ class FlowClassifierDelete(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -366,7 +366,7 @@ class FlowClassifierList(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -385,7 +385,7 @@ class FlowClassifierShow(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -420,7 +420,7 @@ class PortChainCreate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -453,7 +453,7 @@ class PortChainUpdate(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -468,7 +468,7 @@ class PortChainDelete(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -487,7 +487,7 @@ class PortChainList(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
 
@@ -506,5 +506,5 @@ class PortChainShow(SFC):
         except Exception as ex:
             logging.exception("Neutron SFC: %s Exception." %
                               str(self.__class__.__name__))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')

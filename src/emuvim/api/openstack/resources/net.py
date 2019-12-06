@@ -24,6 +24,7 @@
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
 import re
+from json import dumps
 
 
 class Net:
@@ -243,7 +244,7 @@ class Net:
         :return: IP address as int.
         :rtype: ``int``
         """
-        o = map(int, ip.split('.'))
+        o = list(map(int, ip.split('.')))
         res = (16777216 * o[0]) + (65536 * o[1]) + (256 * o[2]) + o[3]
         return res
 
@@ -340,4 +341,4 @@ class Net:
                      self.gateway_ip,
                      self.segmentation_id,
                      self._cidr,
-                     self.start_end_dict))
+                     dumps(self.start_end_dict)))

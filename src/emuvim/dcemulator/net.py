@@ -117,7 +117,7 @@ class DCNetwork(Containernet):
         self.DCNetwork_graph = nx.MultiDiGraph()
 
         # initialize pool of vlan tags to setup the SDN paths
-        self.vlans = range(1, 4095)[::-1]
+        self.vlans = list(range(1, 4095))[::-1]
 
         # link to Ryu REST_API
         ryu_ip = 'localhost'
@@ -159,13 +159,13 @@ class DCNetwork(Containernet):
         assert node2 is not None
 
         # ensure type of node1
-        if isinstance(node1, basestring):
+        if isinstance(node1, str):
             if node1 in self.dcs:
                 node1 = self.dcs[node1].switch
         if isinstance(node1, Datacenter):
             node1 = node1.switch
         # ensure type of node2
-        if isinstance(node2, basestring):
+        if isinstance(node2, str):
             if node2 in self.dcs:
                 node2 = self.dcs[node2].switch
         if isinstance(node2, Datacenter):
@@ -226,7 +226,7 @@ class DCNetwork(Containernet):
                       'dst_port_name': node2_port_name}
         attr_dict2.update(attr_dict)
         self.DCNetwork_graph.add_edge(
-            node1.name, node2.name, attr_dict=attr_dict2)
+            node1.name, node2.name, **attr_dict2)
 
         attr_dict2 = {'src_port_id': node2_port_id, 'src_port_nr': node2.ports[link.intf2],
                       'src_port_name': node2_port_name,
@@ -234,7 +234,7 @@ class DCNetwork(Containernet):
                       'dst_port_name': node1_port_name}
         attr_dict2.update(attr_dict)
         self.DCNetwork_graph.add_edge(
-            node2.name, node1.name, attr_dict=attr_dict2)
+            node2.name, node1.name, **attr_dict2)
 
         LOG.debug("addLink: n1={0} intf1={1} -- n2={2} intf2={3}".format(
             str(node1), node1_port_name, str(node2), node2_port_name))
@@ -320,13 +320,13 @@ class DCNetwork(Containernet):
         Returns a list with all containers within all data centers.
         """
         all_containers = []
-        for dc in self.dcs.itervalues():
+        for dc in self.dcs.values():
             all_containers += dc.listCompute()
         return all_containers
 
     def start(self):
         # start
-        for dc in self.dcs.itervalues():
+        for dc in self.dcs.values():
             dc.start()
         Containernet.start(self)
 
@@ -629,7 +629,7 @@ class DCNetwork(Containernet):
         # check if port is specified (vnf:port)
         if vnf_src_interface is None:
             # take first interface by default
-            connected_sw = self.DCNetwork_graph.neighbors(vnf_src_name)[0]
+            connected_sw = list(self.DCNetwork_graph.neighbors(vnf_src_name))[0]
             link_dict = self.DCNetwork_graph[vnf_src_name][connected_sw]
             vnf_src_interface = link_dict[0]['src_port_id']
 
@@ -646,7 +646,7 @@ class DCNetwork(Containernet):
 
         if vnf_dst_interface is None:
             # take first interface by default
-            connected_sw = self.DCNetwork_graph.neighbors(vnf_dst_name)[0]
+            connected_sw = list(self.DCNetwork_graph.neighbors(vnf_dst_name))[0]
             link_dict = self.DCNetwork_graph[connected_sw][vnf_dst_name]
             vnf_dst_interface = link_dict[0]['dst_port_id']
 

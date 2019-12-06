@@ -23,16 +23,21 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
-from manage import OpenstackManage
+from emuvim.api.openstack.manage import OpenstackManage
 
-from openstack_dummies.glance_dummy_api import GlanceDummyApi
-from openstack_dummies.heat_dummy_api import HeatDummyApi
-from openstack_dummies.keystone_dummy_api import KeystoneDummyApi
-from openstack_dummies.neutron_dummy_api import NeutronDummyApi
-from openstack_dummies.nova_dummy_api import NovaDummyApi
+from emuvim.api.openstack.openstack_dummies.glance_dummy_api import \
+    GlanceDummyApi
+from emuvim.api.openstack.openstack_dummies.heat_dummy_api import \
+    HeatDummyApi
+from emuvim.api.openstack.openstack_dummies.keystone_dummy_api import \
+    KeystoneDummyApi
+from emuvim.api.openstack.openstack_dummies.neutron_dummy_api import \
+    NeutronDummyApi
+from emuvim.api.openstack.openstack_dummies.nova_dummy_api import \
+    NovaDummyApi
 
 import logging
-import compute
+import emuvim.api.openstack.compute as compute
 import socket
 import time
 

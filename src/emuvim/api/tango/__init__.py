@@ -31,7 +31,7 @@
 # partner consortium (www.5gtango.eu).
 import logging
 import threading
-import llcm
+from emuvim.api.tango import llcm
 
 
 LOG = logging.getLogger("5gtango.llcm")

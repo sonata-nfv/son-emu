@@ -513,7 +513,7 @@ class ChainVnfDcStackInterfaces(Resource):
         # search for related OpenStackAPIs
         api_src = None
         api_dst = None
-        from openstack_api_endpoint import OpenstackApiEndpoint
+        from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
         for api in OpenstackApiEndpoint.dc_apis:
             if api.compute.dc == dc_src:
                 api_src = api
@@ -711,7 +711,7 @@ class BalanceHostDcStack(Resource):
         dc_real = self.api.manage.net.dcs[dc]
         # search for related OpenStackAPIs
         api_real = None
-        from openstack_api_endpoint import OpenstackApiEndpoint
+        from emuvim.api.openstack.openstack_api_endpoint import OpenstackApiEndpoint
         for api in OpenstackApiEndpoint.dc_apis:
             if api.compute.dc == dc_real:
                 api_real = api

@@ -63,8 +63,8 @@ class PortChain(object):
 
         port_pair_chain = map(lambda port_pair_group_id: self._get_port_pair(port_pair_group_id, compute),
                               self.port_pair_groups)
-        ingress_ports = map(lambda port_pair: port_pair.ingress, port_pair_chain)
-        egress_ports = map(lambda port_pair: port_pair.ingress, port_pair_chain)
+        ingress_ports = list(map(lambda port_pair: port_pair.ingress, port_pair_chain))
+        egress_ports = list(map(lambda port_pair: port_pair.ingress, port_pair_chain))
         chain_start = ingress_ports[0]
         chain_rest = ingress_ports[1:]
 
@@ -75,7 +75,7 @@ class PortChain(object):
 
             port = compute.find_port_by_name_or_id(flow_classifier.logical_source_port)
 
-            chain = [(port, chain_start)] + zip(egress_ports, chain_rest)
+            chain = [(port, chain_start)] + list(zip(egress_ports, chain_rest))
 
             for (egress_port, ingress_port) in chain:
                 server_egress = None

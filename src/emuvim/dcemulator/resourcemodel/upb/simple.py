@@ -141,7 +141,7 @@ class UpbSimpleCloudDcRM(BaseResourceModel):
         We have to recalculate for all containers to allow e.g. over provisioning models.
         :return:
         """
-        for d in self._allocated_compute_instances.itervalues():
+        for d in self._allocated_compute_instances.values():
             if not self.deactivate_cpu_limit:
                 self._apply_cpu_limits(d)
             if not self.deactivate_mem_limit:

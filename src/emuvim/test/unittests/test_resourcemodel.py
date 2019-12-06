@@ -211,7 +211,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
             rm.allocate(c8)  # calculate allocation
             rm.allocate(c9)  # calculate allocation
         except NotEnoughResourcesAvailable as e:
-            self.assertIn("Not enough compute", e.message)
+            self.assertIn("Not enough compute", str(e))
             exception = True
         self.assertTrue(exception)
 
@@ -241,7 +241,7 @@ class testUpbSimpleCloudDcRM(SimpleTestTopology):
             rm.allocate(c7)  # calculate allocation
             rm.allocate(c8)  # calculate allocation
         except NotEnoughResourcesAvailable as e:
-            self.assertIn("Not enough memory", e.message)
+            self.assertIn("Not enough memory", str(e))
             exception = True
         self.assertTrue(exception)
 

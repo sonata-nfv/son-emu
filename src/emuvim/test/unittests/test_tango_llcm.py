@@ -37,6 +37,7 @@ from emuvim.api.tango import TangoLLCMEndpoint
 from emuvim.api.tango.llcm import initialize_GK, parse_interface
 from ipaddress import ip_network
 
+
 PACKAGE_PATH = "misc/eu.5gtango.emulator-example-service.0.1.tgo"
 
 
@@ -98,7 +99,7 @@ class testTangoLLCM(SimpleTestTopology):
         for link in self.net.deployed_elines:
             vnf_src, intf_src = parse_interface(
                 link['connection_points_reference'][0])
-            print vnf_src, intf_src
+            print(vnf_src, intf_src)
             src = self.net.getNodeByName(vnf_src)
             if not src:
                 continue
@@ -119,10 +120,10 @@ class testTangoLLCM(SimpleTestTopology):
             dst_mask = [intf['netmask']
                         for intf in network_list if intf['intf_name'] == intf_dst][0]
 
-            print "src = {0}:{1} ip={2} ".format(
-                vnf_src, intf_src, src_ip, src_mask)
-            print "dst = {0}:{1} ip={2} ".format(
-                vnf_dst, intf_dst, dst_ip, dst_mask)
+            print("src = {0}:{1} ip={2} ".format(
+                vnf_src, intf_src, src_ip, src_mask))
+            print("dst = {0}:{1} ip={2} ".format(
+                vnf_dst, intf_dst, dst_ip, dst_mask))
 
             # check if the E-Line IP's are in the same subnet
             ret = ip_network(u'{0}'.format(src_ip, src_mask), strict=False)\
@@ -137,7 +138,7 @@ class testTangoLLCM(SimpleTestTopology):
             self.assertTrue(len(mgmt_ip) > 0)
             ip_address = mgmt_ip[0]
             ELAN_list.append(ip_address)
-            print ip_address
+            print(ip_address)
 
         # check ELAN connection by ping over the mgmt network (needs to be
         # configured as ELAN in the test service)
@@ -147,14 +148,14 @@ class testTangoLLCM(SimpleTestTopology):
                        for intf in network_list if intf['intf_name'] == 'mgmt']
             self.assertTrue(len(mgmt_ip) > 0)
             ip_address = mgmt_ip[0]
-            print ELAN_list
-            print ip_address
+            print(ELAN_list)
+            print(ip_address)
             test_ip_list = list(ELAN_list)
             test_ip_list.remove(ip_address)
             for ip in test_ip_list:
                 # only take ip address, without netmask
                 p = self.net.ping([vnf], manualdestip=ip.split('/')[0])
-                print p
+                print(p)
                 self.assertTrue(p <= 0.0)
 
         # stop Mininet network
@@ -181,7 +182,7 @@ class testTangoLLCM(SimpleTestTopology):
         self.startNet()
         time.sleep(3)
 
-        print "starting tests"
+        print("starting tests")
         # board package
         files = {"package": open(PACKAGE_PATH, "rb")}
         r = requests.post("http://127.0.0.1:56001/packages", files=files)

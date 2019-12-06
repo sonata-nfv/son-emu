@@ -23,14 +23,15 @@
 # the Horizon 2020 and 5G-PPP programmes. The authors would like to
 # acknowledge the contributions of their colleagues of the SONATA
 # partner consortium (www.sonata-nfv.eu).
-from __future__ import print_function  # TODO remove when print is no longer needed for debugging
-from resources.router import Router
+# TODO remove when print is no longer needed for debugging
+from __future__ import print_function
+from emuvim.api.openstack.resources.router import Router
 from datetime import datetime
 import re
 import sys
 import uuid
 import logging
-import ip_handler as IP
+import emuvim.api.openstack.ip_handler as IP
 
 
 LOG = logging.getLogger("api.openstack.heat.parser")
@@ -130,7 +131,7 @@ class HeatParser:
                         net_name, True)
 
             except Exception as e:
-                LOG.warning('Could not create Net: ' + e.message)
+                LOG.warning('Could not create Net: ' + str(e))
             return
 
         if 'OS::Neutron::Subnet' in resource['type'] and "Net" not in resource['type']:
@@ -151,7 +152,7 @@ class HeatParser:
                 if not stack_update:
                     net.set_cidr(IP.get_new_cidr(net.subnet_id))
             except Exception as e:
-                LOG.warning('Could not create Subnet: ' + e.message)
+                LOG.warning('Could not create Subnet: ' + str(e))
             return
 
         if 'OS::Neutron::Port' in resource['type']:
@@ -172,7 +173,7 @@ class HeatParser:
                         port.ip_address = net.get_new_ip_address(port.name)
                         return
             except Exception as e:
-                LOG.warning('Could not create Port: ' + e.message)
+                LOG.warning('Could not create Port: ' + str(e))
             self.bufferResource.append(resource)
             return
 
@@ -210,7 +211,7 @@ class HeatParser:
                     server.port_names.append(port_name)
                 return
             except Exception as e:
-                LOG.warning('Could not create Server: ' + e.message)
+                LOG.warning('Could not create Server: ' + str(e))
             return
 
         if 'OS::Neutron::RouterInterface' in resource['type']:
@@ -246,7 +247,7 @@ class HeatParser:
 
                 stack.ports[port_name].floating_ip = floating_network_id
             except Exception as e:
-                LOG.warning('Could not create FloatingIP: ' + e.message)
+                LOG.warning('Could not create FloatingIP: ' + str(e))
             return
 
         if 'OS::Neutron::Router' in resource['type']:
@@ -255,7 +256,7 @@ class HeatParser:
                 if name not in stack.routers:
                     stack.routers[name] = Router(name)
             except Exception as e:
-                print('Could not create Router: ' + e.message)
+                print('Could not create Router: ' + str(e))
             return
 
         if 'OS::Heat::ResourceGroup' in resource['type']:
@@ -267,7 +268,7 @@ class HeatParser:
                 self.handle_resource(
                     embedded_resource, stack, dc_label, stack_update)
             except Exception as e:
-                print('Could not create Router: ' + e.message)
+                print('Could not create Router: ' + str(e))
             return
 
         LOG.warning(

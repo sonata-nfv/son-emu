@@ -116,7 +116,7 @@ class HeatCreateStack(Resource):
 
             reader = HeatParser(self.api.compute)
             if isinstance(stack_dict['template'], str) or isinstance(
-                    stack_dict['template'], unicode):
+                    stack_dict['template'], bytes):
                 stack_dict['template'] = json.loads(stack_dict['template'])
             if not reader.parse_input(
                     stack_dict['template'], stack, self.api.compute.dc.label):
@@ -142,7 +142,7 @@ class HeatCreateStack(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Create Stack exception.")
-            return ex.message, 500
+            return str(ex), 500
 
     def get(self, tenant_id):
         """
@@ -174,7 +174,7 @@ class HeatCreateStack(Resource):
                             status=200, mimetype="application/json")
         except Exception as ex:
             LOG.exception("Heat: List Stack exception.")
-            return ex.message, 500
+            return str(ex), 500
 
 
 class HeatShowStack(Resource):
@@ -244,7 +244,7 @@ class HeatShowStack(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Show stack exception.")
-            return ex.message, 500
+            return str(ex), 500
 
 
 class HeatShowStackTemplate(Resource):
@@ -278,7 +278,7 @@ class HeatShowStackTemplate(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Show stack template exception.")
-            return ex.message, 500
+            return str(ex), 500
 
 
 class HeatShowStackResources(Resource):
@@ -313,7 +313,7 @@ class HeatShowStackResources(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Show stack template exception.")
-            return ex.message, 500
+            return str(ex), 500
 
 
 class HeatUpdateStack(Resource):
@@ -362,7 +362,7 @@ class HeatUpdateStack(Resource):
 
             reader = HeatParser(self.api.compute)
             if isinstance(stack_dict['template'], str) or isinstance(
-                    stack_dict['template'], unicode):
+                    stack_dict['template'], bytes):
                 stack_dict['template'] = json.loads(stack_dict['template'])
             if not reader.parse_input(
                     stack_dict['template'], stack, self.api.compute.dc.label, stack_update=True):
@@ -376,7 +376,7 @@ class HeatUpdateStack(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Update Stack exception")
-            return ex.message, 500
+            return str(ex), 500
 
 
 class HeatDeleteStack(Resource):
@@ -408,4 +408,4 @@ class HeatDeleteStack(Resource):
 
         except Exception as ex:
             LOG.exception("Heat: Delete Stack exception")
-            return ex.message, 500
+            return str(ex), 500

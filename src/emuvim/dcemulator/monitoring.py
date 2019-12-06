@@ -359,7 +359,7 @@ class DCNetworkMonitor():
                     'stats/flow', dpid=flow_dict['switch_dpid'], data=data)
                 if isinstance(ret, dict):
                     flow_stat_dict = ret
-                elif isinstance(ret, basestring):
+                elif isinstance(ret, str):
                     flow_stat_dict = ast.literal_eval(ret.rstrip())
                 else:
                     flow_stat_dict = None
@@ -395,7 +395,7 @@ class DCNetworkMonitor():
                 ret = self.net.ryu_REST('stats/port', dpid=dpid)
                 if isinstance(ret, dict):
                     port_stat_dict = ret
-                elif isinstance(ret, basestring):
+                elif isinstance(ret, str):
                     port_stat_dict = ast.literal_eval(ret.rstrip())
                 else:
                     port_stat_dict = None

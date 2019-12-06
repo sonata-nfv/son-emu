@@ -62,7 +62,7 @@ class ResourceModelRegistrar(object):
         List of registered resource models
         :return:
         """
-        return list(self._resource_models.itervalues())
+        return list(self._resource_models.values())
 
     @property
     def num_dcs_with_rms(self):
@@ -71,7 +71,7 @@ class ResourceModelRegistrar(object):
         :return:
         """
         return sum([len(rm.dcs)
-                    for rm in list(self._resource_models.itervalues())])
+                    for rm in list(self._resource_models.values())])
 
 
 class ResourceFlavor(object):

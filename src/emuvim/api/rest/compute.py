@@ -97,7 +97,9 @@ class Compute(Resource):
                     c.start()
             except Exception as ex:
                 logging.warning("Couldn't run Docker entry point VIM_EMU_CMD")
-                logging.exception("Exception:")
+                logging.exception(
+                    "Exception: " + str(ex) + "; " + str(type(ex))
+                )
             # return docker inspect dict
             return c.getStatus(), 200, CORS_HEADER
         except Exception as ex:
@@ -153,7 +155,7 @@ class ComputeList(Resource):
             if dc_label is None or dc_label == 'None':
                 # return list with all compute nodes in all DCs
                 all_containers = []
-                for dc in dcs.itervalues():
+                for dc in dcs.values():
                     all_containers += dc.listCompute()
                 container_list = [(c.name, c.getStatus())
                                   for c in all_containers]
@@ -246,7 +248,7 @@ class DatacenterList(Resource):
     def get(self):
         logging.debug("API CALL: datacenter list")
         try:
-            return [d.getStatus() for d in dcs.itervalues()], 200, CORS_HEADER
+            return [d.getStatus() for d in dcs.values()], 200, CORS_HEADER
         except Exception as ex:
             logging.exception("API error.")
             return ex.message, 500, CORS_HEADER

@@ -31,15 +31,15 @@ from flask_restful import Api
 from gevent.pywsgi import WSGIServer
 
 # need to import total module to set its global variable dcs
-import compute
-from compute import ComputeList, Compute, ComputeResources, DatacenterList, DatacenterStatus
+from emuvim.api.rest import compute
+from emuvim.api.rest.compute import ComputeList, Compute, ComputeResources, DatacenterList, DatacenterStatus
 
 # need to import total module to set its global variable net
-import network
-from network import NetworkAction, DrawD3jsgraph
+from emuvim.api.rest import network
+from emuvim.api.rest.network import NetworkAction, DrawD3jsgraph
 
-import monitor
-from monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction, MonitorTerminal
+from emuvim.api.rest import monitor
+from emuvim.api.rest.monitor import MonitorInterfaceAction, MonitorFlowAction, MonitorLinkAction, MonitorSkewAction, MonitorTerminal
 
 import pkg_resources
 from os import path

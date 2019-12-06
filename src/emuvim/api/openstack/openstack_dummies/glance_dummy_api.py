@@ -137,7 +137,7 @@ class GlanceListImagesApi(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve the list of images." % __name__)
-            return ex.message, 500
+            return str(ex), 500
 
     def post(self):
         """
@@ -226,7 +226,7 @@ class GlanceImageByIdApi(Resource):
         except Exception as ex:
             LOG.exception(
                 u"%s: Could not retrieve image with id %s." % (__name__, id))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')
 
     def put(self, id):
@@ -259,5 +259,5 @@ class GlanceImageByDockerNameApi(Resource):
         except Exception as ex:
             logging.exception(
                 u"%s: Could not retrieve image with id %s." % (__name__, id))
-            return Response(ex.message, status=500,
+            return Response(str(ex), status=500,
                             mimetype='application/json')

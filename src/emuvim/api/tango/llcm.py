@@ -818,7 +818,7 @@ class Service(object):
         Get all URLs to pre-build docker images in some repo.
         :return:
         """
-        for vnf_id, v in self.vnfds.iteritems():
+        for vnf_id, v in list(self.vnfds.items()):
             for vu in v.get("virtual_deployment_units", []):
                 vnf_container_name = get_container_name(vnf_id, vu.get("id"))
                 if vu.get("vm_image_format") == "docker":
@@ -848,7 +848,7 @@ class Service(object):
         dc = DockerClient()
         LOG.info("Building %d Docker images (this may take several minutes) ..." % len(
             self.local_docker_files))
-        for k, v in self.local_docker_files.iteritems():
+        for k, v in list(self.local_docker_files.items()):
             for line in dc.build(path=v.replace(
                     "Dockerfile", ""), tag=k, rm=False, nocache=False):
                 LOG.debug("DOCKER BUILD: %s" % line)
@@ -859,7 +859,7 @@ class Service(object):
         If the package contains URLs to pre-build Docker images, we download them with this method.
         """
         dc = DockerClient()
-        for url in self.remote_docker_image_urls.itervalues():
+        for url in list(self.remote_docker_image_urls.values()):
             # only pull if not present (speedup for development)
             if not FORCE_PULL:
                 if len(dc.images.list(name=url)) > 0:
@@ -940,7 +940,7 @@ class FirstDcPlacement(object):
     """
 
     def place(self, dcs, vnfd, vnfid, vdu, ssiid, cname):
-        return list(dcs.itervalues())[0]
+        return list(dcs.values())[0]
 
 
 class RoundRobinDcPlacement(object):
@@ -952,7 +952,7 @@ class RoundRobinDcPlacement(object):
         self.count = 0
 
     def place(self, dcs, vnfd, vnfid, vdu, ssiid, cname):
-        dcs_list = list(dcs.itervalues())
+        dcs_list = list(dcs.values())
         rdc = dcs_list[self.count % len(dcs_list)]
         self.count += 1  # inc. count to use next DC
         return rdc
@@ -982,14 +982,14 @@ class StaticConfigPlacement(object):
         if cname not in self.static_placement:
             LOG.error("Coudn't find {} in placement".format(cname))
             LOG.error("Using first DC as fallback!")
-            return list(dcs.itervalues())[0]
+            return list(dcs.values())[0]
         # lookup
         candidate_dc = self.static_placement.get(cname)
         # check if DC exsits
         if candidate_dc not in dcs:
             LOG.error("Coudn't find DC {}".format(candidate_dc))
             LOG.error("Using first DC as fallback!")
-            return list(dcs.itervalues())[0]
+            return list(dcs.values())[0]
         # return correct DC
         return dcs.get(candidate_dc)
 
@@ -1023,10 +1023,13 @@ class Packages(fr.Resource):
                         "error": "upload failed. file not found."}, 500
             # generate a uuid to reference this package
             service_uuid = str(uuid.uuid4())
-            file_hash = hashlib.sha1(str(son_file)).hexdigest()
+            file_hash = str(son_file)
+            file_hash = hashlib.sha1(file_hash.encode())
+            file_hash = file_hash.hexdigest()
             # ensure that upload folder exists
             ensure_dir(UPLOAD_FOLDER)
-            upload_path = os.path.join(UPLOAD_FOLDER, "%s.tgo" % service_uuid)
+            upload_path = os.path.\
+                join(UPLOAD_FOLDER, "%s.tgo" % service_uuid)
             # store *.son file to disk
             if is_file_object:
                 son_file.save(upload_path)
@@ -1075,7 +1078,7 @@ class Packages(fr.Resource):
         """
         LOG.info("GET /packages")
         result = list()
-        for suuid, sobj in GK.services.iteritems():
+        for suuid, sobj in GK.services.items():
             pkg = dict()
             pkg["pd"] = dict()
             pkg["uuid"] = suuid
@@ -1097,7 +1100,7 @@ class Services(fr.Resource):
         """
         LOG.info("GET /services")
         result = list()
-        for suuid, sobj in GK.services.iteritems():
+        for suuid, sobj in GK.services.items():
             service = dict()
             service["nsd"] = dict()
             service["uuid"] = suuid
@@ -1126,7 +1129,7 @@ class Instantiations(fr.Resource):
             service_name = service_uuid
         # first try to find by service_name
         if service_name is not None:
-            for s_uuid, s in GK.services.iteritems():
+            for s_uuid, s in GK.services.items():
                 if s.manifest.get("name") == service_name:
                     LOG.info("Searched for: {}. Found service w. UUID: {}"
                              .format(service_name, s_uuid))
@@ -1136,7 +1139,7 @@ class Instantiations(fr.Resource):
                 "latest") and len(GK.services) > 0:
             # if we don't get a service uuid, we simple start the first service
             # in the list
-            service_uuid = list(GK.services.iterkeys())[0]
+            service_uuid = list(GK.services.keys())[0]
         if service_uuid in GK.services:
             # ok, we have a service uuid, lets start the service
             service_instance_uuid = GK.services.get(
@@ -1154,10 +1157,10 @@ class Instantiations(fr.Resource):
         """
         LOG.debug("GET /instantiations or /api/v3/records/services")
         # return {"service_instantiations_list": [
-        #    list(s.instances.iterkeys()) for s in GK.services.itervalues()]}
+        #    list(s.instances.keys()) for s in GK.services.values()]}
         result = list()
-        for suuid, sobj in GK.services.iteritems():
-            for iuuid, iobj in sobj.instances.iteritems():
+        for suuid, sobj in GK.services.items():
+            for iuuid, iobj in sobj.instances.items():
                 inst = dict()
                 inst["uuid"] = iobj.get("uuid")
                 inst["instance_name"] = "{}-inst.{}".format(
@@ -1180,7 +1183,7 @@ class Instantiations(fr.Resource):
         # try to be fuzzy
         if service_uuid_input is None:
             # if we don't get a service uuid we stop all services
-            service_uuid_list = list(GK.services.iterkeys())
+            service_uuid_list = list(GK.services.keys())
             LOG.info("No service_uuid given, stopping all.")
         else:
             service_uuid_list = [service_uuid_input]
@@ -1188,7 +1191,7 @@ class Instantiations(fr.Resource):
         for service_uuid in service_uuid_list:
             if instance_uuid_input is None:
                 instance_uuid_list = list(
-                    GK.services[service_uuid].instances.iterkeys())
+                    GK.services[service_uuid].instances.keys())
             else:
                 instance_uuid_list = [instance_uuid_input]
             # for all service instances
@@ -1215,7 +1218,10 @@ def generate_subnets(prefix, base, subnet_size=50, mask=24):
     r = list()
     for net in range(base, base + subnet_size):
         subnet = "{0}.{1}.0/{2}".format(prefix, net, mask)
-        r.append(ipaddress.ip_network(unicode(subnet)))
+        try:
+            r.append(ipaddress.ip_network(subnet))
+        except ValueError:
+            r.append(ipaddress.ip_network(unicode(subnet)))
     return r
 
 
@@ -1300,7 +1306,7 @@ def get_dc_network():
     :return:
     """
     assert (len(GK.dcs) > 0)
-    return GK.dcs.values()[0].net
+    return list(GK.dcs.values())[0].net
 
 
 def parse_interface(interface_name):
@@ -1339,7 +1345,7 @@ def update_port_mapping_multi_instance(ssiid, port_bindings):
     def _offset(p):
         return p + MULTI_INSTANCE_PORT_OFFSET * ssiid
 
-    port_bindings = {k: _offset(v) for k, v in port_bindings.iteritems()}
+    port_bindings = {k: _offset(v) for k, v in port_bindings.items()}
     return port_bindings
 
 

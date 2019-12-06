@@ -884,26 +884,26 @@ class testRestApi(ApiBaseOpenStack):
         self.assertEqual(network_resp.status_code, 200)
         network_id = json.loads(network_resp.content)["networks"][0]["id"]
 
-        port_responses = map(lambda name: requests.post("http://0.0.0.0:19696/v2.0/ports",
-                                                        data='{"port": {"name": "%s", "network_id": "%s"}}' %
-                                                             (name, network_id),
-                                                        headers=headers),
-                             ["p1", "p2", "p3", "p4", "p5", "p6"])
+        port_responses = list(map(lambda name: requests.post("http://0.0.0.0:19696/v2.0/ports",
+                                                             data='{"port": {"name": "%s", "network_id": "%s"}}' %
+                                                                  (name, network_id),
+                                                             headers=headers),
+                                  ["p1", "p2", "p3", "p4", "p5", "p6"]))
 
         for port in port_responses:
             self.assertEqual(port.status_code, 201)
 
-        port_ids = map(lambda response: json.loads(response.content)["port"]["id"], port_responses)
+        port_ids = list(map(lambda response: json.loads(response.content)["port"]["id"], port_responses))
 
         listflavorsresponse = requests.get("http://0.0.0.0:18774/v2.1/id_bla/flavors", headers=headers)
         self.assertEqual(listflavorsresponse.status_code, 200)
         flavors = json.loads(listflavorsresponse.content)["flavors"]
-        m1_tiny_flavor = filter(lambda flavor: flavor["name"] == "m1.tiny", flavors)[0]
+        m1_tiny_flavor = list(filter(lambda flavor: flavor["name"] == "m1.tiny", flavors))[0]
 
         listimagesdetailsresponse = requests.get("http://0.0.0.0:18774/v2.1/id_bla/images/detail", headers=headers)
         self.assertEqual(listimagesdetailsresponse.status_code, 200)
         images = json.loads(listimagesdetailsresponse.content)["images"]
-        ubuntu_image = filter(lambda image: image["name"] == "ubuntu:trusty", images)[0]
+        ubuntu_image = list(filter(lambda image: image["name"] == "ubuntu:trusty", images))[0]
 
         server_url = "http://0.0.0.0:18774/v2.1/id_bla/servers"
         server_template = \

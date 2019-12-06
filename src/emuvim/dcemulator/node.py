@@ -354,14 +354,14 @@ class Datacenter(object):
         Return a list of all running containers assigned to this
         data center.
         """
-        return list(self.containers.itervalues())
+        return list(self.containers.values())
 
     def listExtSAPs(self):
         """
         Return a list of all external SAPs assigned to this
         data center.
         """
-        return list(self.extSAPs.itervalues())
+        return list(self.extSAPs.values())
 
     def getStatus(self):
         """

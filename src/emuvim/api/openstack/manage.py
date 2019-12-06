@@ -27,7 +27,7 @@ import logging
 import threading
 import uuid
 import networkx as nx
-import chain_api
+import emuvim.api.openstack.chain_api as chain_api
 import json
 import random
 from emuvim.api.openstack.resources.net import Net
@@ -132,7 +132,7 @@ class OpenstackManage(object):
             port.ip_address = root_ip
             # floating ip network setup
             # wierd way of getting a datacenter object
-            first_dc = self.net.dcs.values()[0]
+            first_dc = list(self.net.dcs.values())[0]
             # set a dpid for the switch. for this we have to get the id of the
             # next possible dc
             self.floating_switch = self.net.addSwitch(
